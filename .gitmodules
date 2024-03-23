@@ -1,0 +1,7 @@
+[submodule "vendor/tinyobjloader"]
+	path = vendor/tinyobjloader
+	url = https://github.com/tinyobjloader/tinyobjloader
+[submodule "vendor/ImGui/repo"]
+	path = vendor/ImGui/repo
+	url = https://github.com/ocornut/imgui
+	branch = docking
