@@ -22,7 +22,7 @@
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
     <ProjectGuid>{42534c9d-fdf8-4978-8c10-db0ee83104ac}</ProjectGuid>
-    <RootNamespace>VkPlayground</RootNamespace>
+    <RootNamespace>GFlow</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -184,7 +184,7 @@
     <ClInclude Include="include\VkBase\vulkan_framebuffer.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="VkPlayground.rc" />
+    <ResourceCompile Include="GFlow.rc" />
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\raytracing.frag" />
