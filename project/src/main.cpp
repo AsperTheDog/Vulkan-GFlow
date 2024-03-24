@@ -4,16 +4,16 @@
 
 int main()
 {
-	try
-	{
-		Engine engine{};
+    try
+    {
+        Engine engine{};
 
-		engine.run();
-	}
-	catch (const std::exception& e)
-	{
-		std::cerr << e.what() << '\n';
-		return EXIT_FAILURE;
-	}
-	return 0;
+        engine.run();
+    }
+    catch (const std::exception& e)
+    {
+        std::cerr << e.what() << '\n';
+        return EXIT_FAILURE;
+    }
+    return 0;
 }

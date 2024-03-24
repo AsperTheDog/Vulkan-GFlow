@@ -3,22 +3,27 @@
 #include <functional>
 #include <vector>
 
-template<typename... Args>
-class Signal {
+template <typename... Args>
+class Signal
+{
 public:
     using FunctionType = std::function<void(Args...)>;
 
-    void connect(FunctionType func) {
+    void connect(FunctionType func)
+    {
         m_functions.push_back(func);
     }
 
-    template<typename T>
-    void connect(T* instance, void (T::*method)(Args...)) {
+    template <typename T>
+    void connect(T* instance, void (T::*method)(Args...))
+    {
         m_functions.push_back([=](Args... args) { return (instance->*method)(args...); });
     }
 
-    void emit(Args... args) {
-        for (const auto& func : m_functions) {
+    void emit(Args... args)
+    {
+        for (const auto& func : m_functions)
+        {
             func(args...);
         }
     }

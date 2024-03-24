@@ -9,39 +9,38 @@ class VulkanDevice;
 class VulkanBuffer : public VulkanBase
 {
 public:
-	[[nodiscard]] VkMemoryRequirements getMemoryRequirements() const;
-	
-	void allocateFromIndex(uint32_t memoryIndex);
-	void allocateFromFlags(VulkanMemoryAllocator::MemoryPropertyPreferences memoryProperties);
+    [[nodiscard]] VkMemoryRequirements getMemoryRequirements() const;
 
-	void* map(VkDeviceSize size, VkDeviceSize offset);
-	void unmap();
+    void allocateFromIndex(uint32_t memoryIndex);
+    void allocateFromFlags(VulkanMemoryAllocator::MemoryPropertyPreferences memoryProperties);
 
-	[[nodiscard]] bool isMemoryMapped() const;
-	[[nodiscard]] void* getMappedData() const;
-	[[nodiscard]] VkDeviceSize getSize() const;
+    void* map(VkDeviceSize size, VkDeviceSize offset);
+    void unmap();
 
-	VkBuffer operator*() const;
+    [[nodiscard]] bool isMemoryMapped() const;
+    [[nodiscard]] void* getMappedData() const;
+    [[nodiscard]] VkDeviceSize getSize() const;
 
-	[[nodiscard]] bool isMemoryBound() const;
-	[[nodiscard]] uint32_t getBoundMemoryType() const;
+    VkBuffer operator*() const;
+
+    [[nodiscard]] bool isMemoryBound() const;
+    [[nodiscard]] uint32_t getBoundMemoryType() const;
 
 private:
-	void free();
+    void free();
 
-	VulkanBuffer(uint32_t device, VkBuffer vkHandle, VkDeviceSize size);
+    VulkanBuffer(uint32_t device, VkBuffer vkHandle, VkDeviceSize size);
 
-	void setBoundMemory(const MemoryChunk::MemoryBlock& memoryRegion);
+    void setBoundMemory(const MemoryChunk::MemoryBlock& memoryRegion);
 
-	VkBuffer m_vkHandle = VK_NULL_HANDLE;
+    VkBuffer m_vkHandle = VK_NULL_HANDLE;
 
-	MemoryChunk::MemoryBlock m_memoryRegion;
-	VkDeviceSize m_size = 0;
-	void* m_mappedData = nullptr;
+    MemoryChunk::MemoryBlock m_memoryRegion;
+    VkDeviceSize m_size = 0;
+    void* m_mappedData = nullptr;
 
-	uint32_t m_device;
+    uint32_t m_device;
 
-	friend class VulkanDevice;
-	friend class VulkanCommandBuffer;
+    friend class VulkanDevice;
+    friend class VulkanCommandBuffer;
 };
-

@@ -9,29 +9,28 @@ class GPUQueueStructure;
 class VulkanGPU
 {
 public:
-	VulkanGPU() = default;
+    VulkanGPU() = default;
 
-	[[nodiscard]] VkPhysicalDeviceProperties getProperties() const;
-	[[nodiscard]] VkPhysicalDeviceFeatures getFeatures() const;
-	[[nodiscard]] VkPhysicalDeviceMemoryProperties getMemoryProperties() const;
-	[[nodiscard]] VkSurfaceCapabilitiesKHR getCapabilities(const SDLWindow& window) const;
+    [[nodiscard]] VkPhysicalDeviceProperties getProperties() const;
+    [[nodiscard]] VkPhysicalDeviceFeatures getFeatures() const;
+    [[nodiscard]] VkPhysicalDeviceMemoryProperties getMemoryProperties() const;
+    [[nodiscard]] VkSurfaceCapabilitiesKHR getCapabilities(const SDLWindow& window) const;
 
-	[[nodiscard]] GPUQueueStructure getQueueFamilies() const;
+    [[nodiscard]] GPUQueueStructure getQueueFamilies() const;
 
-	[[nodiscard]] bool isFormatSupported(VkSurfaceKHR surface, VkSurfaceFormatKHR format) const;
-	[[nodiscard]] VkSurfaceFormatKHR getClosestFormat(const SDLWindow& window, VkSurfaceFormatKHR format) const;
-	[[nodiscard]] VkFormatProperties getFormatProperties(VkFormat format) const;
-	[[nodiscard]] VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, const VkImageTiling tiling, const VkFormatFeatureFlags features) const;
+    [[nodiscard]] bool isFormatSupported(VkSurfaceKHR surface, VkSurfaceFormatKHR format) const;
+    [[nodiscard]] VkSurfaceFormatKHR getClosestFormat(const SDLWindow& window, VkSurfaceFormatKHR format) const;
+    [[nodiscard]] VkFormatProperties getFormatProperties(VkFormat format) const;
+    [[nodiscard]] VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features) const;
 
-	VkPhysicalDevice operator*() const;
+    VkPhysicalDevice operator*() const;
 
 private:
-	explicit VulkanGPU(VkPhysicalDevice physicalDevice);
+    explicit VulkanGPU(VkPhysicalDevice physicalDevice);
 
-	VkPhysicalDevice m_vkHandle = VK_NULL_HANDLE;
+    VkPhysicalDevice m_vkHandle = VK_NULL_HANDLE;
 
-	friend class VulkanContext;
-	friend class GPUQueueStructure;
-	friend class MemoryStructure;
+    friend class VulkanContext;
+    friend class GPUQueueStructure;
+    friend class MemoryStructure;
 };
-

@@ -141,7 +141,12 @@
   <ItemGroup>
     <ClCompile Include="src\gui_manager.cpp" />
     <ClCompile Include="src\camera.cpp" />
-    <ClCompile Include="src\engine.cpp" />
+    <ClCompile Include="src\engine.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">stdafx.hpp</PrecompiledHeaderFile>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Use</PrecompiledHeader>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">stdafx.hpp</PrecompiledHeaderFile>
+    </ClCompile>
     <ClCompile Include="src\VkBase\sdl_window.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\VkBase\vulkan_binding.cpp" />
@@ -159,12 +164,19 @@
     <ClCompile Include="src\VkBase\vulkan_image.cpp" />
     <ClCompile Include="src\VkBase\vulkan_sync.cpp" />
     <ClCompile Include="src\VkBase\vulkan_framebuffer.cpp" />
+    <ClCompile Include="stdafx.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">stdafx.hpp</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">stdafx.hpp</PrecompiledHeaderFile>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\gui\gui_manager.hpp" />
     <ClInclude Include="include\camera.hpp" />
     <ClInclude Include="include\engine.hpp" />
     <ClInclude Include="include\signal.hpp" />
+    <ClInclude Include="stdafx.hpp" />
     <ClInclude Include="include\VkBase\vulkan_base.hpp" />
     <ClInclude Include="include\VkBase\vulkan_binding.hpp" />
     <ClInclude Include="include\logger.hpp" />

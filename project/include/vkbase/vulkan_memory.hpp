@@ -15,99 +15,100 @@ class VulkanDevice;
 class MemoryStructure
 {
 public:
+    [[nodiscard]] std::string toString() const;
 
-	[[nodiscard]] std::string toString() const;
-
-	[[nodiscard]] std::optional<uint32_t> getStagingMemoryType(uint32_t typeFilter) const;
-	[[nodiscard]] std::vector<uint32_t> getMemoryTypes(VkMemoryPropertyFlags properties, uint32_t typeFilter) const;
-	[[nodiscard]] bool doesMemoryContainProperties(uint32_t type, VkMemoryPropertyFlags property) const;
+    [[nodiscard]] std::optional<uint32_t> getStagingMemoryType(uint32_t typeFilter) const;
+    [[nodiscard]] std::vector<uint32_t> getMemoryTypes(VkMemoryPropertyFlags properties, uint32_t typeFilter) const;
+    [[nodiscard]] bool doesMemoryContainProperties(uint32_t type, VkMemoryPropertyFlags property) const;
 
 private:
-	explicit MemoryStructure(VulkanGPU gpu);
+    explicit MemoryStructure(VulkanGPU gpu);
 
-	VkPhysicalDeviceMemoryProperties m_memoryProperties;
+    VkPhysicalDeviceMemoryProperties m_memoryProperties;
 
-	friend class VulkanMemoryAllocator;
+    friend class VulkanMemoryAllocator;
 };
 
 class MemoryChunk : public VulkanBase
 {
 public:
-	struct MemoryBlock
-	{
-		VkDeviceSize size = 0;
-		VkDeviceSize offset = 0;
-		uint32_t chunk = 0;
-	};
+    struct MemoryBlock
+    {
+        VkDeviceSize size = 0;
+        VkDeviceSize offset = 0;
+        uint32_t chunk = 0;
+    };
 
-	[[nodiscard]] VkDeviceSize getSize() const;
-	[[nodiscard]] uint32_t getMemoryType() const;
-	[[nodiscard]] bool isEmpty() const;
-	[[nodiscard]] VkDeviceSize getBiggestChunkSize() const;
-	[[nodiscard]] VkDeviceSize getRemainingSize() const;
+    [[nodiscard]] VkDeviceSize getSize() const;
+    [[nodiscard]] uint32_t getMemoryType() const;
+    [[nodiscard]] bool isEmpty() const;
+    [[nodiscard]] VkDeviceSize getBiggestChunkSize() const;
+    [[nodiscard]] VkDeviceSize getRemainingSize() const;
 
-	MemoryBlock allocate(VkDeviceSize newSize, VkDeviceSize alignment);
-	void deallocate(const MemoryBlock& block);
+    MemoryBlock allocate(VkDeviceSize newSize, VkDeviceSize alignment);
+    void deallocate(const MemoryBlock& block);
 
-	VkDeviceMemory operator*() const;
+    VkDeviceMemory operator*() const;
 
 private:
-	MemoryChunk(VkDeviceSize size, uint32_t memoryType, VkDeviceMemory vkHandle);
+    MemoryChunk(VkDeviceSize size, uint32_t memoryType, VkDeviceMemory vkHandle);
 
-	void defragment();
+    void defragment();
 
-	VkDeviceSize m_size;
-	uint32_t m_memoryType;
+    VkDeviceSize m_size;
+    uint32_t m_memoryType;
 
-	VkDeviceMemory m_memory;
+    VkDeviceMemory m_memory;
 
-	std::map<VkDeviceSize, VkDeviceSize> m_unallocatedData;
+    std::map<VkDeviceSize, VkDeviceSize> m_unallocatedData;
 
-	// Metadata
-	VkDeviceSize m_unallocatedSize;
-	VkDeviceSize m_biggestChunk = 0;
+    // Metadata
+    VkDeviceSize m_unallocatedSize;
+    VkDeviceSize m_biggestChunk = 0;
 
-	friend class VulkanResource;
-	friend class VulkanMemoryAllocator;
-	friend class VulkanDevice;
+    friend class VulkanResource;
+    friend class VulkanMemoryAllocator;
+    friend class VulkanDevice;
 };
 
 class VulkanMemoryAllocator
 {
 public:
-	struct MemoryPropertyPreferences
-	{
-		VkMemoryPropertyFlags desiredProperties;
-		VkMemoryPropertyFlags undesiredProperties;
-		bool allowUndesired;
-	};
+    struct MemoryPropertyPreferences
+    {
+        VkMemoryPropertyFlags desiredProperties;
+        VkMemoryPropertyFlags undesiredProperties;
+        bool allowUndesired;
+    };
 
-	MemoryChunk::MemoryBlock allocate(VkDeviceSize size, VkDeviceSize alignment, uint32_t memoryType);
-	MemoryChunk::MemoryBlock searchAndAllocate(VkDeviceSize size, VkDeviceSize alignment, MemoryPropertyPreferences properties, uint32_t typeFilter, bool includeHidden = false);
-	void deallocate(const MemoryChunk::MemoryBlock& block);
+    MemoryChunk::MemoryBlock allocate(VkDeviceSize size, VkDeviceSize alignment, uint32_t memoryType);
+    MemoryChunk::MemoryBlock searchAndAllocate(VkDeviceSize size, VkDeviceSize alignment,
+                                               MemoryPropertyPreferences properties, uint32_t typeFilter,
+                                               bool includeHidden = false);
+    void deallocate(const MemoryChunk::MemoryBlock& block);
 
-	void hideMemoryType(uint32_t type);
-	void unhideMemoryType(uint32_t type);
+    void hideMemoryType(uint32_t type);
+    void unhideMemoryType(uint32_t type);
 
-	[[nodiscard]] const MemoryStructure& getMemoryStructure() const;
-	[[nodiscard]] VkDeviceSize getRemainingSize(uint32_t heap) const;
-	[[nodiscard]] bool suitableChunkExists(uint32_t memoryType, VkDeviceSize size) const;
-	[[nodiscard]] bool isMemoryTypeHidden(unsigned value) const;
+    [[nodiscard]] const MemoryStructure& getMemoryStructure() const;
+    [[nodiscard]] VkDeviceSize getRemainingSize(uint32_t heap) const;
+    [[nodiscard]] bool suitableChunkExists(uint32_t memoryType, VkDeviceSize size) const;
+    [[nodiscard]] bool isMemoryTypeHidden(unsigned value) const;
 
-	[[nodiscard]] uint32_t getChunkMemoryType(uint32_t chunk) const;
+    [[nodiscard]] uint32_t getChunkMemoryType(uint32_t chunk) const;
 
 private:
-	void free();
+    void free();
 
-	explicit VulkanMemoryAllocator(const VulkanDevice& device, VkDeviceSize defaultChunkSize = 20LL * 1024 * 1024);
+    explicit VulkanMemoryAllocator(const VulkanDevice& device, VkDeviceSize defaultChunkSize = 20LL * 1024 * 1024);
 
-	MemoryStructure m_memoryStructure;
-	VkDeviceSize m_chunkSize;
+    MemoryStructure m_memoryStructure;
+    VkDeviceSize m_chunkSize;
 
-	std::vector<MemoryChunk> m_memoryChunks;
-	std::set<uint32_t> m_hiddenTypes;
+    std::vector<MemoryChunk> m_memoryChunks;
+    std::set<uint32_t> m_hiddenTypes;
 
-	uint32_t m_device;
+    uint32_t m_device;
 
-	friend class VulkanDevice;
+    friend class VulkanDevice;
 };

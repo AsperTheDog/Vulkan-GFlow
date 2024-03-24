@@ -8,45 +8,44 @@ class VulkanDevice;
 class VulkanFence : public VulkanBase
 {
 public:
+    void reset();
+    void wait();
 
-	void reset();
-	void wait();
+    [[nodiscard]] bool isSignaled() const;
 
-	[[nodiscard]] bool isSignaled() const;
-
-	VkFence operator*() const;
+    VkFence operator*() const;
 
 private:
-	void free();
+    void free();
 
-	VulkanFence(uint32_t device, VkFence fence, bool isSignaled);
+    VulkanFence(uint32_t device, VkFence fence, bool isSignaled);
 
-	VkFence m_vkHandle = VK_NULL_HANDLE;
+    VkFence m_vkHandle = VK_NULL_HANDLE;
 
-	bool m_isSignaled = false;
+    bool m_isSignaled = false;
 
-	uint32_t m_device;
+    uint32_t m_device;
 
-	friend class VulkanDevice;
-	friend class SDLWindow;
-	friend class VulkanCommandBuffer;
+    friend class VulkanDevice;
+    friend class SDLWindow;
+    friend class VulkanCommandBuffer;
 };
 
 class VulkanSemaphore : public VulkanBase
 {
 public:
-	VkSemaphore operator*() const;
+    VkSemaphore operator*() const;
 
 private:
-	void free();
+    void free();
 
-	VulkanSemaphore(uint32_t device, VkSemaphore semaphore);
+    VulkanSemaphore(uint32_t device, VkSemaphore semaphore);
 
-	VkSemaphore m_vkHandle = VK_NULL_HANDLE;
+    VkSemaphore m_vkHandle = VK_NULL_HANDLE;
 
-	uint32_t m_device;
+    uint32_t m_device;
 
-	friend class VulkanDevice;
-	friend class SDLWindow;
-	friend class VulkanCommandBuffer;
+    friend class VulkanDevice;
+    friend class SDLWindow;
+    friend class VulkanCommandBuffer;
 };

@@ -9,39 +9,39 @@ class VulkanDevice;
 class VulkanImage : public VulkanBase
 {
 public:
-	[[nodiscard]] VkMemoryRequirements getMemoryRequirements() const;
-	
-	void allocateFromIndex(uint32_t memoryIndex);
-	void allocateFromFlags(VulkanMemoryAllocator::MemoryPropertyPreferences memoryProperties);
+    [[nodiscard]] VkMemoryRequirements getMemoryRequirements() const;
 
-	VkImageView createImageView(VkFormat format, VkImageAspectFlags aspectFlags);
-	void freeImageView(VkImageView imageView);
+    void allocateFromIndex(uint32_t memoryIndex);
+    void allocateFromFlags(VulkanMemoryAllocator::MemoryPropertyPreferences memoryProperties);
 
-	void transitionLayout(const VkImageLayout layout, const VkImageAspectFlags aspectFlags, const uint32_t srcQueueFamily, const uint32_t
-	                      dstQueueFamily, uint32_t threadID);
+    VkImageView createImageView(VkFormat format, VkImageAspectFlags aspectFlags);
+    void freeImageView(VkImageView imageView);
 
-	[[nodiscard]] VkExtent3D getSize() const;
+    void transitionLayout(VkImageLayout layout, VkImageAspectFlags aspectFlags,
+                          uint32_t srcQueueFamily, uint32_t
+                          dstQueueFamily, uint32_t threadID);
 
-	VkImage operator*() const;
+    [[nodiscard]] VkExtent3D getSize() const;
+
+    VkImage operator*() const;
 
 private:
-	void free();
+    void free();
 
-	VulkanImage(uint32_t device, VkImage vkHandle, VkExtent3D size, VkImageType type, VkImageLayout layout);
+    VulkanImage(uint32_t device, VkImage vkHandle, VkExtent3D size, VkImageType type, VkImageLayout layout);
 
-	void setBoundMemory(const MemoryChunk::MemoryBlock& memoryRegion);
+    void setBoundMemory(const MemoryChunk::MemoryBlock& memoryRegion);
 
-	MemoryChunk::MemoryBlock m_memoryRegion;
-	VkExtent3D m_size{};
-	VkImageType m_type;
-	VkImageLayout m_layout = VK_IMAGE_LAYOUT_UNDEFINED;
-	
-	VkImage m_vkHandle = VK_NULL_HANDLE;
-	uint32_t m_device;
+    MemoryChunk::MemoryBlock m_memoryRegion;
+    VkExtent3D m_size{};
+    VkImageType m_type;
+    VkImageLayout m_layout = VK_IMAGE_LAYOUT_UNDEFINED;
 
-	std::vector<VkImageView> m_imageViews;
+    VkImage m_vkHandle = VK_NULL_HANDLE;
+    uint32_t m_device;
 
-	friend class VulkanDevice;
-	friend class VulkanCommandBuffer;
+    std::vector<VkImageView> m_imageViews;
+
+    friend class VulkanDevice;
+    friend class VulkanCommandBuffer;
 };
-

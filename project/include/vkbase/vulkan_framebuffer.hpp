@@ -7,18 +7,17 @@ class VulkanDevice;
 class VulkanFramebuffer : public VulkanBase
 {
 public:
-	VkFramebuffer operator*() const;
+    VkFramebuffer operator*() const;
 
 private:
-	void free();
+    void free();
 
-	VulkanFramebuffer(uint32_t device, VkFramebuffer handle);
+    VulkanFramebuffer(uint32_t device, VkFramebuffer handle);
 
-	VkFramebuffer m_vkHandle = VK_NULL_HANDLE;
+    VkFramebuffer m_vkHandle = VK_NULL_HANDLE;
 
-	uint32_t m_device;
+    uint32_t m_device;
 
-	friend class VulkanDevice;
-	friend class VulkanCommandBuffer;
+    friend class VulkanDevice;
+    friend class VulkanCommandBuffer;
 };
-
