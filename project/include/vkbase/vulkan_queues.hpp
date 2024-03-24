@@ -13,10 +13,11 @@ enum QueueFamilyTypeBits
 	GRAPHICS = 1,
 	COMPUTE = 2,
 	PRESENT = 4,
-	SPARSE_BINDING = 8,
-	VIDEO_DECODE = 16,
-	OPTICAL_FLOW = 32,
-	PROTECTED = 64
+	TRANSFER = 8,
+	SPARSE_BINDING = 16,
+	VIDEO_DECODE = 32,
+	OPTICAL_FLOW = 64,
+	PROTECTED = 128
 };
 typedef uint8_t QueueFamilyTypes;
 

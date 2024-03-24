@@ -7,6 +7,7 @@
 
 #include "logger.hpp"
 #include "backends/imgui_impl_vulkan.h"
+#include "gui/gui_manager.hpp"
 #include "VkBase/vulkan_context.hpp"
 
 enum
@@ -46,8 +47,9 @@ Engine::Engine()
 	createDevice();
 	createSwapchain();
 	createSyncObjects();
+	createRenderPass();
 
-	//TODO: Create other objects (render pass, pipeline, etc.)
+	createSwapchainFramebuffers(false);
 
 	setupEvents();
 	initImgui();
@@ -72,6 +74,10 @@ void Engine::run()
 	VulkanDevice& device = VulkanContext::getDevice(m_deviceID);
 	VulkanFence& inFlightFence = device.getFence(m_inFlightFenceID);
 
+	const VulkanQueue graphicsQueue = device.getQueue(m_graphicsQueuePos);
+	const VulkanQueue presentQueue = device.getQueue(m_presentQueuePos);
+	const VulkanCommandBuffer& graphicsBuffer = device.getCommandBuffer(m_graphicsCmdBufferID, 0);
+
 	uint64_t frameCounter = 0;
 
 	while (!m_window.shouldClose())
@@ -95,26 +101,23 @@ void Engine::run()
 	    m_window.frameImgui();
 	    ImGui::NewFrame();
 
-		Engine::drawImgui();
+		GUIManager::render();
 
-		ImGui::Render();
 		ImDrawData* imguiDrawData = ImGui::GetDrawData();
-
 		if (imguiDrawData->DisplaySize.x <= 0.0f || imguiDrawData->DisplaySize.y <= 0.0f)
 		{
 			ImGui::UpdatePlatformWindows();
 			ImGui::RenderPlatformWindowsDefault();
 			continue;
 		}
+		recordCommandBuffer(m_framebuffers[nextImage], imguiDrawData);
 
-		//TODO: Record
-
-		//TODO: submit
+		graphicsBuffer.submit(graphicsQueue, {{m_imageAvailableSemaphoreID, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT}}, {m_renderFinishedSemaphoreID}, m_inFlightFenceID);
 
 		ImGui::UpdatePlatformWindows();
 		ImGui::RenderPlatformWindowsDefault();
 
-		//TODO: present
+		m_window.present(presentQueue, nextImage, m_renderFinishedSemaphoreID);
 
 		frameCounter++;
 	}
@@ -127,26 +130,29 @@ void Engine::createDevice()
 	QueueFamilySelector queueFamilySelector(queueStructure);
 
 	// Select Queue Families and assign queues
-	//TODO: Select queue families
+	const QueueFamily graphicsQueueFamily = queueStructure.findQueueFamily(VK_QUEUE_GRAPHICS_BIT);
+	const QueueFamily presentQueueFamily = queueStructure.findPresentQueueFamily(m_window.getSurface());
 	const QueueFamily transferQueueFamily = queueStructure.findQueueFamily(VK_QUEUE_TRANSFER_BIT);
 
 	QueueFamilySelector selector{queueStructure};
-	//TODO: Configure queues
-	m_transferQueuePos = selector.addQueue(transferQueueFamily, 1.0);
+	selector.selectQueueFamily(graphicsQueueFamily, QueueFamilyTypeBits::GRAPHICS);
+	selector.selectQueueFamily(presentQueueFamily, QueueFamilyTypeBits::PRESENT);
+	selector.selectQueueFamily(transferQueueFamily, QueueFamilyTypeBits::TRANSFER);
+	m_graphicsImguiQueuePos = selector.getOrAddQueue(graphicsQueueFamily, 0.9f);
+	m_graphicsQueuePos = selector.addQueue(graphicsQueueFamily, 1.0f);
+	m_presentQueuePos = selector.getOrAddQueue(presentQueueFamily, 0.9f);
+	m_transferQueuePos = selector.addQueue(transferQueueFamily, 1.0f);
 
 	m_deviceID = VulkanContext::createDevice(gpu, selector, {VK_KHR_SWAPCHAIN_EXTENSION_NAME}, {});
 	VulkanContext::getDevice(m_deviceID).configureOneTimeQueue(m_transferQueuePos);
+	
+	m_graphicsCmdBufferID = VulkanContext::getDevice(m_deviceID).createCommandBuffer(graphicsQueueFamily, 0, false);
 }
 
 void Engine::createSwapchain()
 {
-	m_window.createSwapchain(m_deviceID, {VK_FORMAT_B8G8R8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR});
-
+	m_window.createSwapchain(m_deviceID, {VK_FORMAT_R8G8B8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR});
 	m_framebuffers.resize(m_window.getImageCount());
-	for (uint32_t i = 0; i < m_window.getImageCount(); i++)
-	{
-		//TODO: Create swapchain framebuffers
-	}
 }
 
 void Engine::createSyncObjects()
@@ -157,14 +163,60 @@ void Engine::createSyncObjects()
 	m_inFlightFenceID = device.createFence(true);
 }
 
-void Engine::recreateSwapchainResources(VkExtent2D extent)
+void Engine::createRenderPass()
 {
-	Logger::pushContext("Swapchain resources rebuild");
+	VulkanRenderPassBuilder builder{};
+	const VkAttachmentDescription colorAttachment = VulkanRenderPassBuilder::createAttachment(
+		m_window.getSwapchainImageFormat().format, 
+		VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE, 
+		VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+	builder.addAttachment(colorAttachment);
+
+	builder.addSubpass(VK_PIPELINE_BIND_POINT_GRAPHICS, {{COLOR, 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL}}, 0);
+
+	m_imguiRenderPassID = VulkanContext::getDevice(m_deviceID).createRenderPass(builder, 0);
+}
+
+void Engine::createSwapchainFramebuffers(const bool destroy)
+{
 	for (uint32_t i = 0; i < m_window.getImageCount(); i++)
 	{
-		VulkanContext::getDevice(m_deviceID).freeFramebuffer(m_framebuffers[i]);
-		//TODO: Create swapchain framebuffers
+		if (destroy)
+		{
+			VulkanContext::getDevice(m_deviceID).freeFramebuffer(m_framebuffers[i]);
+		}
+		const VkExtent3D extent = {m_window.getSwapchainExtent().width, m_window.getSwapchainExtent().height, 1};
+		std::vector attachments = {m_window.getImageView(i)};
+		m_framebuffers[i] = VulkanContext::getDevice(m_deviceID).createFramebuffer(extent, m_imguiRenderPassID, attachments);
 	}
+}
+
+void Engine::recordCommandBuffer(const uint32_t framebuffer, ImDrawData* im_draw_data) const
+{
+	Logger::pushContext("Command buffer recording");
+
+	std::vector<VkClearValue> clearValues{2};
+    clearValues[0].color = {{0.0f, 0.0f, 0.0f, 1.0f}};
+    clearValues[1].depthStencil = {1.0f, 0};
+
+	VulkanCommandBuffer& graphicsBuffer = VulkanContext::getDevice(m_deviceID).getCommandBuffer(m_graphicsCmdBufferID, 0);
+	graphicsBuffer.reset();
+	graphicsBuffer.beginRecording();
+
+	graphicsBuffer.cmdBeginRenderPass(m_imguiRenderPassID, framebuffer, m_window.getSwapchainExtent(), clearValues);
+
+		ImGui_ImplVulkan_RenderDrawData(im_draw_data, *graphicsBuffer);
+
+	graphicsBuffer.cmdEndRenderPass();
+	graphicsBuffer.endRecording();
+
+	Logger::popContext();
+}
+
+void Engine::recreateSwapchainResources(const VkExtent2D newExtent)
+{
+	Logger::pushContext("Swapchain resources rebuild");
+	createSwapchainFramebuffers(true);
 	Logger::popContext();
 }
 
@@ -208,10 +260,10 @@ void Engine::initImgui() const
     init_info.Instance = VulkanContext::getHandle();
     init_info.PhysicalDevice = *device.getGPU();
     init_info.Device = *device;
-    //TODO: init_info.QueueFamily = m_graphicsQueuePos.familyIndex;
-    //TODO: init_info.Queue = *device.getQueue(m_graphicsQueuePos);
+    init_info.QueueFamily = m_graphicsImguiQueuePos.familyIndex;
+    init_info.Queue = *device.getQueue(m_graphicsImguiQueuePos);
     init_info.DescriptorPool = *device.getDescriptorPool(imguiPoolID);
-    //TODO: init_info.RenderPass = *device.getRenderPass(m_renderPassID);
+    init_info.RenderPass = *device.getRenderPass(m_imguiRenderPassID);
     init_info.Subpass = 0;
     init_info.MinImageCount = m_window.getMinImageCount();
     init_info.ImageCount = m_window.getImageCount();
@@ -235,9 +287,4 @@ void Engine::setupEvents()
 	});
 
 	m_window.getSwapchainRebuiltSignal().connect(this, &Engine::recreateSwapchainResources);
-}
-
-void Engine::drawImgui() const
-{
-	
 }

@@ -16,13 +16,15 @@ private:
 	void createDevice();
 	void createSwapchain();
 	void createSyncObjects();
+	void createRenderPass();
+	void createSwapchainFramebuffers(bool destroy);
 
-	void recreateSwapchainResources(VkExtent2D extent);
+	void recordCommandBuffer(uint32_t framebuffer, ImDrawData* im_draw_data) const;
+
+	void recreateSwapchainResources(VkExtent2D newExtent);
 	void initImgui() const;
 
 	void setupEvents();
-
-	void drawImgui() const;
 
 	Camera cam;
 	SDLWindow m_window;
@@ -30,10 +32,16 @@ private:
 	uint32_t m_deviceID = UINT32_MAX;
 
 	QueueSelection m_transferQueuePos{};
+	QueueSelection m_graphicsImguiQueuePos{};
+	QueueSelection m_graphicsQueuePos{};
+	QueueSelection m_presentQueuePos{};
+	
+	uint32_t m_imguiRenderPassID = UINT32_MAX;
 
 	std::vector<uint32_t> m_framebuffers{};
 	uint32_t m_imageAvailableSemaphoreID = UINT32_MAX;
 	uint32_t m_renderFinishedSemaphoreID = UINT32_MAX;
 	uint32_t m_inFlightFenceID = UINT32_MAX;
+	uint32_t m_graphicsCmdBufferID = UINT32_MAX;
 };
 

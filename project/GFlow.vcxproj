@@ -139,6 +139,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\gui_manager.cpp" />
     <ClCompile Include="src\camera.cpp" />
     <ClCompile Include="src\engine.cpp" />
     <ClCompile Include="src\VkBase\sdl_window.cpp" />
@@ -160,6 +161,7 @@
     <ClCompile Include="src\VkBase\vulkan_framebuffer.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\gui\gui_manager.hpp" />
     <ClInclude Include="include\camera.hpp" />
     <ClInclude Include="include\engine.hpp" />
     <ClInclude Include="include\signal.hpp" />

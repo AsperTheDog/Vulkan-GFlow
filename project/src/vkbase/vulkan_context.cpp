@@ -3,6 +3,7 @@
 #include <stdexcept>
 #include <vector>
 
+#include "logger.hpp"
 #include "VkBase/vulkan_device.hpp"
 #include "VkBase/vulkan_gpu.hpp"
 #include "VkBase/vulkan_queues.hpp"
@@ -42,6 +43,7 @@ void VulkanContext::init(const uint32_t vulkanApiVersion, const bool enableValid
 	{
 		throw std::runtime_error("Failed to create Vulkan instance");
 	}
+	Logger::print("Vulkan instance created");
 }
 
 std::vector<VulkanGPU> VulkanContext::getGPUs()

@@ -187,11 +187,11 @@ void VulkanDevice::freeCommandBuffer(const uint32_t id, const uint32_t threadID)
 	}
 }
 
-uint32_t VulkanDevice::createFramebuffer(const VkExtent3D size, const VulkanRenderPass& renderPass, const std::vector<VkImageView>& attachments)
+uint32_t VulkanDevice::createFramebuffer(const VkExtent3D size, const uint32_t renderPass, const std::vector<VkImageView>& attachments)
 {
 	VkFramebufferCreateInfo framebufferInfo{};
 	framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-	framebufferInfo.renderPass = renderPass.m_vkHandle;
+	framebufferInfo.renderPass = getRenderPass(renderPass).m_vkHandle;
 	framebufferInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
 	framebufferInfo.pAttachments = attachments.data();
 	framebufferInfo.width = size.width;

@@ -33,7 +33,7 @@ public:
 	void freeCommandBuffer(const VulkanCommandBuffer& commandBuffer, uint32_t threadID);
 	void freeCommandBuffer(uint32_t id, uint32_t threadID);
 
-	uint32_t createFramebuffer(VkExtent3D size, const VulkanRenderPass& renderPass, const std::vector<VkImageView>& attachments);
+	uint32_t createFramebuffer(const VkExtent3D size, const uint32_t renderPass, const std::vector<VkImageView>& attachments);
 	VulkanFramebuffer& getFramebuffer(uint32_t id);
 	void freeFramebuffer(uint32_t id);
 	void freeFramebuffer(const VulkanFramebuffer& framebuffer);
