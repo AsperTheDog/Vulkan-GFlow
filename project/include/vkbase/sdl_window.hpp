@@ -26,9 +26,7 @@ public:
     };
 
     SDLWindow() = default;
-    SDLWindow(std::string_view name, int width, int height, int top = SDL_WINDOWPOS_CENTERED,
-              int left = SDL_WINDOWPOS_CENTERED,
-              uint32_t flags = SDL_WINDOW_SHOWN | SDL_WINDOW_MAXIMIZED | SDL_WINDOW_RESIZABLE);
+    SDLWindow(std::string_view name, int width, int height, int top = SDL_WINDOWPOS_CENTERED, int left = SDL_WINDOWPOS_CENTERED, uint32_t flags = SDL_WINDOW_SHOWN | SDL_WINDOW_MAXIMIZED | SDL_WINDOW_RESIZABLE);
 
     void initImgui() const;
 
@@ -57,7 +55,6 @@ public:
     void shutdownImgui() const;
 
     void present(const VulkanQueue& queue, uint32_t imageIndex, uint32_t waitSemaphore = UINT32_MAX) const;
-    void frameImgui() const;
 
     [[nodiscard]] Signal<VkExtent2D>& getSwapchainRebuiltSignal();
     [[nodiscard]] Signal<int32_t, int32_t>& getMouseMovedSignal();

@@ -12,4 +12,5 @@ public:
     static void render();
 
 private:
+    static void setImGuiColors();
 };

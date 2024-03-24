@@ -218,11 +218,6 @@ void SDLWindow::present(const VulkanQueue& queue, const uint32_t imageIndex, con
     }
 }
 
-void SDLWindow::frameImgui() const
-{
-    ImGui_ImplSDL2_NewFrame();
-}
-
 Signal<VkExtent2D>& SDLWindow::getSwapchainRebuiltSignal()
 {
     return m_swapchainRebuilt;

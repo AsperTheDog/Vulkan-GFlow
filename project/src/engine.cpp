@@ -27,9 +27,7 @@ VulkanGPU chooseCorrectGPU()
     throw std::runtime_error("No discrete GPU found");
 }
 
-Engine::Engine()
-    : cam({0.0f, 0.0f, -10.0f}, {0.0f, 0.0f, 1.0f}, toFloat(WINDOW_WIDTH) / toFloat(WINDOW_HEIGHT)),
-      m_window("Vulkan", WINDOW_WIDTH, 1080)
+Engine::Engine() : cam({0.0f, 0.0f, -10.0f}, {0.0f, 0.0f, 1.0f}, toFloat(WINDOW_WIDTH) / toFloat(WINDOW_HEIGHT)), m_window("Vulkan", WINDOW_WIDTH, 1080)
 {
     Logger::setRootContext("Engine init");
 #ifndef _DEBUG
@@ -89,10 +87,6 @@ void Engine::run()
             continue;
         }
 
-        ImGui_ImplVulkan_NewFrame();
-        m_window.frameImgui();
-        ImGui::NewFrame();
-
         GUIManager::render();
 
         ImDrawData* imguiDrawData = ImGui::GetDrawData();
@@ -104,8 +98,7 @@ void Engine::run()
         }
         recordCommandBuffer(m_framebuffers[nextImage], imguiDrawData);
 
-        graphicsBuffer.submit(graphicsQueue, {{m_imageAvailableSemaphoreID, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT}},
-                              {m_renderFinishedSemaphoreID}, m_inFlightFenceID);
+        graphicsBuffer.submit(graphicsQueue, {{m_imageAvailableSemaphoreID, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT}}, {m_renderFinishedSemaphoreID}, m_inFlightFenceID);
 
         ImGui::UpdatePlatformWindows();
         ImGui::RenderPlatformWindowsDefault();
