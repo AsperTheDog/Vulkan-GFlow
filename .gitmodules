@@ -5,3 +5,6 @@
 	path = vendor/ImGui/repo
 	url = https://github.com/ocornut/imgui
 	branch = docking
+[submodule "vendor/VkPlayground/repo"]
+	path = vendor/VkPlayground/repo
+	url = https://github.com/AsperTheDog/VkPlayground

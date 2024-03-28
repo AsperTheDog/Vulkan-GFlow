@@ -148,7 +148,7 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="GFlow.rc">
+    <ResourceCompile Include="GUIFLow.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
   </ItemGroup>

@@ -1,6 +1,6 @@
 ﻿//{{NO_DEPENDENCIES}}
 // Microsoft Visual C++ generated include file.
-// Used by GFlow.rc
+// Used by GUIFLow.rc
 
 // Next default values for new objects
 // 
