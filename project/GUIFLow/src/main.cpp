@@ -2,6 +2,6 @@
 
 int main(int argc, char *argv[])
 {
-    gflow::Context::init();
+    gflow::ConfigModule config = gflow::ConfigModule::load("files/example.cfgModule");
     return 0;
 }
