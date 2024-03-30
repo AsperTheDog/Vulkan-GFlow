@@ -1,8 +1,9 @@
 #pragma once
 #include <string>
 
+#include <utils/logger.hpp>
+
 #include "internal/serialization.hpp"
-#include "utils/logger.hpp"
 
 namespace gflow {
 

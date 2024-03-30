@@ -4,7 +4,7 @@
 
 namespace gflow
 {
-    ConfigModule::ConfigModule() : Serializable("Config", "cfg")
+    ConfigModule::ConfigModule() : Serializable("cfg")
     {
         
     }

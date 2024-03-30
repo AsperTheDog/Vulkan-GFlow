@@ -33,16 +33,7 @@ namespace gflow
 
     class Serializable
     {
-    protected:
-        explicit Serializable(std::string_view type, std::string_view suffix);
-
     public:
-        enum EntryType
-        {
-            VALUE,
-            SUBRESOURCE
-        };
-
         [[nodiscard]] virtual std::string getSerialized(std::string_view key) const = 0;
         virtual void set(std::string_view key, std::string_view value) = 0;
         [[nodiscard]] virtual std::vector<std::string> keys() const = 0;
@@ -51,12 +42,15 @@ namespace gflow
         [[nodiscard]] const Serializable* getSubresource(std::string_view key) const;
         virtual Serializable* getSubresource(std::string_view key) = 0;
 
-        [[nodiscard]] uint32_t getId() const { return m_id; }
+        [[nodiscard]] uint32_t getId() const;
+        
+    protected:
+        explicit Serializable(std::string_view suffix);
+        ~Serializable() = default;
 
     private:
         void setID(uint32_t id);
 
-        std::string m_type;
         std::string m_suffix;
 
         uint32_t m_id = ++s_idCounter;
@@ -70,11 +64,23 @@ namespace gflow
     class Serialization
     {
     public:
+        struct ResourceData
+        {
+            uint32_t key;
+            std::string type;
+            bool isSubresource;
+            std::unordered_map<std::string, std::string> data;
+        };
+
         static void serialize(const Serializable& serializable, std::string_view filename);
         static void deserialize(Serializable& serializable, std::string_view filename);
 
     private:
-        static std::string serializeEntry(const Serializable& serializable, const bool isSubresource, std::unordered_set<std::string>& subresources);
+        static std::string serializeEntry(const Serializable& serializable, bool isSubresource, std::unordered_set<std::string>& subresources);
+
+        static ResourceData deserializeEntry(const std::string& serialized, std::vector<ResourceData>& subresources);
+        static void deserializeHeader(std::string serialized, ResourceData& data);
+        static std::pair<std::string, std::string> deserializeKeyValue(const std::string& serialized);
     };
 
     // Inline definitions

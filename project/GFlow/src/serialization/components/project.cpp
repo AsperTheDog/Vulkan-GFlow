@@ -4,7 +4,7 @@
 
 namespace gflow
 {
-    Project::Project() : Serializable("Project", "proj")
+    Project::Project() : Serializable("proj")
     {
 
     }
