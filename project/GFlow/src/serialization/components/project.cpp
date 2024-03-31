@@ -6,7 +6,23 @@ namespace gflow
 {
     Project::Project() : Serializable("proj")
     {
+        ConfigModule module[5] = {ConfigModule{}, ConfigModule{}, ConfigModule{}, ConfigModule{}, ConfigModule{}};
+        for (auto& entry : module)
+        {
+            entry.set("gpu", std::to_string(rand()));
+            m_entries.getRef().push_back(entry);
+        }
+    }
 
+    Project::Project(const std::string_view filename) : Serializable("proj")
+    {
+        Serialization::deserialize(*this, filename);
+        ConfigModule module[5] = {ConfigModule{}, ConfigModule{}, ConfigModule{}, ConfigModule{}, ConfigModule{}};
+        for (auto& entry : module)
+        {
+            entry.set("gpu", std::to_string(rand()));
+            m_entries.getRef().push_back(entry);
+        }
     }
 
     std::string Project::getSerialized(const std::string_view key) const
@@ -25,24 +41,18 @@ namespace gflow
         Serialization::serialize(*this, filename);
     }
 
-    std::vector<std::string> Project::keys() const
+    bool Project::isSubresource(const std::string_view key) const
     {
-        return {};
+        return m_entries.doesNameMatch(key);
     }
 
-    bool Project::isSubresource(std::string_view key) const
+    Serializable* Project::getSubresource(const std::string_view key, const bool willEdit)
     {
-        return false;
-    }
-
-    Serializable* Project::getSubresource(std::string_view key)
-    {
+        if (m_entries.doesNameMatch(key))
+        {
+            return &m_entries.getRef();
+        }
         return nullptr;
-    }
-
-    void Project::addSubresource(std::string_view key, Serialization::ResourceData& subresource)
-    {
-
     }
 
     Project Project::load(const std::string_view path)

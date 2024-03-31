@@ -10,6 +10,7 @@ namespace gflow {
     {
     public:
         ConfigModule();
+        explicit ConfigModule(std::string_view path);
 
         void set(std::string_view key, std::string_view value) override;
         void serialize(std::string_view filename) const override;
@@ -28,21 +29,18 @@ namespace gflow {
     private:
         [[nodiscard]] std::string getSerialized(std::string_view key) const override;
 
-        [[nodiscard]] std::vector<std::string> keys() const override;
         [[nodiscard]] bool isSubresource(std::string_view key) const override;
-        Serializable* getSubresource(std::string_view key) override;
-
-        void addSubresource(std::string_view key, Serialization::ResourceData& subresource) override;
+        Serializable* getSubresource(std::string_view key, bool willEdit = false) override;
 
         // Config values
 
-        SerializeEntry<uint32_t> m_gpu{UINT32_MAX, "gpu", {}};
+        SerializeEntry<uint32_t> m_gpu{this, UINT32_MAX, "gpu"};
 #ifndef _DEBUG
-        SerializeEntry<Logger::LevelBits> m_logLevel{Logger::WARN | Logger::ERR, "logLevel", {}};
-        SerializeEntry<bool> m_debug{false, "debug", {}};
+        SerializeEntry<Logger::LevelBits> m_logLevel{this, Logger::WARN | Logger::ERR, "logLevel"};
+        SerializeEntry<bool> m_debug{this, false, "debug"};
 #else
-        SerializeEntry<LoggerLevels> m_logLevel{Logger::INFO | Logger::WARN | Logger::ERR, "logLevel", {}};
-        SerializeEntry<bool> m_debug{true, "debug", {}};
+        SerializeEntry<LoggerLevels> m_logLevel{this, Logger::INFO | Logger::WARN | Logger::ERR, "logLevel"};
+        SerializeEntry<bool> m_debug{this, true, "debug"};
 #endif
         friend class Context;
     };

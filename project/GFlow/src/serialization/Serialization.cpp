@@ -12,9 +12,14 @@ namespace gflow
 
     }
 
+    std::vector<std::string> Serializable::keys() const
+    {
+        return m_keys;
+    }
+
     const Serializable* Serializable::getSubresource(const std::string_view key) const
     {
-        return const_cast<Serializable*>(this)->getSubresource(key);
+        return const_cast<Serializable*>(this)->getSubresource(key, false);
     }
 
     uint32_t Serializable::getId() const
@@ -43,7 +48,8 @@ namespace gflow
     {
         std::ifstream file(filename.data());
         if (!file.is_open()) throw std::runtime_error(std::string("Failed to open file + ") + filename.data() + " + for deserialization");
-        std::vector<ResourceData> subresources;
+        ResourceData mainResource;
+        std::unordered_map<uint32_t, ResourceData> subresources;
         std::string entry;
         std::string line;
         while (true)
@@ -54,43 +60,13 @@ namespace gflow
                 if (!line.empty()) entry += line + '\n';
                 if (!file.eof()) continue;
             }
-            ResourceData data = deserializeEntry(entry, subresources);
-            if (data.isSubresource)
-            {
-                subresources.push_back(data);
-            }
-            else
-            {
-                if (data.type != serializable.m_suffix)
-                {
-                    Logger::print(std::string("Type mismatch in ") + filename.data() + ": expected " + serializable.m_suffix + ", got " + data.type, Logger::WARN);
-                }
-                for (const auto& [key, value] : data.data)
-                {
-                    if (serializable.isSubresource(key))
-                    {
-                        uint32_t id;
-                        try
-                        {
-                            id = std::stoi(value);
-                            if (id >= subresources.size()) throw std::invalid_argument("");
-                        }
-                        catch (const std::invalid_argument&)
-                        {
-                            Logger::print("Invalid ID " + value + " for subresource " + key + " in " + serializable.m_suffix, Logger::WARN);
-                            continue;
-                        }
-                        serializable.addSubresource(key, subresources.at(id));
-                    }
-                    else
-                    {
-                        serializable.set(key, value);
-                    }
-                }
-            }
+            ResourceData data = parseToData(entry);
+            if (data.isSubresource) subresources[data.key] = data;
+            else mainResource = data;
             if (!line.empty()) entry = line + "\n";
             if (file.eof()) break;
         }
+        deserializeEntry(serializable, mainResource, subresources);
     }
 
     std::string Serialization::serializeEntry(const Serializable& serializable, const bool isSubresource, std::unordered_set<std::string>& subresources)
@@ -105,7 +81,7 @@ namespace gflow
                 if (!subresource) throw std::runtime_error("Subresource " + key + " is null in " + serializable.m_suffix);
                 subresources.insert(key);
                 resource.insert(0, serializeEntry(*subresource, true, subresources));
-                resource += key + " = " + std::to_string(subresource->getId()) + "\n";
+                resource += key + " = Subresource(" + std::to_string(subresource->getId()) + ")\n";
             }
             else
             {
@@ -115,7 +91,7 @@ namespace gflow
         return resource + "\n";
     }
 
-    Serialization::ResourceData Serialization::deserializeEntry(const std::string& serialized, std::vector<ResourceData>& subresources)
+    Serialization::ResourceData Serialization::parseToData(const std::string& serialized)
     {
         ResourceData data;
         uint32_t lineCount = 0;
@@ -146,6 +122,42 @@ namespace gflow
             ++lineCount;
         }
         return data;
+    }
+
+    void Serialization::deserializeEntry(Serializable& serializable, const ResourceData& serialized, std::unordered_map<uint32_t, ResourceData>& subresources)
+    {
+        if (serialized.type != serializable.m_suffix)
+        {
+            Logger::print("Type mismatch: expected " + serializable.m_suffix + ", got " + serialized.type, Logger::WARN);
+        }
+        for (const auto& [key, value] : serialized.data)
+        {
+            if (serializable.isSubresource(key))
+            {
+                uint32_t id;
+                try
+                {
+                    id = std::stoi(value.substr(value.find('(') + 1, value.find(')') - value.find('(') - 1));
+                    if (!subresources.contains(id)) throw std::invalid_argument("");
+                }
+                catch (const std::invalid_argument&)
+                {
+                    Logger::print("Invalid ID " + value + " for subresource " + key + " in " + serializable.m_suffix, Logger::WARN);
+                    continue;
+                }
+                Serializable* subresource = serializable.getSubresource(key, true);
+                if (!subresource)
+                {
+                    Logger::print("Subresource " + key + " is null in " + serializable.m_suffix, Logger::WARN);
+                    continue;
+                }
+                deserializeEntry(*subresource, subresources.at(id), subresources);
+            }
+            else
+            {
+                serializable.set(key, value);
+            }
+        }
     }
 
     void Serialization::deserializeHeader(std::string serialized, ResourceData& data)

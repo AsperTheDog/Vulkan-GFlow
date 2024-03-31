@@ -10,6 +10,7 @@ namespace gflow{
     {
     public:
         SerializedList();
+        explicit SerializedList(std::string_view filename);
 
         void set(std::string_view key, std::string_view value) override;
         void serialize(std::string_view filename) const override;
@@ -34,19 +35,24 @@ namespace gflow{
         [[nodiscard]] std::vector<std::string> keys() const override;
 
         [[nodiscard]] bool isSubresource(std::string_view key) const override;
-        Serializable* getSubresource(std::string_view key) override;
-        void addSubresource(std::string_view key, Serialization::ResourceData& subresource) override;
+        Serializable* getSubresource(std::string_view key, bool willEdit = false) override;
 
     private:
-        SerializeEntry<std::vector<T>> m_elements{{}, "elements", {}};
+        SerializeEntry<std::vector<T>> m_elements{{}, "elements"};
 
-        static_assert(std::is_fundamental_v<T> || std::is_enum_v<T> || std::is_base_of_v<Serializable, T>, "Template parameter must be a primitive type.");
+        static_assert(std::is_fundamental_v<T> || std::is_enum_v<T> || std::is_base_of_v<Serializable, T>, "Template parameter must be a primitive type or inherit from serializable");
         static_assert(!std::is_same_v<T, void> && !std::is_same_v<T, std::nullptr_t> && !std::is_pointer_v<T>, "void, nullptr, and pointers are not serializable");
     };
 
     template <typename T>
     SerializedList<T>::SerializedList() : Serializable("lst")
     {
+    }
+
+    template <typename T>
+    SerializedList<T>::SerializedList(const std::string_view filename) : Serializable("lst")
+    {
+        Serialization::deserialize(*this, filename);
     }
 
     template <typename T>
@@ -121,7 +127,7 @@ namespace gflow{
     }
 
     template <typename T>
-    Serializable* SerializedList<T>::getSubresource(const std::string_view key)
+    Serializable* SerializedList<T>::getSubresource(const std::string_view key, const bool willEdit)
     {
         if constexpr (std::is_base_of_v<Serializable, T>)
         {
@@ -129,28 +135,13 @@ namespace gflow{
                 return nullptr;
             }
             const std::string index = std::string(key.substr(m_elements.getKey().size() + 1));
-            return &at(std::stoi(index));
+            const uint32_t i = std::stoi(index);
+            if (willEdit && i >= size()) resize(i + 1);
+            return &at(i);
         }
         else
         {
             return nullptr;
-        }
-    }
-
-    template <typename T>
-    void SerializedList<T>::addSubresource(const std::string_view key, Serialization::ResourceData& subresource)
-    {
-        if constexpr (std::is_base_of_v<Serializable, T>)
-        {
-            if (!isSubresource(key)) 
-            {
-                return;
-            }
-            std::string index = std::string(key.substr(8));
-            for (std::pair<const std::string, std::string> elem : subresource.data)
-            {
-                at(index).set(elem.first, elem.second);
-            }
         }
     }
 }

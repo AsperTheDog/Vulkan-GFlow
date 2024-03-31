@@ -12,15 +12,16 @@ namespace gflow
 
     enum MatchType
     {
-        CORRECT,
-        LEGACY,
-        INVALID
+        CORRECT = 1,
+        LEGACY = 2,
+        INVALID = 0
     };
 
     template <typename T>
     class SerializeEntry
     {
     public:
+        SerializeEntry(Serializable* parent, T value, std::string_view name, std::initializer_list<std::string> legacyNames = {});
         SerializeEntry(T value, std::string_view name, std::initializer_list<std::string> legacyNames = {});
 
         [[nodiscard]] T get() const;
@@ -62,7 +63,8 @@ namespace gflow
     private:
         static std::string serializeEntry(const Serializable& serializable, bool isSubresource, std::unordered_set<std::string>& subresources);
 
-        static ResourceData deserializeEntry(const std::string& serialized, std::vector<ResourceData>& subresources);
+        static ResourceData parseToData(const std::string& serialized);
+        static void deserializeEntry(Serializable& serializable, const ResourceData& serialized, std::unordered_map<uint32_t, ResourceData>& subresources);
         static void deserializeHeader(std::string serialized, ResourceData& data);
         static std::pair<std::string, std::string> deserializeKeyValue(const std::string& serialized);
     };
@@ -78,12 +80,11 @@ namespace gflow
 
     protected:
         [[nodiscard]] virtual std::string getSerialized(std::string_view key) const = 0;
-        [[nodiscard]] virtual std::vector<std::string> keys() const = 0;
+        [[nodiscard]] virtual std::vector<std::string> keys() const;
 
         [[nodiscard]] virtual bool isSubresource(std::string_view key) const = 0;
-        [[nodiscard]] const Serializable* getSubresource(std::string_view key) const;
-        virtual Serializable* getSubresource(std::string_view key) = 0;
-        virtual void addSubresource(std::string_view key, Serialization::ResourceData& subresource) = 0;
+        [[nodiscard]] const Serializable* getSubresource(const std::string_view key) const;
+        virtual Serializable* getSubresource(std::string_view key, bool willEdit = false) = 0;
 
         explicit Serializable(std::string_view suffix);
         ~Serializable() = default;
@@ -94,23 +95,33 @@ namespace gflow
         void setID(uint32_t id);
 
         uint32_t m_id = ++s_idCounter;
+        std::vector<std::string> m_keys;
 
         inline static uint32_t s_idCounter = 0;
 
         friend class Serialization;
+        template<typename T>
+        friend class SerializeEntry;
     };
 
     // Inline definitions
     
     template <typename T>
-    SerializeEntry<T>::SerializeEntry(T value, const std::string_view name, const std::initializer_list<std::string> legacyNames)
+    SerializeEntry<T>::SerializeEntry(Serializable* parent, T value, const std::string_view name, const std::initializer_list<std::string> legacyNames)
+        : m_key(name), m_value(value)
     {
-        m_value = value;
-        m_key = name;
+        if (parent != nullptr) parent->m_keys.emplace_back(name);
         for (const auto& legacy : legacyNames)
         {
             m_legacy.emplace_back(legacy);
         }
+    }
+
+    template <typename T>
+    SerializeEntry<T>::SerializeEntry(T value, const std::string_view name, std::initializer_list<std::string> legacyNames)
+        : SerializeEntry(nullptr, value, name, legacyNames)
+    {
+
     }
 
     template <typename T>
@@ -159,7 +170,7 @@ namespace gflow
     }
 
     template <typename T>
-    T Serialization::deserializePrimitive(std::string value)
+    T Serialization::deserializePrimitive(const std::string value)
     {
         if constexpr (std::is_same_v<T, int>) 
         {
@@ -174,6 +185,10 @@ namespace gflow
             return std::stoi(value);
         }
         if constexpr (std::is_same_v<T, long long>) 
+        {
+            return std::stoi(value);
+        }
+        if constexpr (std::is_same_v<T, char>) 
         {
             return std::stoi(value);
         }
@@ -193,6 +208,10 @@ namespace gflow
         {
             return std::stoi(value);
         }
+        if constexpr (std::is_same_v<T, unsigned char>) 
+        {
+            return std::stoi(value);
+        }
         if constexpr (std::is_same_v<T, float>) 
         {
             return std::stof(value);
@@ -200,10 +219,6 @@ namespace gflow
         if constexpr (std::is_same_v<T, double>) 
         {
             return std::stod(value);
-        }
-        if constexpr (std::is_same_v<T, char>) 
-        {
-            return value[0];
         }
         if constexpr (std::is_enum_v<T>) 
         {
@@ -236,6 +251,10 @@ namespace gflow
         {
             return std::to_string(value);
         }
+        if constexpr (std::is_same_v<T, char>) 
+        {
+            return std::to_string(value);
+        }
         if constexpr (std::is_same_v<T, unsigned int>) 
         {
             return std::to_string(value);
@@ -252,6 +271,10 @@ namespace gflow
         {
             return std::to_string(value);
         }
+        if constexpr (std::is_same_v<T, unsigned char>) 
+        {
+            return std::to_string(value);
+        }
         if constexpr (std::is_same_v<T, float>) 
         {
             return std::to_string(value);
@@ -260,11 +283,7 @@ namespace gflow
         {
             return std::to_string(value);
         }
-        if constexpr (std::is_same_v<T, char>) 
-        {
-            return std::string(1, value);
-        }
-        if constexpr (std::is_enum_v<T>) 
+        if constexpr (std::is_enum_v<T>)
         {
             return std::to_string(static_cast<int>(value));
         }
