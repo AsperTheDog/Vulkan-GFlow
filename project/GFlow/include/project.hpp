@@ -17,8 +17,6 @@ namespace gflow
         static Project load(std::string_view path);
 
     protected:
-        SerializeEntry<SerializedList<ConfigModule>> m_entries{this, {}, "entries"};
-
         [[nodiscard]] std::string getSerialized(std::string_view key) const override;
 
         [[nodiscard]] bool isSubresource(std::string_view key) const override;
