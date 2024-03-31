@@ -27,6 +27,9 @@
     <ClInclude Include="include\project.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\internal\serialized_list.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\context.cpp">
@@ -38,7 +41,7 @@
     <ClCompile Include="src\serialization\components\project.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\serialization\Serialization.cpp">
+    <ClCompile Include="src\serialization\serialization.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

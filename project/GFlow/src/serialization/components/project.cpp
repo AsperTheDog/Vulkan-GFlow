@@ -9,15 +9,20 @@ namespace gflow
 
     }
 
-    std::string Project::getSerialized(std::string_view key) const
+    std::string Project::getSerialized(const std::string_view key) const
     {
 
-        throw std::runtime_error("Invalid key in get");
+        throw std::runtime_error(std::string("Invalid key ") + key.data() + " in get for serializable of type " + m_suffix);
     }
 
     void Project::set(std::string_view key, std::string_view value)
     {
 
+    }
+
+    void Project::serialize(const std::string_view filename) const
+    {
+        Serialization::serialize(*this, filename);
     }
 
     std::vector<std::string> Project::keys() const
@@ -33,6 +38,11 @@ namespace gflow
     Serializable* Project::getSubresource(std::string_view key)
     {
         return nullptr;
+    }
+
+    void Project::addSubresource(std::string_view key, Serialization::ResourceData& subresource)
+    {
+
     }
 
     Project Project::load(const std::string_view path)

@@ -147,12 +147,13 @@
     <ClInclude Include="include\context.hpp" />
     <ClInclude Include="include\internal\serialization.hpp" />
     <ClInclude Include="include\project.hpp" />
+    <ClInclude Include="include\internal\serialized_list.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\serialization\components\project.cpp" />
     <ClCompile Include="src\serialization\components\config_module.cpp" />
     <ClCompile Include="src\context.cpp" />
-    <ClCompile Include="src\serialization\Serialization.cpp" />
+    <ClCompile Include="src\serialization\serialization.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

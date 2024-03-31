@@ -1,8 +1,6 @@
 #include "context.hpp"
 
-#include "config_module.hpp"
 #include "vulkan_context.hpp"
-#include "utils/logger.hpp"
 
 namespace gflow
 {

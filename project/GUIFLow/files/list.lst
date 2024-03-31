@@ -1,0 +1,6 @@
+[level = Resource, type = lst]
+size = 4
+elements/0 = 1
+elements/1 = 2
+elements/2 = 3
+elements/3 = 4

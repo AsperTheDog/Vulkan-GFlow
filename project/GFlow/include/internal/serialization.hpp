@@ -1,4 +1,6 @@
 #pragma once
+#include <stdexcept>
+#include <string>
 #include <string_view>
 #include <unordered_map>
 #include <unordered_set>
@@ -6,6 +8,8 @@
 
 namespace gflow
 {
+    class Serializable;
+
     enum MatchType
     {
         CORRECT,
@@ -20,46 +24,20 @@ namespace gflow
         SerializeEntry(T value, std::string_view name, std::initializer_list<std::string> legacyNames = {});
 
         [[nodiscard]] T get() const;
+        T& getRef();
+        const T& getRef() const;
         void set(T value);
 
         void addLegacyName(std::string_view name);
         [[nodiscard]] MatchType doesNameMatch(std::string_view name) const;
+
+        [[nodiscard]] std::string getKey() const { return m_key; };
 
     private:
         std::string m_key;
         T m_value;
         std::vector<std::string> m_legacy;
     };
-
-    class Serializable
-    {
-    public:
-        [[nodiscard]] virtual std::string getSerialized(std::string_view key) const = 0;
-        virtual void set(std::string_view key, std::string_view value) = 0;
-        [[nodiscard]] virtual std::vector<std::string> keys() const = 0;
-
-        [[nodiscard]] virtual bool isSubresource(std::string_view key) const = 0;
-        [[nodiscard]] const Serializable* getSubresource(std::string_view key) const;
-        virtual Serializable* getSubresource(std::string_view key) = 0;
-
-        [[nodiscard]] uint32_t getId() const;
-        
-    protected:
-        explicit Serializable(std::string_view suffix);
-        ~Serializable() = default;
-
-    private:
-        void setID(uint32_t id);
-
-        std::string m_suffix;
-
-        uint32_t m_id = ++s_idCounter;
-
-        inline static uint32_t s_idCounter = 0;
-
-        friend class Serialization;
-    };
-    
 
     class Serialization
     {
@@ -75,12 +53,51 @@ namespace gflow
         static void serialize(const Serializable& serializable, std::string_view filename);
         static void deserialize(Serializable& serializable, std::string_view filename);
 
+        template <typename T>
+        static T deserializePrimitive(std::string value);
+
+        template <typename T>
+        static std::string serializePrimitive(T value);
+
     private:
         static std::string serializeEntry(const Serializable& serializable, bool isSubresource, std::unordered_set<std::string>& subresources);
 
         static ResourceData deserializeEntry(const std::string& serialized, std::vector<ResourceData>& subresources);
         static void deserializeHeader(std::string serialized, ResourceData& data);
         static std::pair<std::string, std::string> deserializeKeyValue(const std::string& serialized);
+    };
+
+    class Serializable
+    {
+    public:
+        virtual void set(std::string_view key, std::string_view value) = 0;
+
+        [[nodiscard]] uint32_t getId() const;
+
+        virtual void serialize(std::string_view filename) const = 0;
+
+    protected:
+        [[nodiscard]] virtual std::string getSerialized(std::string_view key) const = 0;
+        [[nodiscard]] virtual std::vector<std::string> keys() const = 0;
+
+        [[nodiscard]] virtual bool isSubresource(std::string_view key) const = 0;
+        [[nodiscard]] const Serializable* getSubresource(std::string_view key) const;
+        virtual Serializable* getSubresource(std::string_view key) = 0;
+        virtual void addSubresource(std::string_view key, Serialization::ResourceData& subresource) = 0;
+
+        explicit Serializable(std::string_view suffix);
+        ~Serializable() = default;
+
+        std::string m_suffix;
+
+    private:
+        void setID(uint32_t id);
+
+        uint32_t m_id = ++s_idCounter;
+
+        inline static uint32_t s_idCounter = 0;
+
+        friend class Serialization;
     };
 
     // Inline definitions
@@ -98,6 +115,18 @@ namespace gflow
 
     template <typename T>
     T SerializeEntry<T>::get() const
+    {
+        return m_value;
+    }
+
+    template <typename T>
+    T& SerializeEntry<T>::getRef()
+    {
+        return m_value;
+    }
+
+    template <typename T>
+    const T& SerializeEntry<T>::getRef() const
     {
         return m_value;
     }
@@ -129,5 +158,122 @@ namespace gflow
         return INVALID;
     }
 
+    template <typename T>
+    T Serialization::deserializePrimitive(std::string value)
+    {
+        if constexpr (std::is_same_v<T, int>) 
+        {
+            return std::stoi(value);
+        }
+        if constexpr (std::is_same_v<T, short>) 
+        {
+            return std::stoi(value);
+        }
+        if constexpr (std::is_same_v<T, long>) 
+        {
+            return std::stoi(value);
+        }
+        if constexpr (std::is_same_v<T, long long>) 
+        {
+            return std::stoi(value);
+        }
+        if constexpr (std::is_same_v<T, unsigned int>) 
+        {
+            return std::stoi(value);
+        }
+        if constexpr (std::is_same_v<T, unsigned short>) 
+        {
+            return std::stoi(value);
+        }
+        if constexpr (std::is_same_v<T, unsigned long>) 
+        {
+            return std::stoi(value);
+        }
+        if constexpr (std::is_same_v<T, unsigned long long>) 
+        {
+            return std::stoi(value);
+        }
+        if constexpr (std::is_same_v<T, float>) 
+        {
+            return std::stof(value);
+        }
+        if constexpr (std::is_same_v<T, double>) 
+        {
+            return std::stod(value);
+        }
+        if constexpr (std::is_same_v<T, char>) 
+        {
+            return value[0];
+        }
+        if constexpr (std::is_enum_v<T>) 
+        {
+            return static_cast<T>(std::stoi(value));
+        }
+        if constexpr (std::is_same_v<T, bool>) 
+        {
+            return value == "true";
+        }
+
+        throw std::runtime_error("Unsupported primitive type");
+    }
+
+    template <typename T>
+    std::string Serialization::serializePrimitive(T value)
+    {
+        if constexpr (std::is_same_v<T, int>) 
+        {
+            return std::to_string(value);
+        }
+        if constexpr (std::is_same_v<T, short>) 
+        {
+            return std::to_string(value);
+        }
+        if constexpr (std::is_same_v<T, long>) 
+        {
+            return std::to_string(value);
+        }
+        if constexpr (std::is_same_v<T, long long>) 
+        {
+            return std::to_string(value);
+        }
+        if constexpr (std::is_same_v<T, unsigned int>) 
+        {
+            return std::to_string(value);
+        }
+        if constexpr (std::is_same_v<T, unsigned short>) 
+        {
+            return std::to_string(value);
+        }
+        if constexpr (std::is_same_v<T, unsigned long>) 
+        {
+            return std::to_string(value);
+        }
+        if constexpr (std::is_same_v<T, unsigned long long>) 
+        {
+            return std::to_string(value);
+        }
+        if constexpr (std::is_same_v<T, float>) 
+        {
+            return std::to_string(value);
+        }
+        if constexpr (std::is_same_v<T, double>) 
+        {
+            return std::to_string(value);
+        }
+        if constexpr (std::is_same_v<T, char>) 
+        {
+            return std::string(1, value);
+        }
+        if constexpr (std::is_enum_v<T>) 
+        {
+            return std::to_string(static_cast<int>(value));
+        }
+        if constexpr (std::is_same_v<T, bool>) 
+        {
+            return value ? "true" : "false";
+        }
+
+        throw std::runtime_error("Unsupported primitive type");
+    }
 } // namespace gflow
 

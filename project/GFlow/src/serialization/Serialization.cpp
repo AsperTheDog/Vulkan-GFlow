@@ -1,22 +1,18 @@
-#include <fstream>
-#include <set>
-#include <string>
-#include <unordered_set>
-
-#include "config_module.hpp"
 #include "internal/serialization.hpp"
 
-#include "config_module.hpp"
+#include <fstream>
+
+#include "utils/logger.hpp"
 
 namespace gflow
 {
-    inline Serializable::Serializable(const std::string_view suffix)
+    Serializable::Serializable(const std::string_view suffix)
         : m_suffix(suffix)
     {
 
     }
 
-    inline const Serializable* Serializable::getSubresource(const std::string_view key) const
+    const Serializable* Serializable::getSubresource(const std::string_view key) const
     {
         return const_cast<Serializable*>(this)->getSubresource(key);
     }
@@ -31,63 +27,89 @@ namespace gflow
         m_id = id;
     }
 
-    inline void Serialization::serialize(const Serializable& serializable, const std::string_view filename)
+    void Serialization::serialize(const Serializable& serializable, const std::string_view filename)
     {
         std::unordered_set<std::string> subresources;
 
         std::ofstream file(filename.data());
         if (!file.is_open()) throw std::runtime_error(std::string("Failed to open file + ") + filename.data() + " + for serialization");
-        const std::string serialized = serializeEntry(serializable, true, subresources);
+        std::string serialized = serializeEntry(serializable, false, subresources);
+        while (serialized.back() == '\n') serialized.pop_back();
         file << serialized;
         file.close();
     }
 
-    inline void Serialization::deserialize(Serializable& serializable, const std::string_view filename)
+    void Serialization::deserialize(Serializable& serializable, const std::string_view filename)
     {
         std::ifstream file(filename.data());
         if (!file.is_open()) throw std::runtime_error(std::string("Failed to open file + ") + filename.data() + " + for deserialization");
         std::vector<ResourceData> subresources;
         std::string entry;
-        for (std::string line; std::getline(file, line);)
+        std::string line;
+        while (true)
         {
-            if (line.empty()) continue;
-            if (line.find('[') != std::string::npos && !entry.empty())
+            std::getline(file, line);
+            if (line.find('[') == std::string::npos || entry.empty())
             {
-                ResourceData data = deserializeEntry(entry, subresources);
-                if (data.isSubresource)
+                if (!line.empty()) entry += line + '\n';
+                if (!file.eof()) continue;
+            }
+            ResourceData data = deserializeEntry(entry, subresources);
+            if (data.isSubresource)
+            {
+                subresources.push_back(data);
+            }
+            else
+            {
+                if (data.type != serializable.m_suffix)
                 {
-                    subresources.push_back(data);
+                    Logger::print(std::string("Type mismatch in ") + filename.data() + ": expected " + serializable.m_suffix + ", got " + data.type, Logger::WARN);
                 }
-                else
+                for (const auto& [key, value] : data.data)
                 {
-                    if (data.type != serializable.m_suffix)
+                    if (serializable.isSubresource(key))
                     {
-                        Logger::print(std::string("Type mismatch in ") + filename.data() + ": expected " + serializable.m_suffix + ", got " + data.type, Logger::WARN);
+                        uint32_t id;
+                        try
+                        {
+                            id = std::stoi(value);
+                            if (id >= subresources.size()) throw std::invalid_argument("");
+                        }
+                        catch (const std::invalid_argument&)
+                        {
+                            Logger::print("Invalid ID " + value + " for subresource " + key + " in " + serializable.m_suffix, Logger::WARN);
+                            continue;
+                        }
+                        serializable.addSubresource(key, subresources.at(id));
                     }
-                    for (const auto& [key, value] : data.data)
+                    else
                     {
                         serializable.set(key, value);
                     }
                 }
-                entry.clear();
             }
-            entry += line + '\n';
+            if (!line.empty()) entry = line + "\n";
+            if (file.eof()) break;
         }
     }
 
-    inline std::string Serialization::serializeEntry(const Serializable& serializable, const bool isSubresource, std::unordered_set<std::string>& subresources)
+    std::string Serialization::serializeEntry(const Serializable& serializable, const bool isSubresource, std::unordered_set<std::string>& subresources)
     {
         std::string resource;
         resource += std::string("[level = ") + (isSubresource ? std::string("Subresource") + ", id = " + std::to_string(serializable.getId()) : "Resource") + ", type = " + serializable.m_suffix + "]\n";
         for (const auto& key : serializable.keys())
         {
-            resource += key + " = " + serializable.getSerialized(key) + "\n";
             if (serializable.isSubresource(key) && !subresources.contains(key))
             {
                 const Serializable* subresource = serializable.getSubresource(key);
                 if (!subresource) throw std::runtime_error("Subresource " + key + " is null in " + serializable.m_suffix);
                 subresources.insert(key);
-                resource.insert(0, serializeEntry(*subresource, false, subresources));
+                resource.insert(0, serializeEntry(*subresource, true, subresources));
+                resource += key + " = " + std::to_string(subresource->getId()) + "\n";
+            }
+            else
+            {
+                resource += key + " = " + serializable.getSerialized(key) + "\n";
             }
         }
         return resource + "\n";
@@ -103,13 +125,11 @@ namespace gflow
             {
                 if (lineCount == 0) continue;
                 
-                std::string line = serialized.substr(lineCount, i - lineCount);
+                std::string line = serialized.substr(i - lineCount, lineCount);
+                lineCount = 0;
                 std::erase_if(line, isspace);
-                if (line.empty())
-                {
-                    lineCount = 0;
-                    continue;
-                }
+
+                if (line.empty()) continue;
 
                 // Header
                 if (line[0] == '[')
@@ -122,7 +142,6 @@ namespace gflow
                 const auto [key, value] = deserializeKeyValue(line);
                 if (data.data.contains(key)) Logger::print("Duplicate key " + key + " in " + data.type + " " + std::to_string(data.key) + " of type " + data.type, Logger::WARN);
                 data.data[key] = value;
-                lineCount = 0;
             }
             ++lineCount;
         }
