@@ -1,21 +1,25 @@
 #pragma once
 #include <initializer_list>
+#include <string_view>
+#include <vector>
 
-#include "config_module.hpp"
-#include "project.hpp"
+#include "environment.hpp"
 
 namespace gflow
 {
     class Context
     {
     public:
-        static void initVulkan(std::initializer_list<const char*> vulkanInstanceExtensions);
-        static void setConfig(std::string_view filepath);
-        static void setConfig(const ConfigModule& config);
+    	static void initVulkan(std::initializer_list<const char*> vulkanInstanceExtensions);
 
-        static Project loadProject(std::string_view path);
+        static uint32_t createEnvironment();
+        static Environment& getEnvironment(uint32_t id);
+        static void destroyEnvironment(uint32_t id);
+        static void destroyEnvironment(const Environment& environment);
+
+        static uint32_t loadProject(std::string_view path, uint32_t gpuOverride = UINT32_MAX);
 
     private:
-        inline static ConfigModule m_config{};
+        inline static std::vector<Environment> m_environments{};
     };
 } // namespace gflow
