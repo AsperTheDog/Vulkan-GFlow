@@ -19,6 +19,8 @@ namespace gflow
         static Project& loadProject(std::string_view path, uint32_t gpuOverride = UINT32_MAX);
 	    static VkInstance getVulkanInstance();
 
+        static void destroy();
+
     private:
         inline static std::vector<Environment> m_environments{};
     };

@@ -40,6 +40,7 @@ namespace gflow
 		{
 			if (it->getID() == id)
 			{
+				it->destroy();
 				m_environments.erase(it);
 				break;
 			}
@@ -62,5 +63,11 @@ namespace gflow
 	VkInstance Context::getVulkanInstance()
 	{
 		return VulkanContext::getHandle();
+	}
+
+	void Context::destroy()
+	{
+		VulkanContext::free();
+		m_environments.clear();
 	}
 } // namespace gflow

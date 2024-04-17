@@ -6,7 +6,6 @@
 #include "vulkan_context.hpp"
 #include "utils/logger.hpp"
 
-
 namespace gflow
 {
 	uint32_t Environment::loadProject(std::string_view path)
@@ -17,23 +16,67 @@ namespace gflow
 
 	void Environment::addSurface(const VkSurfaceKHR surface)
 	{
-		m_swapchains.emplace(surface, UINT32_MAX);
+		m_swapchains.emplace(surface, Swapchain());
 	}
 
 	void Environment::manualBuild(const Project::Requirements& requirements, const uint32_t gpuOverride)
 	{
+		Logger::pushContext("Environment creation");
 		VulkanGPU selectedGPU;
 		if (gpuOverride < VulkanContext::getGPUCount())
 		{
+			Logger::print("Manually selected GPU with id " + std::to_string(gpuOverride), Logger::INFO);
 			const std::vector<VulkanGPU> gpus = VulkanContext::getGPUs();
 			selectedGPU = gpus[gpuOverride];
+			if (!isGPUSuitable(selectedGPU, requirements))
+			{
+				Logger::print("Invalid GPU: manually selected GPU is not suitable, searching alternative...", Logger::WARN);
+				selectedGPU = selectGPU(requirements);
+			}
 		}
 		else
 		{
-			selectedGPU = getSuitableGPU(requirements);
+			Logger::print("Automatically selecting GPU", Logger::INFO);
+			selectedGPU = selectGPU(requirements);
 		}
 
 		const GPUQueueStructure queueStructure = selectedGPU.getQueueFamilies();
+		QueueFamilySelector selector{queueStructure};
+		if (requirements.queueFlags & VK_QUEUE_GRAPHICS_BIT)
+		{
+			const QueueFamily queueFamily = queueStructure.findQueueFamily(VK_QUEUE_GRAPHICS_BIT);
+			selector.selectQueueFamily(queueFamily, QueueFamilyTypeBits::GRAPHICS);
+			m_graphicsQueue = selector.getOrAddQueue(queueFamily, 1.0);
+		}
+		if (requirements.queueFlags & VK_QUEUE_COMPUTE_BIT)
+		{
+			const QueueFamily queueFamily = queueStructure.findQueueFamily(VK_QUEUE_COMPUTE_BIT);
+			selector.selectQueueFamily(queueFamily, QueueFamilyTypeBits::COMPUTE);
+			m_computeQueue = selector.getOrAddQueue(queueFamily, 1.0);
+		}
+		if (requirements.queueFlags & VK_QUEUE_TRANSFER_BIT)
+		{
+			const QueueFamily queueFamily = queueStructure.findQueueFamily(VK_QUEUE_TRANSFER_BIT);
+			selector.selectQueueFamily(queueFamily, QueueFamilyTypeBits::TRANSFER);
+			m_transferQueue = selector.addQueue(queueFamily, 1.0);
+		}
+		if (requirements.present)
+		{
+			for (auto& [surface, swapchain] : m_swapchains)
+			{
+				const QueueFamily presentQueueFamily = queueStructure.findPresentQueueFamily(surface);
+				selector.selectQueueFamily(presentQueueFamily, QueueFamilyTypeBits::PRESENT);
+				swapchain.presentQueue = selector.getOrAddQueue(presentQueueFamily, 1.0);
+			}
+		}
+
+		std::vector<const char*> extensions{};
+		extensions.reserve(requirements.extensions.size());
+		for (const std::string& extension : requirements.extensions) extensions.push_back(extension.c_str());
+
+		m_device = VulkanContext::createDevice(selectedGPU, selector, extensions, requirements.features);
+
+		Logger::popContext();
 	}
 
 	void Environment::build(const uint32_t gpuOverride)
@@ -91,11 +134,23 @@ namespace gflow
 		}
 
 		VulkanDevice& device = VulkanContext::getDevice(m_device);
-		m_swapchains[surface] = device.createSwapchain(surface, extent, format);
+		m_swapchains[surface].id = device.createSwapchain(surface, extent, format);
 	}
 
 	void Environment::present(VkSurfaceKHR surface, uint32_t project, uint32_t image)
 	{
+	}
+
+	void Environment::destroy()
+	{
+		if (m_device == UINT32_MAX) return;
+
+		for (const Swapchain& swapchain : m_swapchains | std::views::values)
+			VulkanContext::getDevice(m_device).freeSwapchain(swapchain.id);
+		m_swapchains.clear();
+
+		VulkanContext::freeDevice(m_device);
+		m_device = UINT32_MAX;
 	}
 
 	Project::Requirements Environment::getRequirements() const
@@ -110,8 +165,97 @@ namespace gflow
 		return requirements;
 	}
 
-	VulkanGPU Environment::getSuitableGPU(const Project::Requirements& requirements)
+	bool Environment::isGPUSuitable(const VulkanGPU gpu, const Project::Requirements& requirements)
 	{
+		Logger::print(std::string("Checking GPU: ") + gpu.getProperties().deviceName, Logger::DEBUG);
+
+		bool invalid = false;
+		const GPUQueueStructure queueStructure = gpu.getQueueFamilies();
+
+		// Check features
+		{
+			const VkPhysicalDeviceFeatures features = gpu.getFeatures();
+
+			const uint8_t* featurePtr = reinterpret_cast<const uint8_t*>(&features);
+			const uint8_t* requestedFeaturePtr = reinterpret_cast<const uint8_t*>(&requirements.features);
+
+			for (size_t i = 0; i < sizeof(VkPhysicalDeviceFeatures); i++)
+			{
+				if ((requestedFeaturePtr[i] & featurePtr[i]) != requestedFeaturePtr[i])
+				{
+					invalid = true;
+					break;
+				}
+			}
+			if (invalid)
+			{
+				Logger::print("Invalid GPU: unsupported requested features", Logger::INFO);
+				return false;
+			}
+		}
+
+		// Check queue families
+		if (!queueStructure.areQueueFlagsSupported(requirements.queueFlags))
+		{
+			Logger::print("Invalid GPU: unsupported requested queue flags", Logger::INFO);
+			return false;
+		}
+
+
+		// Check present
+		if (requirements.present)
+		{
+			for (const auto& surface : m_swapchains | std::views::keys)
+			{
+				if (!queueStructure.isPresentSupported(surface))
+				{
+					invalid = true;
+					break;
+				}
+			}
+			if (invalid)
+			{
+				Logger::print("Invalid GPU: unsupported present queue", Logger::INFO);
+				return false;
+			}
+		}
+		
+
+		// Check extensions
+		if (!requirements.extensions.empty())
+		{
+			const std::vector<VkExtensionProperties> extensions = gpu.getSupportedExtensions();
+			for (const std::string& extension : requirements.extensions)
+			{
+				bool found = false;
+				for (const VkExtensionProperties& supportedExtension : extensions)
+				{
+					if (extension == supportedExtension.extensionName)
+					{
+						found = true;
+						break;
+					}
+				}
+
+				if (!found)
+				{
+					invalid = true;
+					break;
+				}
+			}
+			if (invalid)
+			{
+				Logger::print("Invalid GPU: unsupported requested extensions", Logger::INFO);
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	VulkanGPU Environment::selectGPU(const Project::Requirements& requirements)
+	{
+		Logger::pushContext("GPU Selection");
 		std::vector<VulkanGPU> suitableGPUs{};
 		for (VulkanGPU& gpu : VulkanContext::getGPUs())
 		{
@@ -203,6 +347,7 @@ namespace gflow
 
 		if (suitableGPUs.empty())
 		{
+			Logger::popContext();
 			throw std::runtime_error("No suitable GPU found");
 		}
 
@@ -252,6 +397,7 @@ namespace gflow
 		}
 
 		Logger::print(std::string("Selected GPU: ") + suitableGPUs[bestGPU].getProperties().deviceName, Logger::INFO);
+		Logger::popContext();
 		return suitableGPUs[bestGPU];
 	}
 } // namespace gflow

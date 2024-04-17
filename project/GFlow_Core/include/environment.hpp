@@ -7,6 +7,7 @@
 #include "utils/identifiable.hpp"
 #include "project.hpp"
 #include "vulkan_gpu.hpp"
+#include "vulkan_queues.hpp"
 
 namespace gflow
 {
@@ -30,6 +31,7 @@ namespace gflow
 
 	private:
 		Environment() = default;
+		void destroy();
 
 		[[nodiscard]] Project::Requirements getRequirements() const;
 
@@ -37,10 +39,21 @@ namespace gflow
 
 		uint32_t m_commandBuffer = UINT32_MAX;
 
-		std::unordered_map<VkSurfaceKHR, uint32_t> m_swapchains{};
+		struct Swapchain
+		{
+			uint32_t id = UINT32_MAX;
+			QueueSelection presentQueue{};
+		};
+
+		std::unordered_map<VkSurfaceKHR, Swapchain> m_swapchains{};
 		std::vector<Project> m_projects{};
 
-		VulkanGPU getSuitableGPU(const Project::Requirements& requirements);
+		QueueSelection m_graphicsQueue{};
+		QueueSelection m_transferQueue{};
+		QueueSelection m_computeQueue{};
+
+		bool isGPUSuitable(VulkanGPU gpu, const Project::Requirements& requirements);
+		VulkanGPU selectGPU(const Project::Requirements& requirements);
 
 		friend class Context;
 	};
