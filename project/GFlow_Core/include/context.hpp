@@ -1,6 +1,5 @@
 #pragma once
 #include <initializer_list>
-#include <string_view>
 #include <vector>
 
 #include "environment.hpp"
@@ -10,14 +9,15 @@ namespace gflow
     class Context
     {
     public:
-    	static void initVulkan(std::initializer_list<const char*> vulkanInstanceExtensions);
+    	static void initVulkan(const std::vector<const char*>& vulkanInstanceExtensions);
 
         static uint32_t createEnvironment();
         static Environment& getEnvironment(uint32_t id);
         static void destroyEnvironment(uint32_t id);
         static void destroyEnvironment(const Environment& environment);
 
-        static uint32_t loadProject(std::string_view path, uint32_t gpuOverride = UINT32_MAX);
+        static Project& loadProject(std::string_view path, uint32_t gpuOverride = UINT32_MAX);
+	    static VkInstance getVulkanInstance();
 
     private:
         inline static std::vector<Environment> m_environments{};

@@ -34,7 +34,7 @@ private:
 
     SerializeEntry<uint32_t> m_gpu{this, UINT32_MAX, "gpu"};
 #ifndef _DEBUG
-    SerializeEntry<Logger::LevelBits> m_logLevel{this, Logger::WARN | Logger::ERR, "logLevel"};
+    SerializeEntry<LoggerLevels> m_logLevel{this, Logger::WARN | Logger::ERR, "logLevel"};
     SerializeEntry<bool> m_debug{this, false, "debug"};
 #else
     SerializeEntry<LoggerLevels> m_logLevel{this, Logger::INFO | Logger::WARN | Logger::ERR, "logLevel"};

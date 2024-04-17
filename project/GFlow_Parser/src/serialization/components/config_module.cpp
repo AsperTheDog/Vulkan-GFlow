@@ -1,4 +1,4 @@
-#include "config_module.hpp"
+#include "serialization/components/config_module.hpp"
 
 #include <stdexcept>
 

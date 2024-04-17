@@ -6,7 +6,7 @@
 
 namespace gflow
 {
-	void Context::initVulkan(std::initializer_list<const char*> vulkanInstanceExtensions)
+	void Context::initVulkan(const std::vector<const char*>& vulkanInstanceExtensions)
 	{
 #ifndef _DEBUG
 		VulkanContext::init(VK_API_VERSION_1_0, false, false, vulkanInstanceExtensions);
@@ -17,7 +17,7 @@ namespace gflow
 
 	uint32_t Context::createEnvironment()
 	{
-		m_environments.emplace_back();
+		m_environments.push_back({});
 		return m_environments.back().getID();
 	}
 
@@ -51,8 +51,16 @@ namespace gflow
 		destroyEnvironment(environment.getID());
 	}
 
-	uint32_t Context::loadProject(std::string_view path, uint32_t gpuOverride)
+	Project& Context::loadProject(const std::string_view path, const uint32_t gpuOverride)
 	{
-		throw std::runtime_error("Not implemented");
+		Environment& env = getEnvironment(createEnvironment());
+		const uint32_t proj = env.loadProject(path);
+		env.build(gpuOverride);
+		return env.getProject(proj);
+	}
+
+	VkInstance Context::getVulkanInstance()
+	{
+		return VulkanContext::getHandle();
 	}
 } // namespace gflow

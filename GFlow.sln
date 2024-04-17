@@ -5,18 +5,21 @@ VisualStudioVersion = 17.8.34525.116
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ImGui", "vendor\ImGui\ImGui.vcxproj", "{123E943A-3BF3-40AB-ACC6-91C4F3EE1B86}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GUIFlow", "project\GUIFLow\GUIFlow.vcxproj", "{42534C9D-FDF8-4978-8C10-DB0EE83104AC}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GFlow_Editor", "project\GFlow_Editor\GFlow_Editor.vcxproj", "{42534C9D-FDF8-4978-8C10-DB0EE83104AC}"
 	ProjectSection(ProjectDependencies) = postProject
 		{123E943A-3BF3-40AB-ACC6-91C4F3EE1B86} = {123E943A-3BF3-40AB-ACC6-91C4F3EE1B86}
+		{39E587BF-AF4F-47E1-88B7-DDBA471ABEA5} = {39E587BF-AF4F-47E1-88B7-DDBA471ABEA5}
 		{F8666F9E-786D-421A-85CB-7D16087EBEC2} = {F8666F9E-786D-421A-85CB-7D16087EBEC2}
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "VkPlayground", "vendor\VkPlayground\VkPlayground.vcxproj", "{1345BEC1-F8FB-4A89-8721-88523CFC9C40}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GFlow", "project\GFlow\GFlow.vcxproj", "{F8666F9E-786D-421A-85CB-7D16087EBEC2}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GFlow_Core", "project\GFlow_Core\GFlow_Core.vcxproj", "{F8666F9E-786D-421A-85CB-7D16087EBEC2}"
 	ProjectSection(ProjectDependencies) = postProject
 		{1345BEC1-F8FB-4A89-8721-88523CFC9C40} = {1345BEC1-F8FB-4A89-8721-88523CFC9C40}
 	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GFlow_Parser", "project\GFlow_Parser\GFlow_Parser.vcxproj", "{39E587BF-AF4F-47E1-88B7-DDBA471ABEA5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -58,6 +61,14 @@ Global
 		{F8666F9E-786D-421A-85CB-7D16087EBEC2}.Release|x64.Build.0 = Release|x64
 		{F8666F9E-786D-421A-85CB-7D16087EBEC2}.Release|x86.ActiveCfg = Release|Win32
 		{F8666F9E-786D-421A-85CB-7D16087EBEC2}.Release|x86.Build.0 = Release|Win32
+		{39E587BF-AF4F-47E1-88B7-DDBA471ABEA5}.Debug|x64.ActiveCfg = Debug|x64
+		{39E587BF-AF4F-47E1-88B7-DDBA471ABEA5}.Debug|x64.Build.0 = Debug|x64
+		{39E587BF-AF4F-47E1-88B7-DDBA471ABEA5}.Debug|x86.ActiveCfg = Debug|Win32
+		{39E587BF-AF4F-47E1-88B7-DDBA471ABEA5}.Debug|x86.Build.0 = Debug|Win32
+		{39E587BF-AF4F-47E1-88B7-DDBA471ABEA5}.Release|x64.ActiveCfg = Release|x64
+		{39E587BF-AF4F-47E1-88B7-DDBA471ABEA5}.Release|x64.Build.0 = Release|x64
+		{39E587BF-AF4F-47E1-88B7-DDBA471ABEA5}.Release|x86.ActiveCfg = Release|Win32
+		{39E587BF-AF4F-47E1-88B7-DDBA471ABEA5}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
