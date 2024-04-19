@@ -3,6 +3,7 @@
 #include <stdexcept>
 #include <SDL2/SDL.h>
 
+#include "backends/imgui_impl_sdl2.h"
 #include "utils/logger.hpp"
 
 VkExtent2D SDLWindow::WindowSize::toExtent2D() const
@@ -56,6 +57,7 @@ void SDLWindow::pollEvents()
 	SDL_Event event;
 	while (SDL_PollEvent(&event))
 	{
+		ImGui_ImplSDL2_ProcessEvent(&event);
 		switch (event.type)
 		{
 		case SDL_WINDOWEVENT:
@@ -100,4 +102,19 @@ void SDLWindow::free()
 	SDL_DestroyWindow(m_SDLHandle);
 	SDL_Quit();
 	m_SDLHandle = nullptr;
+}
+
+void SDLWindow::shutdownImgui()
+{
+	ImGui_ImplSDL2_Shutdown();
+}
+
+void SDLWindow::initImgui() const
+{
+	ImGui_ImplSDL2_InitForVulkan(m_SDLHandle);
+}
+
+void SDLWindow::frameImgui() const
+{
+	ImGui_ImplSDL2_NewFrame();
 }

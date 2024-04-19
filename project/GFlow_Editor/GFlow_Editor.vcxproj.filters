@@ -3,10 +3,12 @@
   <ItemGroup>
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\sdl_window.cpp" />
+    <ClCompile Include="src\editor.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource.h" />
     <ClInclude Include="src\sdl_window.hpp" />
+    <ClInclude Include="src\editor.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="GFLow_Editor.rc" />

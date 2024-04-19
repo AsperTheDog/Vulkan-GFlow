@@ -2,6 +2,7 @@
 
 #include <ranges>
 #include <stdexcept>
+#include <thread>
 
 #include "vulkan_context.hpp"
 #include "utils/logger.hpp"
@@ -19,7 +20,7 @@ namespace gflow
 		m_swapchains.emplace(surface, Swapchain());
 	}
 
-	void Environment::manualBuild(const Project::Requirements& requirements, const uint32_t gpuOverride)
+	void Environment::man_manualBuild(const Project::Requirements& requirements, const uint32_t gpuOverride)
 	{
 		Logger::pushContext("Environment creation");
 		VulkanGPU selectedGPU;
@@ -41,32 +42,31 @@ namespace gflow
 		}
 
 		const GPUQueueStructure queueStructure = selectedGPU.getQueueFamilies();
-		QueueFamilySelector selector{queueStructure};
-		if (requirements.queueFlags & VK_QUEUE_GRAPHICS_BIT)
+		QueueFamilySelector selector{ queueStructure };
 		{
-			const QueueFamily queueFamily = queueStructure.findQueueFamily(VK_QUEUE_GRAPHICS_BIT);
-			selector.selectQueueFamily(queueFamily, QueueFamilyTypeBits::GRAPHICS);
-			m_graphicsQueue = selector.getOrAddQueue(queueFamily, 1.0);
-		}
-		if (requirements.queueFlags & VK_QUEUE_COMPUTE_BIT)
-		{
-			const QueueFamily queueFamily = queueStructure.findQueueFamily(VK_QUEUE_COMPUTE_BIT);
-			selector.selectQueueFamily(queueFamily, QueueFamilyTypeBits::COMPUTE);
-			m_computeQueue = selector.getOrAddQueue(queueFamily, 1.0);
-		}
-		if (requirements.queueFlags & VK_QUEUE_TRANSFER_BIT)
-		{
-			const QueueFamily queueFamily = queueStructure.findQueueFamily(VK_QUEUE_TRANSFER_BIT);
-			selector.selectQueueFamily(queueFamily, QueueFamilyTypeBits::TRANSFER);
-			m_transferQueue = selector.addQueue(queueFamily, 1.0);
-		}
-		if (requirements.present)
-		{
-			for (auto& [surface, swapchain] : m_swapchains)
+			VkQueueFlags queueFlags = requirements.queueFlags & (VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT);
+			const QueueFamily queueFamily = queueStructure.findQueueFamily(queueFlags);
+			m_mainQueue = selector.getOrAddQueue(queueFamily, 1.0);
+
+			if (requirements.queueFlags & VK_QUEUE_GRAPHICS_BIT)
+				selector.selectQueueFamily(queueFamily, QueueFamilyTypeBits::GRAPHICS);
+			if (requirements.queueFlags & VK_QUEUE_COMPUTE_BIT)
+				selector.selectQueueFamily(queueFamily, QueueFamilyTypeBits::COMPUTE);
+
+			if (requirements.queueFlags & VK_QUEUE_TRANSFER_BIT)
 			{
-				const QueueFamily presentQueueFamily = queueStructure.findPresentQueueFamily(surface);
-				selector.selectQueueFamily(presentQueueFamily, QueueFamilyTypeBits::PRESENT);
-				swapchain.presentQueue = selector.getOrAddQueue(presentQueueFamily, 1.0);
+				const QueueFamily transferQueueFamily = queueStructure.findQueueFamily(VK_QUEUE_TRANSFER_BIT);
+				selector.selectQueueFamily(transferQueueFamily, QueueFamilyTypeBits::TRANSFER);
+				m_transferQueue = selector.addQueue(transferQueueFamily, 1.0);
+			}
+			if (requirements.present)
+			{
+				for (auto& [surface, swapchain] : m_swapchains)
+				{
+					const QueueFamily presentQueueFamily = queueStructure.findPresentQueueFamily(surface);
+					selector.selectQueueFamily(presentQueueFamily, QueueFamilyTypeBits::PRESENT);
+					swapchain.presentQueue = selector.getOrAddQueue(presentQueueFamily, 1.0);
+				}
 			}
 		}
 
@@ -76,13 +76,40 @@ namespace gflow
 
 		m_device = VulkanContext::createDevice(selectedGPU, selector, extensions, requirements.features);
 
+		QueueFamily queueFamily = queueStructure.getQueueFamily(m_mainQueue.familyIndex);
+		m_commandBuffer = VulkanContext::getDevice(m_device).createCommandBuffer(queueFamily, 0, false);
+
+		QueueFamily transferFamily = queueStructure.getQueueFamily(m_transferQueue.familyIndex);
+		m_transferBuffer = VulkanContext::getDevice(m_device).createCommandBuffer(transferFamily, 0, false);
+
+		m_inFlightFence = VulkanContext::getDevice(m_device).createFence(VK_FENCE_CREATE_SIGNALED_BIT);
+		m_renderFinishedSemaphoreID = VulkanContext::getDevice(m_device).createSemaphore();
+		m_readyToPresentSemaphoerID = VulkanContext::getDevice(m_device).createSemaphore();
+
 		Logger::popContext();
+	}
+
+	uint32_t Environment::man_acquireSwapchainImage(const VkSurfaceKHR surface)
+	{
+		if (!m_swapchains.contains(surface))
+			throw std::runtime_error("Surface not found in environment (ID: " + std::to_string(m_id));
+
+		VulkanSwapchain& swapchain = VulkanContext::getDevice(m_device).getSwapchain(m_swapchains[surface].id);
+		return swapchain.acquireNextImage();
+	}
+
+	uint32_t Environment::man_getSwapchainImage(const VkSurfaceKHR surface)
+	{
+		if (!m_swapchains.contains(surface))
+			throw std::runtime_error("Surface not found in environment (ID: " + std::to_string(m_id));
+
+		return VulkanContext::getDevice(m_device).getSwapchain(m_swapchains[surface].id).getNextImage();
 	}
 
 	void Environment::build(const uint32_t gpuOverride)
 	{
 		const Project::Requirements requirements = getRequirements();
-		manualBuild(requirements, gpuOverride);
+		man_manualBuild(requirements, gpuOverride);
 	}
 
 	Project& Environment::getProject(const uint32_t id)
@@ -104,9 +131,65 @@ namespace gflow
 		return const_cast<Environment*>(this)->getProject(id);
 	}
 
-	uint32_t Environment::getDevice() const
+	uint32_t Environment::man_getDevice() const
 	{
 		return m_device;
+	}
+
+	uint32_t Environment::man_getCommandBuffer() const
+	{
+		return m_commandBuffer;
+	}
+
+	void Environment::beginRecording(const std::vector<VkSurfaceKHR>& surfacesToPrepare)
+	{
+		VulkanDevice& device = VulkanContext::getDevice(m_device);
+
+		device.getFence(m_inFlightFence).wait();
+		device.getFence(m_inFlightFence).reset();
+
+		for (const VkSurfaceKHR surface : surfacesToPrepare)
+		{
+			if (!m_swapchains.contains(surface)) continue;
+			man_acquireSwapchainImage(surface);
+			m_swapchains[surface].mustBeAwaited = true;
+		}
+
+		VulkanCommandBuffer& commandBuffer = device.getCommandBuffer(m_commandBuffer, 0);
+		commandBuffer.reset();
+		commandBuffer.beginRecording();
+	}
+
+	void Environment::recordProject(uint32_t project)
+	{
+		throw std::runtime_error("Not implemented");
+	}
+
+	void Environment::setRecordingBarrier() const
+	{
+		VulkanContext::getDevice(m_device).getCommandBuffer(m_commandBuffer, 0).cmdSimpleAbsoluteBarrier();
+	}
+
+	void Environment::endRecording()
+	{
+		VulkanDevice& device = VulkanContext::getDevice(m_device);
+
+		VulkanCommandBuffer& commandBuffer = device.getCommandBuffer(m_commandBuffer, 0);
+		commandBuffer.endRecording();
+		const VulkanQueue graphicsQueue = device.getQueue(m_mainQueue);
+
+		std::vector<std::pair<uint32_t, VkSemaphoreWaitFlags>> semaphores{};
+		for (const Swapchain& swapchain : m_swapchains | std::views::values)
+		{
+			if (swapchain.mustBeAwaited)
+			{
+				VulkanSwapchain& swapchainObj = device.getSwapchain(swapchain.id);
+				semaphores.emplace_back(swapchainObj.getImgSemaphore(), VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT);
+			}
+		}
+
+		const uint32_t fence = !semaphores.empty() ? m_inFlightFence : UINT32_MAX;
+		commandBuffer.submit(graphicsQueue, semaphores, { m_renderFinishedSemaphoreID }, fence);
 	}
 
 	void Environment::configurePresentTarget(const VkSurfaceKHR surface, const VkExtent2D windowSize)
@@ -137,8 +220,44 @@ namespace gflow
 		m_swapchains[surface].id = device.createSwapchain(surface, extent, format);
 	}
 
-	void Environment::present(VkSurfaceKHR surface, uint32_t project, uint32_t image)
+	bool Environment::present(VkSurfaceKHR surface)
 	{
+		bool finishedCorrectly = true;
+		for (auto& swapchain : m_swapchains | std::views::values)
+		{
+			
+			if (swapchain.mustBeAwaited)
+			{
+				VulkanSwapchain& swapchainObj = VulkanContext::getDevice(m_device).getSwapchain(swapchain.id);
+				if (!swapchainObj.present(swapchain.presentQueue, { m_renderFinishedSemaphoreID }))
+				{
+					finishedCorrectly = false;
+					Logger::print("Swapchain (ID: " + std::to_string(swapchain.id) + ") out of date", Logger::WARN);
+				}
+				swapchain.mustBeAwaited = false;
+			}
+		}
+		return finishedCorrectly;
+	}
+
+	uint32_t Environment::man_getSwapchain(const VkSurfaceKHR surface)
+	{
+		return m_swapchains[surface].id;
+	}
+
+	QueueSelection Environment::man_getQueuePos(const QueueFamilyTypeBits type) const
+	{
+		switch (type)
+		{
+		case QueueFamilyTypeBits::GRAPHICS:
+		case QueueFamilyTypeBits::COMPUTE:
+			return m_mainQueue;
+		case QueueFamilyTypeBits::TRANSFER:
+			return m_transferQueue;
+		default:
+			return {};
+		}
+
 	}
 
 	void Environment::destroy()
@@ -195,7 +314,8 @@ namespace gflow
 		}
 
 		// Check queue families
-		if (!queueStructure.areQueueFlagsSupported(requirements.queueFlags))
+		const VkQueueFlags queueFlags = requirements.queueFlags & (VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT);
+		if (!queueStructure.areQueueFlagsSupported(queueFlags, true) || !queueStructure.areQueueFlagsSupported(requirements.queueFlags))
 		{
 			Logger::print("Invalid GPU: unsupported requested queue flags", Logger::INFO);
 			return false;
@@ -219,7 +339,7 @@ namespace gflow
 				return false;
 			}
 		}
-		
+
 
 		// Check extensions
 		if (!requirements.extensions.empty())
@@ -259,90 +379,8 @@ namespace gflow
 		std::vector<VulkanGPU> suitableGPUs{};
 		for (VulkanGPU& gpu : VulkanContext::getGPUs())
 		{
-			Logger::print(std::string("Checking GPU: ") + gpu.getProperties().deviceName, Logger::DEBUG);
-
-			bool invalid = false;
-			const GPUQueueStructure queueStructure = gpu.getQueueFamilies();
-
-			// Check features
-			{
-				const VkPhysicalDeviceFeatures features = gpu.getFeatures();
-
-				const uint8_t* featurePtr = reinterpret_cast<const uint8_t*>(&features);
-				const uint8_t* requestedFeaturePtr = reinterpret_cast<const uint8_t*>(&requirements.features);
-
-				for (size_t i = 0; i < sizeof(VkPhysicalDeviceFeatures); i++)
-				{
-					if ((requestedFeaturePtr[i] & featurePtr[i]) != requestedFeaturePtr[i])
-					{
-						invalid = true;
-						break;
-					}
-				}
-				if (invalid)
-				{
-					Logger::print("Invalid GPU: unsupported requested features", Logger::INFO);
-					continue;
-				}
-			}
-
-			// Check queue families
-			if (!queueStructure.areQueueFlagsSupported(requirements.queueFlags))
-			{
-				Logger::print("Invalid GPU: unsupported requested queue flags", Logger::INFO);
-				continue;
-			}
-
-
-			// Check present
-			if (requirements.present)
-			{
-				for (const auto& surface : m_swapchains | std::views::keys)
-				{
-					if (!queueStructure.isPresentSupported(surface))
-					{
-						invalid = true;
-						break;
-					}
-				}
-				if (invalid)
-				{
-					Logger::print("Invalid GPU: unsupported present queue", Logger::INFO);
-					continue;
-				}
-			}
-			
-
-			// Check extensions
-			if (!requirements.extensions.empty())
-			{
-				const std::vector<VkExtensionProperties> extensions = gpu.getSupportedExtensions();
-				for (const std::string& extension : requirements.extensions)
-				{
-					bool found = false;
-					for (const VkExtensionProperties& supportedExtension : extensions)
-					{
-						if (extension == supportedExtension.extensionName)
-						{
-							found = true;
-							break;
-						}
-					}
-
-					if (!found)
-					{
-						invalid = true;
-						break;
-					}
-				}
-				if (invalid)
-				{
-					Logger::print("Invalid GPU: unsupported requested extensions", Logger::INFO);
-					continue;
-				}
-			}
-
-			suitableGPUs.push_back(gpu);
+			if (isGPUSuitable(gpu, requirements))
+				suitableGPUs.push_back(gpu);
 		}
 
 		if (suitableGPUs.empty())
@@ -363,15 +401,6 @@ namespace gflow
 				scores[i] += 10000;
 			}
 
-			// If all flags are fulfilled a single queue family, add 1000 points
-			{
-				VkQueueFlags queueFlags = requirements.queueFlags & ~VK_QUEUE_TRANSFER_BIT;
-				if (gpu.getQueueFamilies().areQueueFlagsSupported(queueFlags, true))
-				{
-					scores[i] += 1000;
-				}
-			}
-
 			// Add 1 point for each 10MB of local memory
 			{
 				VkPhysicalDeviceMemoryProperties properties = gpu.getMemoryProperties();
@@ -384,7 +413,7 @@ namespace gflow
 				}
 			}
 
-			Logger::print(std::string("GPU ") +  + gpu.getProperties().deviceName + " score: " + std::to_string(scores[i]), Logger::DEBUG);
+			Logger::print(std::string("GPU ") + +gpu.getProperties().deviceName + " score: " + std::to_string(scores[i]), Logger::DEBUG);
 		}
 
 		uint32_t bestGPU = 0;
@@ -400,4 +429,46 @@ namespace gflow
 		Logger::popContext();
 		return suitableGPUs[bestGPU];
 	}
+
+	/*bool Environment::blitImage(const VkSurfaceKHR surface, const uint32_t deviceImage)
+	{
+		if (!m_swapchains.contains(surface))
+			throw std::runtime_error("Surface not found in environment (ID: " + std::to_string(m_id));
+
+		VulkanDevice& device = VulkanContext::getDevice(m_device);
+		VulkanSwapchain& swapchain = device.getSwapchain(m_swapchains[surface].id);
+
+		swapchain.acquireNextImage(swapchain.getImgSemaphore());
+
+		if (swapchain.getNextImage() == UINT32_MAX)
+		{
+			Logger::print("Swapchain out of date", Logger::WARN);
+			return false;
+		}
+
+		const VulkanImage& image = device.getImage(deviceImage);
+		const VulkanImage& presentImage = swapchain.getImage(swapchain.getNextImage());
+
+		const VulkanQueue& transferQueue = device.getQueue(m_transferQueue);
+		const VulkanQueue& presentQueue = device.getQueue(m_swapchains[surface].presentQueue);
+
+		VulkanCommandBuffer& commandBuffer = device.getCommandBuffer(m_transferBuffer, 0);
+		commandBuffer.reset();
+		commandBuffer.beginRecording();
+
+		if (image.getLayout() != VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL)
+			commandBuffer.cmdSimpleTransitionImageLayout(deviceImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_ASPECT_COLOR_BIT, m_mainQueue.familyIndex, m_transferQueue.familyIndex);
+
+		if (presentImage.getLayout() != VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
+			commandBuffer.cmdSimpleTransitionImageLayout(swapchain.getNextImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_ASPECT_COLOR_BIT);
+
+		commandBuffer.cmdSimpleBlitImage(image, presentImage, VK_FILTER_LINEAR);
+
+		commandBuffer.cmdSimpleTransitionImageLayout(swapchain.getNextImage(), VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, VK_IMAGE_ASPECT_COLOR_BIT);
+
+		commandBuffer.endRecording();
+		commandBuffer.submit(transferQueue, {}, {m_readyToPresentSemaphoerID}, m_inFlightFence);
+
+		return true;
+	}*/
 } // namespace gflow

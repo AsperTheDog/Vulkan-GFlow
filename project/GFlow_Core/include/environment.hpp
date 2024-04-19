@@ -18,43 +18,61 @@ namespace gflow
 		uint32_t loadProject(std::string_view path);
 		void addSurface(VkSurfaceKHR surface);
 
-		void manualBuild(const Project::Requirements& requirements, uint32_t gpuOverride = UINT32_MAX);
 		void build(uint32_t gpuOverride = UINT32_MAX);
 
 		Project& getProject(uint32_t id);
 		[[nodiscard]] const Project& getProject(uint32_t id) const;
-		[[nodiscard]] uint32_t getDevice() const;
-		
+
+		void beginRecording(const std::vector<VkSurfaceKHR>& surfacesToPrepare = {});
+		void recordProject(uint32_t project);
+		void setRecordingBarrier() const;
+		void endRecording();
+
 		void configurePresentTarget(VkSurfaceKHR surface, VkExtent2D windowSize);
 		void configurePresentTarget(VkSurfaceKHR surface, VkExtent2D windowSize, VkSurfaceFormatKHR format);
-		void present(VkSurfaceKHR surface, uint32_t project, uint32_t image);
+		bool present(VkSurfaceKHR surface);
+		
+		[[nodiscard]] uint32_t man_getCommandBuffer() const;
+		[[nodiscard]] uint32_t man_getDevice() const;
+		[[nodiscard]] QueueSelection man_getQueuePos(QueueFamilyTypeBits type) const;
+		void man_manualBuild(const Project::Requirements& requirements, uint32_t gpuOverride = UINT32_MAX);
+		uint32_t man_acquireSwapchainImage(VkSurfaceKHR surface);
+		uint32_t man_getSwapchainImage(VkSurfaceKHR surface);
+		uint32_t man_getSwapchain(VkSurfaceKHR surface);
 
 	private:
 		Environment() = default;
 		void destroy();
 
 		[[nodiscard]] Project::Requirements getRequirements() const;
+		//bool blitImage(VkSurfaceKHR surface, uint32_t deviceImage);
 
 		uint32_t m_device = UINT32_MAX;
-
-		uint32_t m_commandBuffer = UINT32_MAX;
 
 		struct Swapchain
 		{
 			uint32_t id = UINT32_MAX;
 			QueueSelection presentQueue{};
+			bool mustBeAwaited = false;
 		};
+		VkSurfaceKHR m_surfaceToPresent = VK_NULL_HANDLE;
+		
+		uint32_t m_inFlightFence = UINT32_MAX;
+		uint32_t m_renderFinishedSemaphoreID = UINT32_MAX;
+		uint32_t m_readyToPresentSemaphoerID = UINT32_MAX;
 
 		std::unordered_map<VkSurfaceKHR, Swapchain> m_swapchains{};
 		std::vector<Project> m_projects{};
-
-		QueueSelection m_graphicsQueue{};
+		
+		uint32_t m_commandBuffer = UINT32_MAX;
+		uint32_t m_transferBuffer = UINT32_MAX;
+		QueueSelection m_mainQueue{};
 		QueueSelection m_transferQueue{};
-		QueueSelection m_computeQueue{};
 
 		bool isGPUSuitable(VulkanGPU gpu, const Project::Requirements& requirements);
 		VulkanGPU selectGPU(const Project::Requirements& requirements);
 
 		friend class Context;
+		friend class Editor;
 	};
 } // namespace gflow
