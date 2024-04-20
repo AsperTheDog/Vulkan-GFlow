@@ -19,6 +19,7 @@ void Editor::init()
 
     createEnv();
     initImgui();
+    connectSignals();
 }
 
 void Editor::run()
@@ -27,7 +28,24 @@ void Editor::run()
     {
 	    s_window.pollEvents();
         renderFrame();
+		updateImguiWindows();
     }
+}
+
+void Editor::renderFrame()
+{
+	gflow::Environment& env = gflow::Context::getEnvironment(s_environment);
+
+    env.beginRecording({s_window.getSurface()});
+
+    // Build and render projects here
+
+    if (!renderImgui()) return;
+    env.setRecordingBarrier();
+    submitImgui();
+
+    env.endRecording();
+    env.present(s_window.getSurface());
 }
 
 void Editor::cleanup()
@@ -98,7 +116,7 @@ void Editor::initImgui()
 			{ VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000 }
 		};
 
-	const uint32_t imguiPoolID = device.createDescriptorPool(pool_sizes, 1000U * pool_sizes.size(), VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT);
+	const uint32_t imguiPoolID = device.createDescriptorPool(pool_sizes, 1000 * static_cast<uint32_t>(pool_sizes.size()), VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT);
     const VulkanSwapchain& swapchain = device.getSwapchain(env.man_getSwapchain(s_window.getSurface()));
 
 	{
@@ -122,14 +140,15 @@ void Editor::initImgui()
 	}
 
     const VulkanRenderPass& renderPass = device.getRenderPass(s_imguiRenderPass);
+    const QueueSelection queuePos = env.man_getQueuePos(QueueFamilyTypeBits::GRAPHICS);
 
     s_window.initImgui();
     ImGui_ImplVulkan_InitInfo init_info = {};
     init_info.Instance = VulkanContext::getHandle();
     init_info.PhysicalDevice = *device.getGPU();
     init_info.Device = *device;
-    init_info.QueueFamily = env.man_getQueuePos(QueueFamilyTypeBits::GRAPHICS).familyIndex;
-    init_info.Queue = *device.getQueue(env.m_mainQueue);
+    init_info.QueueFamily = queuePos.familyIndex;
+    init_info.Queue = *device.getQueue(queuePos);
     init_info.DescriptorPool = *device.getDescriptorPool(imguiPoolID);
     init_info.RenderPass = *renderPass;
     init_info.Subpass = 0;
@@ -144,22 +163,9 @@ void Editor::initImgui()
     	s_imguiFrameBuffers.push_back(device.createFramebuffer(extent, renderPass, {swapchain.getImageView(i)}));
 }
 
-void Editor::renderFrame()
+void Editor::connectSignals()
 {
-	gflow::Environment& env = gflow::Context::getEnvironment(s_environment);
-
-    env.beginRecording({s_window.getSurface()});
-
-    if (!renderImgui())
-	{
-		updateImguiWindows();
-        return;
-	}
-    env.setRecordingBarrier();
-    submitImgui();
-    env.endRecording();
-    updateImguiWindows();
-    env.present(s_window.getSurface());
+    s_window.getResizeSignal().connect(Editor::recreateSwapchain);
 }
 
 bool Editor::renderImgui()
@@ -205,4 +211,24 @@ void Editor::updateImguiWindows()
 {
 	ImGui::UpdatePlatformWindows();
 	ImGui::RenderPlatformWindowsDefault();
+}
+
+void Editor::recreateSwapchain(const uint32_t width, const uint32_t height)
+{
+	Logger::pushContext("Recreate Swapchain");
+    gflow::Environment& env = gflow::Context::getEnvironment(s_environment);
+    VulkanDevice& device = VulkanContext::getDevice(env.man_getDevice());
+
+	env.reconfigurePresentTarget(s_window.getSurface(), {width, height});
+
+    const VulkanRenderPass& renderPass = device.getRenderPass(s_imguiRenderPass);
+	const VulkanSwapchain& swapchain = device.getSwapchain(env.man_getSwapchain(s_window.getSurface()));
+    
+    const VkExtent3D extent = {width, height, 1};
+    for (uint32_t i = 0; i < swapchain.getImageCount(); ++i)
+    {
+		device.freeFramebuffer(s_imguiFrameBuffers[i]);
+	    s_imguiFrameBuffers[i] = device.createFramebuffer(extent, renderPass, {swapchain.getImageView(i)});
+    }
+    Logger::popContext();
 }

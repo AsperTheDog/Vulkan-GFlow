@@ -4,6 +4,8 @@
 #include <SDL2/SDL_vulkan.h>
 #include <vulkan/vulkan.h>
 
+#include "utils/signal.hpp"
+
 class VulkanFence;
 class VulkanDevice;
 class VulkanContext;
@@ -23,7 +25,7 @@ public:
 	};
 
 	SDLWindow() = default;
-	SDLWindow(std::string_view name, int width, int height, int top = SDL_WINDOWPOS_CENTERED, int left = SDL_WINDOWPOS_CENTERED, uint32_t flags = SDL_WINDOW_SHOWN);
+	SDLWindow(std::string_view name, int width, int height, int top = SDL_WINDOWPOS_CENTERED, int left = SDL_WINDOWPOS_CENTERED, uint32_t flags = SDL_WINDOW_SHOWN | SDL_WINDOW_MAXIMIZED | SDL_WINDOW_RESIZABLE);
 
 	[[nodiscard]] bool shouldClose() const;
 	[[nodiscard]] std::vector<const char*> getRequiredVulkanExtensions() const;
@@ -40,13 +42,17 @@ public:
 	[[nodiscard]] VkSurfaceKHR getSurface() const;
 
 	void free();
-	void shutdownImgui();
+	void shutdownImgui() const;
+
+	[[nodiscard]] Signal<uint32_t, uint32_t>& getResizeSignal();
 
 private:
 	SDL_Window* m_SDLHandle = nullptr;
 
 	VkInstance m_instance = nullptr;
 	VkSurfaceKHR m_surface = nullptr;
+
+	Signal<uint32_t, uint32_t> m_resizeSignal;
 
 	friend class Surface;
 	friend class VulkanGPU;

@@ -63,7 +63,7 @@ void SDLWindow::pollEvents()
 		case SDL_WINDOWEVENT:
 			if (event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED && event.window.data1 > 0 && event.window.data2 > 0)
 			{
-				
+				m_resizeSignal.emit(event.window.data1, event.window.data2);
 			}
 			break;
 		}
@@ -104,9 +104,14 @@ void SDLWindow::free()
 	m_SDLHandle = nullptr;
 }
 
-void SDLWindow::shutdownImgui()
+void SDLWindow::shutdownImgui() const
 {
 	ImGui_ImplSDL2_Shutdown();
+}
+
+Signal<uint32_t, uint32_t>& SDLWindow::getResizeSignal()
+{
+	return m_resizeSignal;
 }
 
 void SDLWindow::initImgui() const

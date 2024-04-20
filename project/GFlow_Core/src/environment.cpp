@@ -272,6 +272,13 @@ namespace gflow
 		m_device = UINT32_MAX;
 	}
 
+	void Environment::reconfigurePresentTarget(const VkSurfaceKHR surface, const VkExtent2D windowSize)
+	{
+		VulkanDevice& device = VulkanContext::getDevice(m_device);
+		const VulkanSwapchain& swapchain = device.getSwapchain(m_swapchains[surface].id);
+		m_swapchains[surface].id = device.createSwapchain(surface, windowSize, swapchain.getFormat(), m_swapchains[surface].id);
+	}
+
 	Project::Requirements Environment::getRequirements() const
 	{
 		Project::Requirements requirements;

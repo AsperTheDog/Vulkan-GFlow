@@ -30,6 +30,7 @@ namespace gflow
 
 		void configurePresentTarget(VkSurfaceKHR surface, VkExtent2D windowSize);
 		void configurePresentTarget(VkSurfaceKHR surface, VkExtent2D windowSize, VkSurfaceFormatKHR format);
+		void reconfigurePresentTarget(VkSurfaceKHR surface, VkExtent2D windowSize);
 		bool present(VkSurfaceKHR surface);
 		
 		[[nodiscard]] uint32_t man_getCommandBuffer() const;
@@ -73,6 +74,5 @@ namespace gflow
 		VulkanGPU selectGPU(const Project::Requirements& requirements);
 
 		friend class Context;
-		friend class Editor;
 	};
 } // namespace gflow
