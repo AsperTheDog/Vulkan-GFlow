@@ -123,7 +123,7 @@ void Editor::initImgui()
         Logger::pushContext("Create Imgui Renderpass");
     	VulkanRenderPassBuilder builder{};
 		const VkAttachmentDescription colorAttachment = VulkanRenderPassBuilder::createAttachment(swapchain.getFormat().format, 
-			VK_ATTACHMENT_LOAD_OP_DONT_CARE, VK_ATTACHMENT_STORE_OP_STORE, 
+			VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE, 
 			VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
     	builder.addAttachment(colorAttachment);
     	builder.addSubpass(VK_PIPELINE_BIND_POINT_GRAPHICS, {{COLOR, 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL}}, 0);
