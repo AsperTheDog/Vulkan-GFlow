@@ -279,7 +279,7 @@ namespace gflow
 		m_swapchains[surface].id = device.createSwapchain(surface, windowSize, swapchain.getFormat(), m_swapchains[surface].id);
 	}
 
-	Project::Requirements Environment::getRequirements() const
+    Project::Requirements Environment::getRequirements() const
 	{
 		Project::Requirements requirements;
 		for (const Project& project : m_projects)
@@ -436,46 +436,4 @@ namespace gflow
 		Logger::popContext();
 		return suitableGPUs[bestGPU];
 	}
-
-	/*bool Environment::blitImage(const VkSurfaceKHR surface, const uint32_t deviceImage)
-	{
-		if (!m_swapchains.contains(surface))
-			throw std::runtime_error("Surface not found in environment (ID: " + std::to_string(m_id));
-
-		VulkanDevice& device = VulkanContext::getDevice(m_device);
-		VulkanSwapchain& swapchain = device.getSwapchain(m_swapchains[surface].id);
-
-		swapchain.acquireNextImage(swapchain.getImgSemaphore());
-
-		if (swapchain.getNextImage() == UINT32_MAX)
-		{
-			Logger::print("Swapchain out of date", Logger::WARN);
-			return false;
-		}
-
-		const VulkanImage& image = device.getImage(deviceImage);
-		const VulkanImage& presentImage = swapchain.getImage(swapchain.getNextImage());
-
-		const VulkanQueue& transferQueue = device.getQueue(m_transferQueue);
-		const VulkanQueue& presentQueue = device.getQueue(m_swapchains[surface].presentQueue);
-
-		VulkanCommandBuffer& commandBuffer = device.getCommandBuffer(m_transferBuffer, 0);
-		commandBuffer.reset();
-		commandBuffer.beginRecording();
-
-		if (image.getLayout() != VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL)
-			commandBuffer.cmdSimpleTransitionImageLayout(deviceImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_ASPECT_COLOR_BIT, m_mainQueue.familyIndex, m_transferQueue.familyIndex);
-
-		if (presentImage.getLayout() != VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
-			commandBuffer.cmdSimpleTransitionImageLayout(swapchain.getNextImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_ASPECT_COLOR_BIT);
-
-		commandBuffer.cmdSimpleBlitImage(image, presentImage, VK_FILTER_LINEAR);
-
-		commandBuffer.cmdSimpleTransitionImageLayout(swapchain.getNextImage(), VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, VK_IMAGE_ASPECT_COLOR_BIT);
-
-		commandBuffer.endRecording();
-		commandBuffer.submit(transferQueue, {}, {m_readyToPresentSemaphoerID}, m_inFlightFence);
-
-		return true;
-	}*/
 } // namespace gflow

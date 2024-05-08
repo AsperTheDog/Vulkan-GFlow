@@ -1,17 +1,26 @@
 #include "editor.hpp"
 
+#include <ranges>
+
 #include "context.hpp"
 #include "imgui.h"
 #include "vulkan_context.hpp"
+#include "windows/nodes/test_node.hpp"
 #include "backends/imgui_impl_vulkan.h"
 #include "utils/logger.hpp"
+#include "windows/imgui_execution.hpp"
+#include "windows/imgui_project_settings.hpp"
+#include "windows/imgui_renderpass.hpp"
+
+#include "windows/imgui_resources.hpp"
+#include "windows/imgui_resource_editor.hpp"
 
 void Editor::init()
 {
-	Logger::setLevels(Logger::ALL);
+    Logger::setLevels(Logger::ALL);
     Logger::setRootContext("Window init");
 
-    s_window = SDLWindow{"GFlow", 1280, 720};
+    s_window = SDLWindow{ "GFlow", 1280, 720 };
 
     Logger::setRootContext("Vulkan init");
     gflow::Context::initVulkan(s_window.getRequiredVulkanExtensions());
@@ -20,23 +29,36 @@ void Editor::init()
     createEnv();
     initImgui();
     connectSignals();
+
+    s_imguiWindows.push_back(new ImGuiResourcesWindow("Resources"));
+    s_imguiWindows.push_back(new ImGuiResourceEditorWindow("Resource Editor"));
+    s_imguiWindows.push_back(new ImGuiExecutionWindow("Execution"));
+    s_imguiWindows.push_back(new ImGuiRenderPassWindow("RenderPass"));
+    s_imguiWindows.push_back(new ImGuiProjectSettingsWindow("Project Settings"));
+
+    getWindow("Project Settings")->open = false;
+
+#ifdef _DEBUG
+    s_imguiWindows.push_back(new ImGuiTestWindow("Test"));
+    getWindow("Test")->open = false;
+#endif
 }
 
 void Editor::run()
 {
     while (!s_window.shouldClose())
     {
-	    s_window.pollEvents();
+        s_window.pollEvents();
         renderFrame();
-		updateImguiWindows();
+        updateImguiWindows();
     }
 }
 
 void Editor::renderFrame()
 {
-	gflow::Environment& env = gflow::Context::getEnvironment(s_environment);
+    gflow::Environment& env = gflow::Context::getEnvironment(s_environment);
 
-    env.beginRecording({s_window.getSurface()});
+    env.beginRecording({ s_window.getSurface() });
 
     // Build and render projects here
 
@@ -52,9 +74,9 @@ void Editor::cleanup()
 {
     Logger::setRootContext("Environment cleanup");
     VulkanContext::getDevice(gflow::Context::getEnvironment(s_environment).man_getDevice()).waitIdle();
-    
-	ImGui_ImplVulkan_Shutdown();
-	s_window.shutdownImgui();
+
+    ImGui_ImplVulkan_Shutdown();
+    s_window.shutdownImgui();
     ImGui::DestroyContext();
 
     gflow::Context::destroyEnvironment(s_environment);
@@ -69,75 +91,75 @@ void Editor::createEnv()
     s_environment = gflow::Context::createEnvironment();
     gflow::Environment& env = gflow::Context::getEnvironment(s_environment);
     env.addSurface(s_window.getSurface());
-	{
-		gflow::Project::Requirements requirements{};
-    	requirements.queueFlags = VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT | VK_QUEUE_TRANSFER_BIT;
-    	requirements.present = true;
-    	requirements.extensions.insert(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
-    	env.man_manualBuild(requirements);
-	}
+    {
+        gflow::Project::Requirements requirements{};
+        requirements.queueFlags = VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT | VK_QUEUE_TRANSFER_BIT;
+        requirements.present = true;
+        requirements.extensions.insert(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+        env.man_manualBuild(requirements);
+    }
 
-    env.configurePresentTarget(s_window.getSurface(), s_window.getSize().toExtent2D(), {VK_FORMAT_B8G8R8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR});
+    env.configurePresentTarget(s_window.getSurface(), s_window.getSize().toExtent2D(), { VK_FORMAT_B8G8R8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR });
 }
 
 void Editor::initImgui()
 {
     Logger::pushContext("Init Imgui");
     IMGUI_CHECKVERSION();
-	ImGui::CreateContext();
-	ImGuiIO& io = ImGui::GetIO(); (void)io;
-	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-	//io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+    //io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 
-	ImGui::StyleColorsDark();
-	ImGuiStyle& style = ImGui::GetStyle();
+    ImGui::StyleColorsDark();
+    ImGuiStyle& style = ImGui::GetStyle();
     if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
     {
         style.WindowRounding = 0.0f;
         style.Colors[ImGuiCol_WindowBg].w = 1.0f;
     }
-    
+
     gflow::Environment& env = gflow::Context::getEnvironment(s_environment);
-	VulkanDevice& device = VulkanContext::getDevice(env.man_getDevice());
+    VulkanDevice& device = VulkanContext::getDevice(env.man_getDevice());
 
-	const std::vector<VkDescriptorPoolSize> pool_sizes =
-		{
-			{ VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
-			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
-			{ VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000 },
-			{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000 },
-			{ VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000 },
-			{ VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000 },
-			{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000 },
-			{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000 },
-			{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000 },
-			{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000 },
-			{ VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000 }
-		};
+    const std::vector<VkDescriptorPoolSize> pool_sizes =
+    {
+        { VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
+        { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
+        { VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000 },
+        { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000 },
+        { VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000 },
+        { VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000 },
+        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000 },
+        { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000 },
+        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000 },
+        { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000 },
+        { VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000 }
+    };
 
-	const uint32_t imguiPoolID = device.createDescriptorPool(pool_sizes, 1000 * static_cast<uint32_t>(pool_sizes.size()), VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT);
+    const uint32_t imguiPoolID = device.createDescriptorPool(pool_sizes, 1000 * static_cast<uint32_t>(pool_sizes.size()), VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT);
     const VulkanSwapchain& swapchain = device.getSwapchain(env.man_getSwapchain(s_window.getSurface()));
 
-	{
+    {
         Logger::pushContext("Create Imgui Renderpass");
-    	VulkanRenderPassBuilder builder{};
-		const VkAttachmentDescription colorAttachment = VulkanRenderPassBuilder::createAttachment(swapchain.getFormat().format, 
-			VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE, 
-			VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
-    	builder.addAttachment(colorAttachment);
-    	builder.addSubpass(VK_PIPELINE_BIND_POINT_GRAPHICS, {{COLOR, 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL}}, 0);
-    	VkSubpassDependency dependency{};
-    	dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-    	dependency.dstSubpass = 0;
-    	dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    	dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    	dependency.srcAccessMask = 0;
-    	dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-    	builder.addDependency(dependency);
-    	s_imguiRenderPass = device.createRenderPass(builder, 0);
+        VulkanRenderPassBuilder builder{};
+        const VkAttachmentDescription colorAttachment = VulkanRenderPassBuilder::createAttachment(swapchain.getFormat().format,
+            VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE,
+            VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+        builder.addAttachment(colorAttachment);
+        builder.addSubpass(VK_PIPELINE_BIND_POINT_GRAPHICS, { {COLOR, 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL} }, 0);
+        VkSubpassDependency dependency{};
+        dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+        dependency.dstSubpass = 0;
+        dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+        dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+        dependency.srcAccessMask = 0;
+        dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+        builder.addDependency(dependency);
+        s_imguiRenderPass = device.createRenderPass(builder, 0);
         Logger::popContext();
-	}
+    }
 
     const VulkanRenderPass& renderPass = device.getRenderPass(s_imguiRenderPass);
     const QueueSelection queuePos = env.man_getQueuePos(QueueFamilyTypeBits::GRAPHICS);
@@ -158,9 +180,9 @@ void Editor::initImgui()
     ImGui_ImplVulkan_Init(&init_info);
     Logger::popContext();
 
-    const VkExtent3D extent = {swapchain.getExtent().width, swapchain.getExtent().height, 1};
+    const VkExtent3D extent = { swapchain.getExtent().width, swapchain.getExtent().height, 1 };
     for (uint32_t i = 0; i < swapchain.getImageCount(); ++i)
-    	s_imguiFrameBuffers.push_back(device.createFramebuffer(extent, renderPass, {swapchain.getImageView(i)}));
+        s_imguiFrameBuffers.push_back(device.createFramebuffer(extent, renderPass, { swapchain.getImageView(i) }));
 }
 
 void Editor::connectSignals()
@@ -174,61 +196,114 @@ bool Editor::renderImgui()
     s_window.frameImgui();
     ImGui::NewFrame();
 
-	drawImgui();
+    drawImgui();
 
-	ImGui::Render();
+    ImGui::Render();
 
     const ImDrawData* imguiDrawData = ImGui::GetDrawData();
-	if (imguiDrawData->DisplaySize.x <= 0.0f || imguiDrawData->DisplaySize.y <= 0.0f)
-	{
+    if (imguiDrawData->DisplaySize.x <= 0.0f || imguiDrawData->DisplaySize.y <= 0.0f)
+    {
         return false;
-	}
+    }
     return true;
 }
 
 void Editor::submitImgui()
 {
-	gflow::Environment& env = gflow::Context::getEnvironment(s_environment);
-	ImDrawData* imguiDrawData = ImGui::GetDrawData();
+    gflow::Environment& env = gflow::Context::getEnvironment(s_environment);
+    ImDrawData* imguiDrawData = ImGui::GetDrawData();
 
-	const VulkanCommandBuffer& commandBuffer = VulkanContext::getDevice(env.man_getDevice()).getCommandBuffer(env.man_getCommandBuffer(), 0);
+    const VulkanCommandBuffer& commandBuffer = VulkanContext::getDevice(env.man_getDevice()).getCommandBuffer(env.man_getCommandBuffer(), 0);
 
-	const std::vector<VkClearValue> clearValues{{0.0f, 0.0f, 0.0f, 1.0f}};
+    const std::vector<VkClearValue> clearValues{ {0.0f, 0.0f, 0.0f, 1.0f} };
 
-	const uint32_t frameBuffer = s_imguiFrameBuffers[env.man_getSwapchainImage(s_window.getSurface())];
+    const uint32_t frameBuffer = s_imguiFrameBuffers[env.man_getSwapchainImage(s_window.getSurface())];
 
-	commandBuffer.cmdBeginRenderPass(s_imguiRenderPass, frameBuffer, s_window.getSize().toExtent2D(), clearValues);
-		ImGui_ImplVulkan_RenderDrawData(imguiDrawData, *commandBuffer);
+    commandBuffer.cmdBeginRenderPass(s_imguiRenderPass, frameBuffer, s_window.getSize().toExtent2D(), clearValues);
+    ImGui_ImplVulkan_RenderDrawData(imguiDrawData, *commandBuffer);
     commandBuffer.cmdEndRenderPass();
 }
 
 void Editor::drawImgui()
 {
-	ImGui::ShowDemoWindow();
+    // Main menu bar
+    ImGui::BeginMainMenuBar();
+    if (ImGui::BeginMenu("Project"))
+    {
+        if (ImGui::MenuItem("New project"))
+        {
+
+        }
+        if (ImGui::MenuItem("Load project"))
+        {
+
+        }
+        ImGui::Separator();
+        if (ImGui::MenuItem("Save project"))
+        {
+
+        }
+        ImGui::Separator();
+        ImGui::MenuItem("Project Settings", "", &getWindow("Project Settings")->open);
+
+        ImGui::EndMenu();
+    }
+    if (ImGui::BeginMenu("Windows"))
+    {
+        for (ImGuiEditorWindow* window : s_imguiWindows)
+        {
+            ImGui::MenuItem(window->getName().c_str(), "", &window->open);
+        }
+        ImGui::EndMenu();
+    }
+    ImGui::EndMainMenuBar();
+
+    // General window execution
+    ImGui::DockSpaceOverViewport(ImGui::GetMainViewport());
+
+    for (ImGuiEditorWindow* window : s_imguiWindows)
+    {
+        if (window->open)
+        {
+            window->draw();
+        }
+    }
 }
 
 void Editor::updateImguiWindows()
 {
-	ImGui::UpdatePlatformWindows();
-	ImGui::RenderPlatformWindowsDefault();
+    ImGui::UpdatePlatformWindows();
+    ImGui::RenderPlatformWindowsDefault();
 }
 
 void Editor::recreateSwapchain(const uint32_t width, const uint32_t height)
 {
-	Logger::pushContext("Recreate Swapchain");
+    Logger::pushContext("Recreate Swapchain");
     gflow::Environment& env = gflow::Context::getEnvironment(s_environment);
     VulkanDevice& device = VulkanContext::getDevice(env.man_getDevice());
 
-	env.reconfigurePresentTarget(s_window.getSurface(), {width, height});
+    env.reconfigurePresentTarget(s_window.getSurface(), { width, height });
 
     const VulkanRenderPass& renderPass = device.getRenderPass(s_imguiRenderPass);
-	const VulkanSwapchain& swapchain = device.getSwapchain(env.man_getSwapchain(s_window.getSurface()));
-    
-    const VkExtent3D extent = {width, height, 1};
+    const VulkanSwapchain& swapchain = device.getSwapchain(env.man_getSwapchain(s_window.getSurface()));
+
+    const VkExtent3D extent = { width, height, 1 };
     for (uint32_t i = 0; i < swapchain.getImageCount(); ++i)
     {
-		device.freeFramebuffer(s_imguiFrameBuffers[i]);
-	    s_imguiFrameBuffers[i] = device.createFramebuffer(extent, renderPass, {swapchain.getImageView(i)});
+        device.freeFramebuffer(s_imguiFrameBuffers[i]);
+        s_imguiFrameBuffers[i] = device.createFramebuffer(extent, renderPass, { swapchain.getImageView(i) });
     }
     Logger::popContext();
+}
+
+ImGuiEditorWindow* Editor::getWindow(const std::string_view& name)
+{
+    for (ImGuiEditorWindow* window : s_imguiWindows)
+    {
+        if (window->getName() == name)
+        {
+            return window;
+        }
+    }
+    return nullptr;
 }

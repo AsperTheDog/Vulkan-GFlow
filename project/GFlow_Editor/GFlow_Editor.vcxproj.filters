@@ -4,13 +4,44 @@
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\sdl_window.cpp" />
     <ClCompile Include="src\editor.cpp" />
+    <ClCompile Include="src\windows\nodes\test_node.cpp">
+      <Filter>nodes</Filter>
+    </ClCompile>
+    <ClCompile Include="src\windows\imgui_resources.cpp">
+      <Filter>windows</Filter>
+    </ClCompile>
+    <ClCompile Include="src\windows\imgui_resource_editor.cpp" />
+    <ClCompile Include="src\windows\imgui_execution.cpp" />
+    <ClCompile Include="src\windows\imgui_renderpass.cpp" />
+    <ClCompile Include="src\windows\imgui_project_settings.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource.h" />
     <ClInclude Include="src\sdl_window.hpp" />
     <ClInclude Include="src\editor.hpp" />
+    <ClInclude Include="src\windows\nodes\test_node.hpp">
+      <Filter>nodes</Filter>
+    </ClInclude>
+    <ClInclude Include="src\windows\imgui_resources.hpp">
+      <Filter>windows</Filter>
+    </ClInclude>
+    <ClInclude Include="src\windows\imgui_editor_window.hpp">
+      <Filter>windows</Filter>
+    </ClInclude>
+    <ClInclude Include="src\windows\imgui_resource_editor.hpp" />
+    <ClInclude Include="src\windows\imgui_execution.hpp" />
+    <ClInclude Include="src\windows\imgui_renderpass.hpp" />
+    <ClInclude Include="src\windows\imgui_project_settings.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="GFLow_Editor.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="windows">
+      <UniqueIdentifier>{c23aa838-ae25-4b2f-964b-0069ed0147ef}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="nodes">
+      <UniqueIdentifier>{32c695b7-dba5-4d2f-9409-ba6e2a121857}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
 </Project>

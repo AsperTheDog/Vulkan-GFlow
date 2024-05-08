@@ -102,9 +102,9 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>IMGUI_DEFINE_MATH_OPERATORS;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)repo;$(VULKAN_SDK)\Include;$(VULKAN_SDK)\Include\SDL2;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)repo;$(ProjectDir)nodeRepo/include;$(VULKAN_SDK)\Include;$(VULKAN_SDK)\Include\SDL2;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -117,9 +117,9 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>IMGUI_DEFINE_MATH_OPERATORS;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)repo;$(VULKAN_SDK)\Include;$(VULKAN_SDK)\Include\SDL2;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)repo;$(ProjectDir)nodeRepo/include;$(VULKAN_SDK)\Include;$(VULKAN_SDK)\Include\SDL2;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -129,6 +129,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="nodeRepo\include\ImNodeFlow.h" />
+    <ClInclude Include="nodeRepo\src\context_wrapper.h" />
+    <ClInclude Include="nodeRepo\src\imgui_bezier_math.h" />
+    <ClInclude Include="nodeRepo\src\imgui_extra_math.h" />
     <ClInclude Include="repo\backends\imgui_impl_sdl2.h" />
     <ClInclude Include="repo\backends\imgui_impl_vulkan.h" />
     <ClInclude Include="repo\imconfig.h" />
@@ -139,6 +143,7 @@
     <ClInclude Include="repo\imstb_truetype.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="nodeRepo\src\ImNodeFlow.cpp" />
     <ClCompile Include="repo\backends\imgui_impl_sdl2.cpp" />
     <ClCompile Include="repo\backends\imgui_impl_vulkan.cpp" />
     <ClCompile Include="repo\imgui.cpp" />
@@ -146,6 +151,11 @@
     <ClCompile Include="repo\imgui_draw.cpp" />
     <ClCompile Include="repo\imgui_tables.cpp" />
     <ClCompile Include="repo\imgui_widgets.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="nodeRepo\src\imgui_bezier_math.inl" />
+    <None Include="nodeRepo\src\imgui_extra_math.inl" />
+    <None Include="nodeRepo\src\ImNodeFlow.inl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -39,6 +39,18 @@
     <ClInclude Include="repo\backends\imgui_impl_sdl2.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="nodeRepo\include\ImNodeFlow.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="nodeRepo\src\context_wrapper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="nodeRepo\src\imgui_bezier_math.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="nodeRepo\src\imgui_extra_math.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="repo\imgui.cpp">
@@ -62,5 +74,19 @@
     <ClCompile Include="repo\backends\imgui_impl_sdl2.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="nodeRepo\src\ImNodeFlow.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="nodeRepo\src\imgui_bezier_math.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="nodeRepo\src\imgui_extra_math.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="nodeRepo\src\ImNodeFlow.inl">
+      <Filter>Header Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

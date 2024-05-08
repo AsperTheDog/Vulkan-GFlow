@@ -1,6 +1,9 @@
 #pragma once
+#include "ImNodeFlow.h"
 #include "sdl_window.hpp"
 
+
+class ImGuiEditorWindow;
 
 class Editor
 {
@@ -27,5 +30,8 @@ private:
 	inline static uint32_t s_environment = UINT32_MAX;
 	inline static uint32_t s_imguiRenderPass = UINT32_MAX;
 	inline static std::vector<uint32_t> s_imguiFrameBuffers{};
+
+    inline static std::vector<ImGuiEditorWindow*> s_imguiWindows{};
+    static ImGuiEditorWindow* getWindow(const std::string_view& name);
 };
 

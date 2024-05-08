@@ -38,6 +38,7 @@ namespace gflow
 		[[nodiscard]] QueueSelection man_getQueuePos(QueueFamilyTypeBits type) const;
 		void man_manualBuild(const Project::Requirements& requirements, uint32_t gpuOverride = UINT32_MAX);
 		uint32_t man_acquireSwapchainImage(VkSurfaceKHR surface);
+
 		uint32_t man_getSwapchainImage(VkSurfaceKHR surface);
 		uint32_t man_getSwapchain(VkSurfaceKHR surface);
 

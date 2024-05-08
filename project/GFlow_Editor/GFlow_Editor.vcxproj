@@ -103,9 +103,9 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>IMGUI_DEFINE_MATH_OPERATORS;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(VULKAN_SDK)\Include;$(ProjectDir)src;$(SolutionDir)vendor\tinyobjloader;$(SolutionDir)vendor\ImGui\repo;$(SolutionDir)project\GFlow_Core\include;$(SolutionDir)vendor\VkPlayground\repo\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(VULKAN_SDK)\Include;$(ProjectDir)src;$(SolutionDir)vendor\tinyobjloader;$(SolutionDir)vendor\ImGui\repo;$(SolutionDir)vendor\ImGui\nodeRepo\include;$(SolutionDir)project\GFlow_Core\include;$(SolutionDir)vendor\VkPlayground\repo\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp20</LanguageStandard>
@@ -123,9 +123,9 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>IMGUI_DEFINE_MATH_OPERATORS;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(VULKAN_SDK)\Include;$(ProjectDir)src;$(SolutionDir)vendor\tinyobjloader;$(SolutionDir)vendor\ImGui\repo;$(SolutionDir)project\GFlow_Core\include;$(SolutionDir)vendor\VkPlayground\repo\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(VULKAN_SDK)\Include;$(ProjectDir)src;$(SolutionDir)vendor\tinyobjloader;$(SolutionDir)vendor\ImGui\repo;$(SolutionDir)vendor\ImGui\nodeRepo\include;$(SolutionDir)project\GFlow_Core\include;$(SolutionDir)vendor\VkPlayground\repo\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp20</LanguageStandard>
@@ -140,17 +140,30 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\windows\imgui_project_settings.hpp" />
+    <ClInclude Include="src\windows\imgui_renderpass.hpp" />
+    <ClInclude Include="src\windows\imgui_execution.hpp" />
+    <ClInclude Include="src\windows\imgui_resource_editor.hpp" />
+    <ClInclude Include="src\windows\imgui_editor_window.hpp" />
+    <ClInclude Include="src\windows\imgui_resources.hpp" />
     <ClInclude Include="src\editor.hpp" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="src\sdl_window.hpp" />
+    <ClInclude Include="src\windows\nodes\test_node.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="GFLow_Editor.rc" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\windows\imgui_project_settings.cpp" />
+    <ClCompile Include="src\windows\imgui_renderpass.cpp" />
+    <ClCompile Include="src\windows\imgui_execution.cpp" />
+    <ClCompile Include="src\windows\imgui_resource_editor.cpp" />
+    <ClCompile Include="src\windows\imgui_resources.cpp" />
     <ClCompile Include="src\editor.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\sdl_window.cpp" />
+    <ClCompile Include="src\windows\nodes\test_node.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
