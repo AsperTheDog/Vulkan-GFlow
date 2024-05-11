@@ -59,6 +59,23 @@ void ImGuiResourceEditorWindow::draw()
                     //TODO: Select resource
                 }
                 break;
+            case gflow::parser::DataType::ENUM:
+                uint32_t currentSelection = *static_cast<uint32_t*>(exportElem.data);
+                if (ImGui::BeginCombo(exportElem.name.data(), exportElem.enumContext->names[currentSelection], 0))
+                {
+                    for (uint32_t n = 0; n < exportElem.enumContext->names.size(); n++)
+                    {
+                        const bool isSelected = (currentSelection == n);
+                        if (ImGui::Selectable(exportElem.enumContext->names[n], isSelected))
+                            currentSelection = n;
+
+                        if (isSelected)
+                            ImGui::SetItemDefaultFocus();
+                    }
+                    ImGui::EndCombo();
+                }
+                *static_cast<uint32_t*>(exportElem.data) = currentSelection;
+                break;
             }
         }
     }

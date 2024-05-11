@@ -34,6 +34,8 @@ namespace gflow::parser
                 return *static_cast<bool*>(exportData.data) ? "true" : "false";
             case REF:
                 return static_cast<Resource::Ref*>(exportData.data)->path;
+            case ENUM:
+                return "E" + std::to_string(*static_cast<uint32_t*>(exportData.data));
             }
         }
         return "";
@@ -59,6 +61,9 @@ namespace gflow::parser
                 break;
             case REF:
                 static_cast<Resource::Ref*>(exportData.data)->path = string::reduce(value.data(), 1, 0);
+                break;
+            case ENUM:
+                *static_cast<uint32_t*>(exportData.data) = std::stoi(value.data());
                 break;
             }
         }
@@ -89,6 +94,8 @@ namespace gflow::parser
             return BOOL;
         if (token.find('.') != std::string::npos)
             return FLOAT;
+        if (token[0] == 'E')
+            return ENUM;
         return INT;
     }
 }

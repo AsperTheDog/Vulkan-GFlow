@@ -18,11 +18,17 @@ namespace gflow::parser
         EXPORT(float, testFloat);
         EXPORT(Ref, testRef);
         EXPORT_GROUP(tg2, "Test Group 2");
-        EXPORT(std::string, testString);
+        EXPORT_ENUM(topology1, s_primitiveTopology);
+        EXPORT_ENUM(topology2, s_primitiveTopology);
+        EXPORT_ENUM(topology3, s_primitiveTopology);
+        EXPORT_ENUM(topology4, s_primitiveTopology);
         
         static Resource* create(const std::string_view path, Project* parent) { return new Pipeline(path, parent); }
 
         friend class Project;
+
+    private:
+        static EnumContext s_primitiveTopology;
     };
 }
 
