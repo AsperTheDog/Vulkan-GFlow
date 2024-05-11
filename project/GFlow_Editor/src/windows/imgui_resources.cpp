@@ -6,7 +6,7 @@ ImGuiResourcesWindow::ImGuiResourcesWindow(const std::string_view& name) : ImGui
 
 void ImGuiResourcesWindow::draw()
 {
-    ImGui::Begin(name.c_str(), &open);
-
+    ImGui::Begin(m_name.c_str(), &open);
+    
     ImGui::End();
 }

@@ -105,7 +105,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>IMGUI_DEFINE_MATH_OPERATORS;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(VULKAN_SDK)\Include;$(ProjectDir)src;$(SolutionDir)vendor\tinyobjloader;$(SolutionDir)vendor\ImGui\repo;$(SolutionDir)vendor\ImGui\nodeRepo\include;$(SolutionDir)project\GFlow_Core\include;$(SolutionDir)vendor\VkPlayground\repo\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(VULKAN_SDK)\Include;$(ProjectDir)src;$(SolutionDir)vendor\tinyobjloader;$(SolutionDir)vendor\ImGui\repo;$(SolutionDir)vendor\ImGui\nodeRepo\include;$(SolutionDir)project\GFlow_Core\include;$(SolutionDir)project\GFlow_Parser\include;$(SolutionDir)vendor\VkPlayground\repo\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp20</LanguageStandard>
@@ -125,7 +125,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>IMGUI_DEFINE_MATH_OPERATORS;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(VULKAN_SDK)\Include;$(ProjectDir)src;$(SolutionDir)vendor\tinyobjloader;$(SolutionDir)vendor\ImGui\repo;$(SolutionDir)vendor\ImGui\nodeRepo\include;$(SolutionDir)project\GFlow_Core\include;$(SolutionDir)vendor\VkPlayground\repo\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(VULKAN_SDK)\Include;$(ProjectDir)src;$(SolutionDir)vendor\tinyobjloader;$(SolutionDir)vendor\ImGui\repo;$(SolutionDir)vendor\ImGui\nodeRepo\include;$(SolutionDir)project\GFlow_Core\include;$(SolutionDir)project\GFlow_Parser\include;$(SolutionDir)vendor\VkPlayground\repo\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp20</LanguageStandard>
@@ -140,6 +140,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\windows\imgui_pipeline.hpp" />
     <ClInclude Include="src\windows\imgui_project_settings.hpp" />
     <ClInclude Include="src\windows\imgui_renderpass.hpp" />
     <ClInclude Include="src\windows\imgui_execution.hpp" />
@@ -155,6 +156,7 @@
     <ResourceCompile Include="GFLow_Editor.rc" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\windows\imgui_pipeline.cpp" />
     <ClCompile Include="src\windows\imgui_project_settings.cpp" />
     <ClCompile Include="src\windows\imgui_renderpass.cpp" />
     <ClCompile Include="src\windows\imgui_execution.cpp" />

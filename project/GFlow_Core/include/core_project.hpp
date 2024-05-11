@@ -10,6 +10,9 @@ namespace gflow
 	class Project : public Identifiable
 	{
 	public:
+
+
+
 		struct Requirements {
 			VkPhysicalDeviceFeatures features{};
 			VkQueueFlags queueFlags{};
@@ -38,5 +41,5 @@ namespace gflow
 			size_t resourcesPos = 0;
 		} m_fileStructure;
 	};
-} // namespace gflow
+} // namespace gflow::core
 

@@ -8,7 +8,7 @@ ImGuiRenderPassWindow::ImGuiRenderPassWindow(const std::string_view& name) : ImG
 
 void ImGuiRenderPassWindow::draw()
 {
-    ImGui::Begin(name.c_str(), &open);
+    ImGui::Begin(m_name.c_str(), &open);
     m_grid.update();
     ImGui::End();
 }

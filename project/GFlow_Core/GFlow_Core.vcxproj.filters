@@ -18,7 +18,7 @@
     <ClInclude Include="include\context.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\project.hpp">
+    <ClInclude Include="include\core_project.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\environment.hpp">
@@ -29,7 +29,7 @@
     <ClCompile Include="src\context.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\project.cpp">
+    <ClCompile Include="src\core_project.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\environment.cpp">

@@ -4,21 +4,22 @@
 class ImGuiEditorWindow
 {
 public:
-    explicit ImGuiEditorWindow(const std::string_view name) : name(name) {}
+    virtual ~ImGuiEditorWindow() = default;
+    explicit ImGuiEditorWindow(const std::string_view name) : m_name(name) {}
 
     virtual void draw() = 0;
-    [[nodiscard]] std::string getName() const { return name; }
+    [[nodiscard]] std::string getName() const { return m_name; }
 
     bool open = true;
 
 protected:
-    std::string name;
+    std::string m_name;
 };
 
 #ifdef _DEBUG
 #include <imgui.h>
 
-class ImGuiTestWindow : public ImGuiEditorWindow
+class ImGuiTestWindow final : public ImGuiEditorWindow
 {
 public:
     explicit ImGuiTestWindow(const std::string_view name) : ImGuiEditorWindow(name) {}

@@ -9,6 +9,7 @@
 #include "backends/imgui_impl_vulkan.h"
 #include "utils/logger.hpp"
 #include "windows/imgui_execution.hpp"
+#include "windows/imgui_pipeline.hpp"
 #include "windows/imgui_project_settings.hpp"
 #include "windows/imgui_renderpass.hpp"
 
@@ -32,16 +33,21 @@ void Editor::init()
 
     s_imguiWindows.push_back(new ImGuiResourcesWindow("Resources"));
     s_imguiWindows.push_back(new ImGuiResourceEditorWindow("Resource Editor"));
+    s_resourceSelectedSignal.connect(dynamic_cast<ImGuiResourceEditorWindow*>(s_imguiWindows.back()), &ImGuiResourceEditorWindow::resourceSelected);
     s_imguiWindows.push_back(new ImGuiExecutionWindow("Execution"));
     s_imguiWindows.push_back(new ImGuiRenderPassWindow("RenderPass"));
+    s_imguiWindows.push_back(new ImGuiPipelineWindow("Pipeline"));
     s_imguiWindows.push_back(new ImGuiProjectSettingsWindow("Project Settings"));
-
-    getWindow("Project Settings")->open = false;
+    s_imguiWindows.back()->open = false;
 
 #ifdef _DEBUG
     s_imguiWindows.push_back(new ImGuiTestWindow("Test"));
     getWindow("Test")->open = false;
 #endif
+
+    m_project = gflow::parser::Project("Test", "");
+    m_project->createResource("Pipeline", "test.ppln");
+    s_resourceSelectedSignal.emit("test.ppln");
 }
 
 void Editor::run()
@@ -306,4 +312,13 @@ ImGuiEditorWindow* Editor::getWindow(const std::string_view& name)
         }
     }
     return nullptr;
+}
+
+gflow::parser::Project& Editor::getProject()
+{
+    if (!m_project.has_value())
+    {
+        throw std::runtime_error("Project not loaded");
+    }
+    return m_project.value();
 }

@@ -1,13 +1,15 @@
 #pragma once
-#include "ImNodeFlow.h"
-#include "sdl_window.hpp"
+#include <optional>
 
+#include "ImNodeFlow.h"
+#include "project.hpp"
+#include "sdl_window.hpp"
 
 class ImGuiEditorWindow;
 
 class Editor
 {
-public:
+public: // Editor Management
 	static void init();
 	static void run();
 
@@ -32,6 +34,16 @@ private:
 	inline static std::vector<uint32_t> s_imguiFrameBuffers{};
 
     inline static std::vector<ImGuiEditorWindow*> s_imguiWindows{};
+
     static ImGuiEditorWindow* getWindow(const std::string_view& name);
+
+    
+public: // Project Management
+    [[nodiscard]] static gflow::parser::Project& getProject();
+
+private:
+    inline static std::optional<gflow::parser::Project> m_project;
+
+    inline static Signal<std::string_view> s_resourceSelectedSignal;
 };
 

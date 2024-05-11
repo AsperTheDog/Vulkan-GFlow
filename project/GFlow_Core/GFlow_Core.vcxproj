@@ -146,11 +146,11 @@
   <ItemGroup>
     <ClInclude Include="include\environment.hpp" />
     <ClInclude Include="include\context.hpp" />
-    <ClInclude Include="include\project.hpp" />
+    <ClInclude Include="include\core_project.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\environment.cpp" />
-    <ClCompile Include="src\project.cpp" />
+    <ClCompile Include="src\core_project.cpp" />
     <ClCompile Include="src\context.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

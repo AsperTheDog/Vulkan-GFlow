@@ -8,7 +8,7 @@ ImGuiProjectSettingsWindow::ImGuiProjectSettingsWindow(const std::string_view& n
 
 void ImGuiProjectSettingsWindow::draw()
 {
-    ImGui::Begin(name.c_str(), &open);
+    ImGui::Begin(m_name.c_str(), &open);
 
     ImGui::End();
 }
