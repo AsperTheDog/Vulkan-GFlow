@@ -398,3 +398,4 @@ FodyWeavers.xsd
 *.sln.iml
 project/imgui.ini
 project/GFlow_Editor/imgui.ini
+/project/GFlow_Editor/assets

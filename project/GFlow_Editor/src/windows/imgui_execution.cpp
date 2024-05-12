@@ -17,7 +17,7 @@ void ImGuiExecutionWindow::draw()
     ImGui::End();
 }
 
-void ImGuiExecutionWindow::rightClick(ImFlow::BaseNode* node)
+void ImGuiExecutionWindow::rightClick(ImFlow::BaseNode* node) const
 {
     if (node == nullptr)
     {

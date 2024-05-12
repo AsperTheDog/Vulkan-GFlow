@@ -1,5 +1,6 @@
 #include "project.hpp"
 
+#include <filesystem>
 #include <fstream>
 #include <ranges>
 #include <stdexcept>
@@ -22,6 +23,13 @@ namespace gflow::parser
 
     Project::Project(const std::string_view name, const std::string_view workingDir) : m_name(name), m_workingDir(workingDir)
     {
+        // Check if the working directory exists, if it doesn't then create it
+        if (!m_workingDir.empty())
+        {
+            const std::filesystem::path dir{ m_workingDir };
+            if (!std::filesystem::exists(dir))
+                std::filesystem::create_directories(dir);
+        }
     }
 
     Resource& Project::loadResource(const std::string& path)
@@ -105,7 +113,7 @@ namespace gflow::parser
         throw std::runtime_error("Resource not found");
     }
 
-    std::vector<std::string> Project::getResourcePaths(const std::string_view type)
+    std::vector<std::string> Project::getResourcePaths(const std::string& type)
     {
         std::vector<std::string> resources;
         for (const auto& [path, resource] : m_resources)
@@ -114,5 +122,10 @@ namespace gflow::parser
                 resources.push_back(path);
         }
         return resources;
+    }
+
+    bool Project::hasResource(const std::string& path) const
+    {
+        return m_resources.contains(path);
     }
 }

@@ -40,10 +40,14 @@ private:
     
 public: // Project Management
     [[nodiscard]] static gflow::parser::Project& getProject();
+    static void resourceSelected(const std::string& path);
+
+    [[nodiscard]] static bool hasProject();
 
 private:
     inline static std::optional<gflow::parser::Project> m_project;
 
+    inline static Signal<> s_projectLoadedSignal;
     inline static Signal<std::string_view> s_resourceSelectedSignal;
 };
 

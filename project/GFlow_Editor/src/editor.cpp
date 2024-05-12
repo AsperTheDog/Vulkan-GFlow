@@ -32,6 +32,7 @@ void Editor::init()
     connectSignals();
 
     s_imguiWindows.push_back(new ImGuiResourcesWindow("Resources"));
+    s_projectLoadedSignal.connect(dynamic_cast<ImGuiResourcesWindow*>(s_imguiWindows.back()), &ImGuiResourcesWindow::projectLoaded);
     s_imguiWindows.push_back(new ImGuiResourceEditorWindow("Resource Editor"));
     s_resourceSelectedSignal.connect(dynamic_cast<ImGuiResourceEditorWindow*>(s_imguiWindows.back()), &ImGuiResourceEditorWindow::resourceSelected);
     s_imguiWindows.push_back(new ImGuiExecutionWindow("Execution"));
@@ -45,7 +46,8 @@ void Editor::init()
     getWindow("Test")->open = false;
 #endif
 
-    m_project = gflow::parser::Project("Test", "");
+    m_project = gflow::parser::Project("Test", "assets");
+    s_projectLoadedSignal.emit();
     m_project->createResource("Pipeline", "test.ppln");
     s_resourceSelectedSignal.emit("test.ppln");
 }
@@ -321,4 +323,14 @@ gflow::parser::Project& Editor::getProject()
         throw std::runtime_error("Project not loaded");
     }
     return m_project.value();
+}
+
+void Editor::resourceSelected(const std::string& path)
+{
+    s_resourceSelectedSignal.emit(path);
+}
+
+bool Editor::hasProject()
+{
+    return m_project.has_value();
 }

@@ -17,8 +17,12 @@ namespace gflow::parser
 
         [[nodiscard]] Resource& getResource(const std::string& path) const;
         [[nodiscard]] Resource& getResource(uint32_t id) const;
+        [[nodiscard]] bool hasResource(const std::string& path) const;
 
-        std::vector<std::string> getResourcePaths(std::string_view type);
+        [[nodiscard]] std::string getName() const { return m_name; }
+        [[nodiscard]] std::string getWorkingDir() const { return m_workingDir; }
+
+        std::vector<std::string> getResourcePaths(const std::string& type = "");
 
     private:
         std::string m_name;

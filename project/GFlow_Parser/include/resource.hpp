@@ -3,9 +3,13 @@
 #include <unordered_map>
 #include <vector>
 
+#include "utils/logger.hpp"
+
 #define EXPORT(type, name) Export<type> ##name{#name, this}
+#define EXPORT_LIST(type, name) Export<std::vector<(type)>> ##name{#name, this}
 #define EXPORT_GROUP(name, title) Export<bool> _##name{title, this, true}
 #define EXPORT_ENUM(name, context) Export<EnumExport> ##name{#name, this, context}
+#define EXPORT_ENUM_LIST(name, context) Export<std::vector<EnumExport>> ##name{#name, this, context}
 
 namespace gflow::parser
 {
@@ -14,12 +18,19 @@ namespace gflow::parser
 
     enum DataType
     {
+        NONE,
         STRING,
         INT,
         FLOAT,
         BOOL,
         REF,
-        ENUM
+        ENUM,
+        LIST_STRING,
+        LIST_INT,
+        LIST_FLOAT,
+        LIST_BOOL,
+        LIST_REF,
+        LIST_ENUM,
     };
 
     struct EnumExport { uint32_t id; };
@@ -50,7 +61,7 @@ namespace gflow::parser
         struct ExportData
         {
             DataType type;
-            std::string_view name;
+            std::string name;
             void* data = nullptr;
             EnumContext* enumContext = nullptr;
         };
@@ -62,23 +73,23 @@ namespace gflow::parser
 
         virtual std::string serialize();
 
-        virtual std::string get(std::string_view variable);
-        virtual void set(std::string_view variable, std::string_view value);
+        virtual std::string get(const std::string& variable);
+        virtual void set(const std::string& variable, const std::string& value);
 
-        virtual std::vector<std::string_view> getCustomExports() { return {}; }
-        virtual std::vector<std::string_view> getDependencies();
+        virtual std::vector<std::string> getCustomExports() { return {}; }
+        virtual std::vector<std::string> getDependencies();
 
         [[nodiscard]] const std::vector<ExportData>& getExports() const { return m_exports; }
 
         [[nodiscard]] virtual std::string getType() const = 0;
 
-        [[nodiscard]] std::string_view getPath() const { return m_path; }
+        [[nodiscard]] std::string getPath() const { return m_path; }
         [[nodiscard]] uint32_t getID() const { return m_id; }
-
-        [[nodiscard]] static DataType getTokenType(const std::string& token);
 
     protected:
         explicit Resource(const std::string_view path, Project* project) : m_path(path), m_parent(project) {}
+
+        [[nodiscard]] std::string getList(const ExportData& exportData) const;
 
         std::string m_path;
         uint32_t m_id = ++s_idCounter;
@@ -119,6 +130,21 @@ namespace gflow::parser
         else if constexpr (std::is_same_v<T, float>) data.type = FLOAT;
         else if constexpr (std::is_same_v<T, bool>) data.type = BOOL;
         else if constexpr (std::is_same_v<T, Resource::Ref>) data.type = REF;
+        else if constexpr (std::is_same_v<T, Resource::Ref>) data.type = REF;
+        else if constexpr (std::is_same_v<T, std::vector<EnumExport>>) data.type = ENUM;
+        else if constexpr (std::is_same_v<T, std::vector<std::string>>) data.type = LIST_STRING;
+        else if constexpr (std::is_same_v<T, std::vector<int>>) data.type = LIST_INT;
+        else if constexpr (std::is_same_v<T, std::vector<float>>) data.type = LIST_FLOAT;
+        else if constexpr (std::is_same_v<T, std::vector<bool>>) data.type = LIST_BOOL;
+        else if constexpr (std::is_same_v<T, std::vector<Resource::Ref>>) data.type = LIST_REF;
+        else data.type = NONE;
+
+        if (data.type == NONE)
+        {
+            Logger::print("Export type not supported", Logger::ERR);
+            return;
+        }
+
         parent->registerExport(data);
     }
 

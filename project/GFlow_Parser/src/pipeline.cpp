@@ -1,5 +1,7 @@
 #include "pipeline.hpp"
 
+#include <vulkan/vulkan_core.h>
+
 namespace gflow::parser
 {
     Pipeline::Pipeline(const std::string_view path, Project* parent) : Resource(path, parent) {}
@@ -24,7 +26,17 @@ namespace gflow::parser
             "Patch List"
         },
         {
-            0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10
+            VK_PRIMITIVE_TOPOLOGY_POINT_LIST,
+            VK_PRIMITIVE_TOPOLOGY_LINE_LIST,
+            VK_PRIMITIVE_TOPOLOGY_LINE_STRIP,
+            VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+            VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP,
+            VK_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN,
+            VK_PRIMITIVE_TOPOLOGY_LINE_LIST_WITH_ADJACENCY,
+            VK_PRIMITIVE_TOPOLOGY_LINE_STRIP_WITH_ADJACENCY,
+            VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST_WITH_ADJACENCY,
+            VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP_WITH_ADJACENCY,
+            VK_PRIMITIVE_TOPOLOGY_PATCH_LIST
         }
     };
 }

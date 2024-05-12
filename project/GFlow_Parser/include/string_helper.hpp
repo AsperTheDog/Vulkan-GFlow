@@ -37,10 +37,13 @@ namespace gflow::string
         size_t prev = 0;
         while ((pos = str.find(delimiter, prev)) != std::string::npos)
         {
-            tokens.push_back(str.substr(prev, pos - prev));
-            prev = pos + delimiter.size();
+            if (pos - prev != 0)
+            {
+                tokens.push_back(str.substr(prev, pos - prev));
+                prev = pos + delimiter.size();
+            }
         }
-        tokens.push_back(str.substr(prev));
+        if (prev != str.size()) tokens.push_back(str.substr(prev));
         return tokens;
     }
 
@@ -58,10 +61,14 @@ namespace gflow::string
         return tokens;
     }
 
-    inline std::string join(const std::vector<std::string>& strings, const std::string& delimiter)
+    inline std::string join(const std::vector<std::string>& strings, const std::string& delimiter, const size_t begin = 0, size_t end = 0)
     {
         std::string result;
-        for (size_t i = 0; i < strings.size(); ++i)
+        if (begin >= strings.size())
+            return result;
+        if (end == 0 || end > strings.size())
+            end = strings.size();
+        for (size_t i = begin; i < end; ++i)
         {
             result += strings[i];
             if (i < strings.size() - 1)
@@ -72,7 +79,7 @@ namespace gflow::string
 
     inline std::pair<std::string, std::string> tokenize(const std::string& str, const std::string& delimiter)
     {
-        const size_t pos = str.find(delimiter);
+        const size_t pos = str.find_first_of(delimiter);
         if (pos == std::string::npos)
             return { str, "" };
         return { trim(str.substr(0, pos)), trim(str.substr(pos + delimiter.size())) };
@@ -95,17 +102,26 @@ namespace gflow::string
 
     inline std::string getPathFilename(const std::string& path)
     {
-        const size_t pos = path.find_last_of('/');
+        std::string truePath = path;
+        if (path.back() == '/') truePath.pop_back();
+        const size_t pos = truePath.find_last_of('/');
         if (pos == std::string::npos)
-            return path;
-        return path.substr(pos + 1);
+            return truePath;
+        return truePath.substr(pos + 1);
     }
 
     inline std::string getPathDirectory(const std::string& path)
     {
-        const size_t pos = path.find_last_of('/');
+        std::string truePath = path;
+        if (path.back() == '/') truePath.pop_back();
+        const size_t pos = truePath.find_last_of('/');
         if (pos == std::string::npos)
             return "";
-        return path.substr(0, pos);
+        return truePath.substr(0, pos);
+    }
+
+    inline bool contains(const std::string_view variable, const std::string_view str)
+    {
+        return variable.find(str) != std::string::npos;
     }
 }
