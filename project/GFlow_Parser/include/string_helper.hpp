@@ -49,15 +49,9 @@ namespace gflow::string
 
     inline std::vector<std::string> splitAndTrim(const std::string& str, const std::string& delimiter)
     {
-        std::vector<std::string> tokens;
-        size_t pos;
-        size_t prev = 0;
-        while ((pos = str.find(delimiter, prev)) != std::string::npos)
-        {
-            tokens.push_back(trim(str.substr(prev, pos - prev)));
-            prev = pos + delimiter.size();
-        }
-        tokens.push_back(trim(str.substr(prev)));
+        std::vector<std::string> tokens = split(str, delimiter);
+        for (std::string& token : tokens)
+            token = trim(token);
         return tokens;
     }
 
@@ -118,6 +112,12 @@ namespace gflow::string
         if (pos == std::string::npos)
             return "";
         return truePath.substr(0, pos);
+    }
+
+    inline std::string replacePathFilename(const std::string& path, const std::string& filename)
+    {
+        const std::string dirPath = getPathDirectory(path);
+        return (dirPath.empty() ? "" : dirPath + "/") + filename + (path.back() == '/' ? "/" : "");
     }
 
     inline bool contains(const std::string_view variable, const std::string_view str)

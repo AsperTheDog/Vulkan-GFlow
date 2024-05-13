@@ -1,11 +1,12 @@
 #include "editor.hpp"
 
+#include <filesystem>
 #include <ranges>
 
 #include "context.hpp"
 #include "imgui.h"
+#include "string_helper.hpp"
 #include "vulkan_context.hpp"
-#include "windows/nodes/test_node.hpp"
 #include "backends/imgui_impl_vulkan.h"
 #include "utils/logger.hpp"
 #include "windows/imgui_execution.hpp"
@@ -33,6 +34,12 @@ void Editor::init()
 
     s_imguiWindows.push_back(new ImGuiResourcesWindow("Resources"));
     s_projectLoadedSignal.connect(dynamic_cast<ImGuiResourcesWindow*>(s_imguiWindows.back()), &ImGuiResourcesWindow::projectLoaded);
+    s_folderCreatedSignal.connect(dynamic_cast<ImGuiResourcesWindow*>(s_imguiWindows.back()), &ImGuiResourcesWindow::folderCreated);
+    s_folderDeletedSignal.connect(dynamic_cast<ImGuiResourcesWindow*>(s_imguiWindows.back()), &ImGuiResourcesWindow::folderDeleted);
+    s_folderRenamedSignal.connect(dynamic_cast<ImGuiResourcesWindow*>(s_imguiWindows.back()), &ImGuiResourcesWindow::folderRenamed);
+    s_resourceCreatedSignal.connect(dynamic_cast<ImGuiResourcesWindow*>(s_imguiWindows.back()), &ImGuiResourcesWindow::resourceCreated);
+    s_resourceDeletedSignal.connect(dynamic_cast<ImGuiResourcesWindow*>(s_imguiWindows.back()), &ImGuiResourcesWindow::resourceDeleted);
+    s_resourceRenamedSignal.connect(dynamic_cast<ImGuiResourcesWindow*>(s_imguiWindows.back()), &ImGuiResourcesWindow::resourceRenamed);
     s_imguiWindows.push_back(new ImGuiResourceEditorWindow("Resource Editor"));
     s_resourceSelectedSignal.connect(dynamic_cast<ImGuiResourceEditorWindow*>(s_imguiWindows.back()), &ImGuiResourceEditorWindow::resourceSelected);
     s_imguiWindows.push_back(new ImGuiExecutionWindow("Execution"));
@@ -276,6 +283,10 @@ void Editor::drawImgui()
             window->draw();
         }
     }
+
+    createFolderModal();
+    deleteFolderModal();
+    renameFolderModal();
 }
 
 void Editor::updateImguiWindows()
@@ -333,4 +344,144 @@ void Editor::resourceSelected(const std::string& path)
 bool Editor::hasProject()
 {
     return m_project.has_value();
+}
+
+void Editor::showCreateFolderModal(const std::string& path)
+{
+    s_showCreateFolderModal = true;
+    s_modalBasePath = path;
+}
+
+void Editor::showRenameFolderModal(const std::string& path)
+{
+    s_showRenameFolderModal = true;
+    s_modalBasePath = path;
+}
+
+void Editor::showDeleteFolderModal(const std::string& path)
+{
+    s_showDeleteFolderModal = true;
+    s_modalBasePath = path;
+}
+
+void Editor::showCreateResourceModal(const std::string& path)
+{
+    s_showCreateResourceModal = true;
+    s_modalBasePath = path;
+}
+
+void Editor::showRenameResourceModal(const std::string& path)
+{
+    s_showRenameResourceModal = true;
+    s_modalBasePath = path;
+}
+
+void Editor::showDeleteResourceModal(const std::string& path)
+{
+    s_showDeleteResourceModal = true;
+    s_modalBasePath = path;
+}
+
+void Editor::createFolderModal()
+{
+    if (s_showCreateFolderModal)
+    {
+        ImGui::OpenPopup("New Folder");
+        s_showCreateFolderModal = false;
+    }
+
+    if (ImGui::BeginPopupModal("New Folder", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+    {
+        static char folderName[128] = "";
+        ImGui::InputText("Folder Name", folderName, IM_ARRAYSIZE(folderName));
+        ImGui::BeginDisabled(strcmp(folderName, "") == 0);
+        if (ImGui::Button("Create"))
+        {
+            const std::string baseDir = (getProject().getWorkingDir().empty() ? "" : getProject().getWorkingDir() + "/") + s_modalBasePath;
+            const std::string folderPath = baseDir + folderName;
+            if (std::filesystem::create_directory(folderPath))
+            {
+                Logger::print("Folder created at: " + folderPath, Logger::INFO);
+                s_folderCreatedSignal.emit(s_modalBasePath + folderName + "/");
+            }
+            else
+            {
+                Logger::print("Failed to create folder at: " + folderPath, Logger::ERR);
+            }
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndDisabled();
+        ImGui::SameLine();
+        if (ImGui::Button("Cancel"))
+        {
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndPopup();
+    }
+}
+
+void Editor::deleteFolderModal()
+{
+    if (s_showDeleteFolderModal)
+    {
+        ImGui::OpenPopup("Delete Folder");
+        s_showDeleteFolderModal = false;
+    }
+
+    if (ImGui::BeginPopupModal("Delete Folder", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+    {
+        ImGui::Text("Folder Name: %s", gflow::string::getPathFilename(s_modalBasePath).c_str());
+        ImGui::Text("Are you sure you want to delete this folder?");
+        if (ImGui::Button("Confirm"))
+        {
+            const std::string baseDir = (getProject().getWorkingDir().empty() ? "" : getProject().getWorkingDir() + "/") + s_modalBasePath;
+            std::filesystem::remove_all(baseDir);
+            Logger::print("Folder deleted at: " + baseDir, Logger::INFO);
+            s_folderDeletedSignal.emit(s_modalBasePath);
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Cancel"))
+        {
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndPopup();
+    }
+}
+
+void Editor::renameFolderModal()
+{
+    if (s_showRenameFolderModal)
+    {
+        ImGui::OpenPopup("Rename Folder");
+        s_showRenameFolderModal = false;
+    }
+
+    if (ImGui::BeginPopupModal("Rename Folder", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+    {
+        std::string renameFolderName = gflow::string::getPathFilename(s_modalBasePath);
+
+        ImGui::BeginDisabled(true);
+        ImGui::InputText("Old folder Name", renameFolderName.data(), renameFolderName.size());
+        ImGui::EndDisabled();
+        static char folderName[128] = "";
+        ImGui::InputText("New folder Name", folderName, IM_ARRAYSIZE(folderName));
+        ImGui::BeginDisabled(strcmp(folderName, "") == 0 || strcmp(folderName, renameFolderName.c_str()) == 0);
+        if (ImGui::Button("Create"))
+        {
+            const std::string baseDir = (getProject().getWorkingDir().empty() ? "" : getProject().getWorkingDir() + "/") + s_modalBasePath;
+            const std::string folderPath = gflow::string::replacePathFilename(baseDir, folderName);
+            std::filesystem::rename(baseDir, folderPath);
+            Logger::print("Folder renamed from: " + baseDir + " to: " + folderPath, Logger::INFO);
+            s_folderRenamedSignal.emit(gflow::string::replacePathFilename(s_modalBasePath, renameFolderName), folderName);
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndDisabled();
+        ImGui::SameLine();
+        if (ImGui::Button("Cancel"))
+        {
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndPopup();
+    }
 }
