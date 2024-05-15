@@ -67,7 +67,10 @@ void ImGuiResourceEditorWindow::drawResource(const std::string& name, void* data
         for (const gflow::parser::Resource::ExportData& exportElem : resource->getExports())
         {
             if (exportElem.data == nullptr)
-                isHeaderOpen = ImGui::CollapsingHeader(exportElem.name.data());
+            {
+	            isHeaderOpen = ImGui::CollapsingHeader(exportElem.name.data());
+                continue;
+            }
 
             if (!isHeaderOpen) continue;
             switch (exportElem.type)
