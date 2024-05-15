@@ -1,138 +1,151 @@
 #include "resource.hpp"
 
-#include <sstream>
+#include <filesystem>
+#include <fstream>
 
+#include "project.hpp"
 #include "string_helper.hpp"
 
 namespace gflow::parser
 {
-    std::string Resource::serialize()
+    static Resource::ResourceData parseToData(const std::string& serialized)
     {
-        std::stringstream ss;
-        ss << "[" << getType() << "]\n";
-        for (const ExportData& exportData : m_exports)
-            ss << exportData.name << " = " << get(exportData.name) << "\n";
-        for (const std::string& dep : getCustomExports())
-            ss << dep << " = " << get(dep) << "\n";
-        return ss.str();
+        Resource::ResourceData data{};
+        for (std::string& line : string::split(serialized, "\n"))
+        {
+            if (line.empty()) continue;
+
+            // Header
+            if (line[0] == '[')
+            {
+                std::erase_if(line, isspace);
+                line = string::reduce(line);
+                for (const std::string& part : string::split(line, ","))
+                {
+                    const auto [key, value] = string::tokenize(part, "=");
+                    if (key == "id") data.key = std::stoi(value);
+                    else if (key == "type") data.type = value;
+                    else if (key == "level") data.isSubresource = value == "Subresource";
+                }
+                continue;
+            }
+
+            // Key-value pair
+            const auto [key, value] = string::tokenize(line, "=");
+            if (data.data.contains(key))
+                Logger::print("Duplicate key " + key + " in " + data.type + " " + std::to_string(data.key) + " of type " + data.type, Logger::WARN);
+            data.data[key] = value;
+        }
+        return data;
     }
 
-    std::string Resource::get(const std::string& variable)
+    std::string Resource::serialize()
     {
-        for (const ExportData& exportData : m_exports)
+        std::ofstream file;
+        if (!m_isSubresource)
         {
-            if (variable != exportData.name) continue;
-            switch (exportData.type)
+            file.open(m_parent->getWorkingDir() + m_path);
+            if (!file.is_open())
             {
-            case STRING:
-                return "\"" + *static_cast<std::string*>(exportData.data) + "\"";
-            case INT:
-                return std::to_string(*static_cast<int*>(exportData.data));
-            case FLOAT:
-                return std::to_string(*static_cast<float*>(exportData.data));
-            case BOOL:
-                return *static_cast<bool*>(exportData.data) ? "true" : "false";
-            case REF:
-                return "$" + static_cast<Resource::Ref*>(exportData.data)->path;
-            case ENUM:
-                return "E" + std::to_string(static_cast<EnumExport*>(exportData.data)->id);
-            case LIST_STRING:
-            case LIST_INT:
-            case LIST_FLOAT:
-            case LIST_BOOL:
-            case LIST_REF:
-            case LIST_ENUM:
-                return getList(exportData);
-            case NONE:
-                Logger::print("Export type not supported", Logger::ERR);
+                Logger::print("Failed to open file " + m_parent->getWorkingDir() + m_path, Logger::ERR);
                 return "";
             }
         }
-        return "";
+        std::string str;
+        std::string dependencies;
+        str += "[id=" + std::to_string(m_id) + ", type=" + getType() + ", level=" + (m_isSubresource ? "Subresource" : "Main") + "]\n";
+        for (const ExportData& exportData : m_exports)
+        {
+            if (exportData.data == nullptr) continue;
+            auto [value, subresources] = get(exportData.name);
+            if (!subresources.empty())
+                dependencies += subresources + "\n";
+            str += exportData.name + " = " + value + "\n";
+        }
+        if (!dependencies.empty()) str += "\n" + dependencies;
+        if (!m_isSubresource)
+        {
+            file << str;
+            file.close();
+        }
+        return str;
     }
 
-#define INVALID_EXPORT_LIST_SIZE_SET(list, index) if ((index) >= (list)->size())                                                                 \
-                                        {                                                                                            \
-                                            Logger::print("Index out of bounds for list export, resizing" + variable, Logger::WARN); \
-                                            (list)->resize((index) + 1);                                                             \
-                                        }                                                                                            \
-
-
-    void Resource::set(const std::string& variable, const std::string& value)
+    bool Resource::deserialize(std::string filename)
     {
-        if (string::contains(variable, "/"))
+        if (filename.empty()) filename = m_path;
+        ResourceEntries dependencies;
+        ResourceData mainResource;
+        std::ifstream file(m_parent->getWorkingDir() + filename);
+        if (!file.is_open()) return false;
+        std::string entry;
+        std::string line;
+        while (true)
         {
-            const std::vector<std::string> parts = string::split(variable, "/");
-            uint32_t index;
-            try
+            std::getline(file, line);
+            if (string::contains(line, "[") && !entry.empty())
             {
-                index = std::stoi(parts[1]);
+                ResourceData data = parseToData(entry);
+                if (data.isSubresource) dependencies[data.key] = data;
+                else mainResource = data;
+                entry.clear();
             }
-            catch (const std::exception& e)
-            {
-                Logger::print("Invalid index for list export " + variable, Logger::ERR);
-                return;
-            }
-            for (const ExportData& exportData : m_exports)
-            {
-                if (parts[0] != exportData.name) continue;
-                switch (exportData.type)
-                {
-                case LIST_STRING:
-                {
-                    std::vector<std::string>* list = static_cast<std::vector<std::string>*>(exportData.data);
-                    INVALID_EXPORT_LIST_SIZE_SET(list, index)
-                    list->at(index) = string::reduce(value);
-                    break;
-                }
-                case LIST_INT:
-                {
-                    std::vector<int>* list = static_cast<std::vector<int>*>(exportData.data);
-                    INVALID_EXPORT_LIST_SIZE_SET(list, index)
-                    list->at(index) = std::stoi(value);
-                    break;
-                }
-                case LIST_FLOAT:
-                {
-                    std::vector<float>* list = static_cast<std::vector<float>*>(exportData.data);
-                    INVALID_EXPORT_LIST_SIZE_SET(list, index)
-                    list->at(index) = std::stof(value);
-                    break;
-                }
-                case LIST_BOOL:
-                {
-                    std::vector<bool>* list = static_cast<std::vector<bool>*>(exportData.data);
-                    INVALID_EXPORT_LIST_SIZE_SET(list, index)
-                    list->at(index) = value == "true";
-                    break;
-                }
-                case LIST_REF:
-                {
-                    std::vector<Ref>* list = static_cast<std::vector<Ref>*>(exportData.data);
-                    INVALID_EXPORT_LIST_SIZE_SET(list, index)
-                    list->at(index).path = string::reduce(value, 1, 0);
-                    break;
-                }
-                case LIST_ENUM:
-                {
-                    std::vector<EnumExport>* list = static_cast<std::vector<EnumExport>*>(exportData.data);
-                    INVALID_EXPORT_LIST_SIZE_SET(list, index)
-                    list->at(index).id = std::stoi(string::reduce(value, 1, 0));
-                    break;
-                }
-                default:
-                    Logger::print("Malformed variable key " + variable, Logger::ERR);
-                    return;
-                }
-            }
+            if (!line.empty()) entry += line + "\n";
+            if (file.eof()) break;
         }
+        if (!entry.empty())
+        {
+            ResourceData data = parseToData(entry);
+            if (data.isSubresource) dependencies[data.key] = data;
+            else mainResource = data;
+        }
+        deserialize(mainResource, dependencies);
+        return true;
+    }
+
+    void Resource::deserialize(const ResourceData& data, const ResourceEntries& dependencies)
+    {
+        for (const auto& [key, value] : data.data)
+        {
+            set(key, value, dependencies);
+        }
+    }
+
+    std::pair<std::string, std::string> Resource::get(const std::string& variable)
+    {
         for (const ExportData& exportData : m_exports)
         {
             if (variable != exportData.name) continue;
             switch (exportData.type)
             {
             case STRING:
-                *static_cast<std::string*>(exportData.data) = string::reduce(value);
+                return { *static_cast<std::string*>(exportData.data), "" };
+            case INT:
+                return { std::to_string(*static_cast<int*>(exportData.data)), "" };
+            case FLOAT:
+                return { std::to_string(*static_cast<float*>(exportData.data)), "" };
+            case BOOL:
+                return { std::to_string(*static_cast<bool*>(exportData.data)), "" };
+            case ENUM:
+                return { std::to_string(static_cast<EnumExport*>(exportData.data)->id), "" };
+            case RESOURCE:
+                return { std::to_string(static_cast<Resource*>(exportData.data)->getID()), static_cast<Resource*>(exportData.data)->serialize() };
+            case NONE:
+                Logger::print("Export type not supported", Logger::ERR);
+            }
+        }
+        return { "", "" };
+    }
+
+    void Resource::set(const std::string& variable, const std::string& value, const ResourceEntries& dependencies)
+    {
+        for (const ExportData& exportData : m_exports)
+        {
+            if (variable != exportData.name) continue;
+            switch (exportData.type)
+            {
+            case STRING:
+                *static_cast<std::string*>(exportData.data) = value;
                 break;
             case INT:
                 *static_cast<int*>(exportData.data) = std::stoi(value);
@@ -143,90 +156,27 @@ namespace gflow::parser
             case BOOL:
                 *static_cast<bool*>(exportData.data) = value == "true";
                 break;
-            case REF:
-                static_cast<Resource::Ref*>(exportData.data)->path = string::reduce(value, 1, 0);
-                break;
             case ENUM:
-                static_cast<EnumExport*>(exportData.data)->id = std::stoi(string::reduce(value, 1, 0));
+                static_cast<EnumExport*>(exportData.data)->id = std::stoi(value);
                 break;
+            case RESOURCE:
+            {
+                const uint32_t id = std::stoi(value);
+                if (id == m_id)
+                {
+                    Logger::print("Resource with id " + std::to_string(id) + " cannot be a dependency of itself", Logger::ERR);
+                    return;
+                }
+                if (dependencies.contains(id))
+                    static_cast<Resource*>(exportData.data)->deserialize(dependencies.at(id), dependencies);
+                else
+                    Logger::print("Resource with id " + std::to_string(id) + " not found in dependencies", Logger::ERR);
+                break;
+            }
             default:
                 Logger::print("Export type not supported for export " + variable, Logger::ERR);
                 return;
             }
         }
-    }
-
-    std::vector<std::string> Resource::getDependencies()
-    {
-        std::vector<std::string> dependencies;
-        for (const ExportData& exportData : m_exports)
-        {
-            if (exportData.type == REF)
-            {
-                dependencies.push_back(static_cast<Resource::Ref*>(exportData.data)->path);
-            }
-        }
-        return dependencies;
-    }
-
-    std::string Resource::getList(const ExportData& exportData) const
-    {
-        std::stringstream ss;
-
-        switch (exportData.type)
-        {
-        case LIST_STRING:
-        {
-            const std::vector<std::string>* list = static_cast<std::vector<std::string>*>(exportData.data);
-            ss << exportData.name << " = S" << list->size() << "\n";
-            for (uint32_t i = 0; i < list->size(); ++i)
-                ss << exportData.name << "/" << i << " = \"" << list->at(i) << "\"\n";
-            break;
-        }
-        case LIST_INT:
-        {
-            const std::vector<int>* list = static_cast<std::vector<int>*>(exportData.data);
-            ss << exportData.name << " = S" << list->size() << "\n";
-            for (uint32_t i = 0; i < list->size(); ++i)
-                ss << exportData.name << "/" << i << " = " << list->at(i) << "\n";
-            break;
-        }
-        case LIST_FLOAT:
-        {
-            const std::vector<float>* list = static_cast<std::vector<float>*>(exportData.data);
-            ss << exportData.name << " = S" << list->size() << "\n";
-            for (uint32_t i = 0; i < list->size(); ++i)
-                ss << exportData.name << "/" << i << " = " << list->at(i) << "\n";
-            break;
-        }
-        case LIST_BOOL:
-        {
-            std::vector<bool>* list = static_cast<std::vector<bool>*>(exportData.data);
-            ss << exportData.name << " = S" << list->size() << "\n";
-            for (uint32_t i = 0; i < list->size(); ++i)
-                ss << exportData.name << "/" << i << " = " << (list->at(i) ? "true" : "false") << "\n";
-            break;
-        }
-        case LIST_REF:
-        {
-            const std::vector<Ref>* list = static_cast<std::vector<Ref>*>(exportData.data);
-            ss << exportData.name << " = S" << list->size() << "\n";
-            for (uint32_t i = 0; i < list->size(); ++i)
-                ss << exportData.name << "/" << i << " = $" << list->at(i).path << "\n";
-            break;
-        }
-        case LIST_ENUM:
-        {
-            const std::vector<EnumExport>* list = static_cast<std::vector<EnumExport>*>(exportData.data);
-            ss << exportData.name << " = S" << list->size() << "\n";
-            for (uint32_t i = 0; i < list->size(); ++i)
-                ss << exportData.name << "/" << i << " = E" << list->at(i).id << "\n";
-            break;
-        }
-        default:
-            Logger::print("Invalid export type sent to getList for export " + exportData.name, Logger::ERR);
-            return "";
-        }
-        return string::reduce(ss.str(), 0, 1);
     }
 }

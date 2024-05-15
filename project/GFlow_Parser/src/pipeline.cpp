@@ -4,11 +4,19 @@
 
 namespace gflow::parser
 {
-    Pipeline::Pipeline(const std::string_view path, Project* parent) : Resource(path, parent) {}
+    Pipeline::Pipeline(const std::string& path, Project* parent) : Resource(path, parent) {}
 
     std::string Pipeline::getType() const
     {
         return "Pipeline";
+    }
+
+    Resource* Pipeline::create(const std::string& path, Project* parent)
+    {
+        Pipeline* pipeline = new Pipeline(path, parent);
+        if (!pipeline->deserialize())
+            pipeline->serialize();
+        return pipeline;
     }
 
     EnumContext Pipeline::s_primitiveTopology{

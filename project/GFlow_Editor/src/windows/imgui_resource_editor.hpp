@@ -17,11 +17,13 @@ public:
     void draw() override;
 
 private:
+    void drawElement(const gflow::parser::Resource::ExportData& element) const;
+
     void drawFloat(const std::string& name, void* data) const;
     void drawInt(const std::string& name, void* data) const;
     void drawString(const std::string& name, void* data) const;
     void drawBool(const std::string& name, void* data) const;
-    void drawRef(const std::string& name, void* data) const;
+    void drawResource(const std::string& name, void* data, bool openTree = true) const;
     void drawEnum(const std::string& name, void* data, const gflow::parser::EnumContext* context) const;
 
     template <typename T>

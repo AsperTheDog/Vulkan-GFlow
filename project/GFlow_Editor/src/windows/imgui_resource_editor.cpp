@@ -25,88 +25,7 @@ void ImGuiResourceEditorWindow::draw()
     ImGui::Begin(m_name.c_str(), &open);
     if (m_selectedResource)
     {
-        bool isHeaderOpen = true;
-        for (const gflow::parser::Resource::ExportData& exportElem : m_selectedResource->getExports())
-        {
-            if (exportElem.data == nullptr)
-                isHeaderOpen = ImGui::CollapsingHeader(exportElem.name.data());
-
-            if (!isHeaderOpen) continue;
-
-            ImGui::SeparatorEx(ImGuiSeparatorFlags_Horizontal, 5.0f);
-            switch (exportElem.type)
-            {
-            case gflow::parser::DataType::STRING:
-                drawString(exportElem.name, exportElem.data);
-                break;
-            case gflow::parser::DataType::INT:
-                drawInt(exportElem.name, exportElem.data);
-                break;
-            case gflow::parser::DataType::FLOAT:
-                drawFloat(exportElem.name, exportElem.data);
-                break;
-            case gflow::parser::DataType::BOOL:
-                drawBool(exportElem.name, exportElem.data);
-                break;
-            case gflow::parser::DataType::REF:
-                drawRef(exportElem.name, exportElem.data);
-                break;
-            case gflow::parser::DataType::ENUM:
-                drawEnum(exportElem.name, exportElem.data, exportElem.enumContext);
-                break;
-            case gflow::parser::DataType::LIST_STRING:
-            {
-                std::vector<std::string>* list = static_cast<std::vector<std::string>*>(exportElem.data);
-                drawListHeader(exportElem.name, list);
-                for (uint32_t i = 0; i < list->size(); ++i)
-                    drawString(std::to_string(i) + "##List-" + exportElem.name, &list->at(i));
-            }
-            break;
-            case gflow::parser::DataType::LIST_INT:
-            {
-                std::vector<int>* list = static_cast<std::vector<int>*>(exportElem.data);
-                drawListHeader(exportElem.name, list);
-                for (uint32_t i = 0; i < list->size(); ++i)
-                    drawInt(std::to_string(i) + "##List-" + exportElem.name, &list->at(i));
-            }
-            break;
-            case gflow::parser::DataType::LIST_FLOAT:
-            {
-                std::vector<float>* list = static_cast<std::vector<float>*>(exportElem.data);
-                drawListHeader(exportElem.name, list);
-                for (uint32_t i = 0; i < list->size(); ++i)
-                    drawFloat(std::to_string(i) + "##List-" + exportElem.name, &list->at(i));
-            }
-            break;
-            case gflow::parser::DataType::LIST_BOOL:
-            {
-                std::vector<bool>* list = static_cast<std::vector<bool>*>(exportElem.data);
-                drawListHeader(exportElem.name, list);
-                for (uint32_t i = 0; i < list->size(); ++i)
-                {
-                    bool value = list->at(i);
-                    drawBool(std::to_string(i) + "##List-" + exportElem.name, &value);
-                    list->at(i) = value;
-                }
-            }
-            break;
-            case gflow::parser::DataType::LIST_REF:
-            {
-                std::vector<gflow::parser::Resource::Ref>* list = static_cast<std::vector<gflow::parser::Resource::Ref>*>(exportElem.data);
-                drawListHeader(exportElem.name, list);
-                for (uint32_t i = 0; i < list->size(); ++i)
-                    drawString(std::to_string(i) + "##List-" + exportElem.name, &list->at(i).path);
-            }
-            break;
-            case gflow::parser::DataType::LIST_ENUM:
-            {
-                std::vector<gflow::parser::EnumExport>* list = static_cast<std::vector<gflow::parser::EnumExport>*>(exportElem.data);
-                drawListHeader(exportElem.name, list);
-                for (uint32_t i = 0; i < list->size(); ++i)
-                    drawEnum(std::to_string(i) + "##List-" + exportElem.name, &list->at(i), exportElem.enumContext);
-            }
-            }
-        }
+        drawResource(m_selectedResource->getType(), m_selectedResource, false);
     }
     ImGui::End();
 }
@@ -135,11 +54,46 @@ void ImGuiResourceEditorWindow::drawBool(const std::string& name, void* data) co
     ImGui::Checkbox(name.c_str(), static_cast<bool*>(data));
 }
 
-void ImGuiResourceEditorWindow::drawRef(const std::string& name, void* data) const
+void ImGuiResourceEditorWindow::drawResource(const std::string& name, void* data, const bool openTree) const
 {
-    if (ImGui::Button(name.c_str()))
+    bool isTreeOpen = true;
+    if (openTree)
+        isTreeOpen = ImGui::TreeNode(name.c_str());
+
+    if (isTreeOpen)
     {
-        //TODO: Select resource
+        bool isHeaderOpen = true;
+        const gflow::parser::Resource* resource = static_cast<gflow::parser::Resource*>(data);
+        for (const gflow::parser::Resource::ExportData& exportElem : resource->getExports())
+        {
+            if (exportElem.data == nullptr)
+                isHeaderOpen = ImGui::CollapsingHeader(exportElem.name.data());
+
+            if (!isHeaderOpen) continue;
+            switch (exportElem.type)
+            {
+            case gflow::parser::DataType::STRING:
+                drawString(exportElem.name, exportElem.data);
+                break;
+            case gflow::parser::DataType::INT:
+                drawInt(exportElem.name, exportElem.data);
+                break;
+            case gflow::parser::DataType::FLOAT:
+                drawFloat(exportElem.name, exportElem.data);
+                break;
+            case gflow::parser::DataType::BOOL:
+                drawBool(exportElem.name, exportElem.data);
+                break;
+            case gflow::parser::DataType::ENUM:
+                drawEnum(exportElem.name, exportElem.data, exportElem.enumContext);
+                break;
+            case gflow::parser::DataType::RESOURCE:
+                drawResource(exportElem.name, exportElem.data);
+                break;
+            }
+        }
+        if (openTree)
+            ImGui::TreePop();
     }
 }
 

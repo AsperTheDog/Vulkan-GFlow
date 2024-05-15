@@ -23,6 +23,7 @@
     <ClInclude Include="include\project.hpp" />
     <ClInclude Include="include\string_helper.hpp" />
     <ClInclude Include="include\pipeline.hpp" />
+    <ClInclude Include="include\test.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\pipeline.cpp" />

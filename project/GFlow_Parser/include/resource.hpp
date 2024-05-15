@@ -23,14 +23,8 @@ namespace gflow::parser
         INT,
         FLOAT,
         BOOL,
-        REF,
         ENUM,
-        LIST_STRING,
-        LIST_INT,
-        LIST_FLOAT,
-        LIST_BOOL,
-        LIST_REF,
-        LIST_ENUM,
+        RESOURCE
     };
 
     struct EnumExport { uint32_t id; };
@@ -53,6 +47,14 @@ namespace gflow::parser
         bool m_isGroup = false;
         std::string m_name;
         T m_data;
+
+
+        static_assert(std::is_same_v<T, std::string> 
+            || std::is_same_v<T, int> 
+            || std::is_same_v<T, float> 
+            || std::is_same_v<T, bool> 
+            || std::is_same_v<T, EnumExport> 
+            || (std::is_pointer_v<T> && std::is_base_of_v<Resource, std::remove_pointer_t<T>>), "Invalid export type");
     };
 
     class Resource
@@ -66,18 +68,32 @@ namespace gflow::parser
             EnumContext* enumContext = nullptr;
         };
 
+        struct ResourceData
+        {
+            uint32_t key;
+            std::string type;
+            bool isSubresource;
+            std::unordered_map<std::string, std::string> data;
+        };
+
+        typedef std::unordered_map<uint32_t, ResourceData> ResourceEntries;
+
+
     public:
+        Resource() = default;
         virtual ~Resource() = default;
 
         struct Ref { std::string path; };
 
         virtual std::string serialize();
+        virtual void deserialize(const ResourceData& data, const ResourceEntries& dependencies);
 
-        virtual std::string get(const std::string& variable);
-        virtual void set(const std::string& variable, const std::string& value);
+        bool deserialize(std::string filename = "");
 
-        virtual std::vector<std::string> getCustomExports() { return {}; }
-        virtual std::vector<std::string> getDependencies();
+        virtual std::pair<std::string, std::string> get(const std::string& variable);
+        virtual void set(const std::string& variable, const std::string& value, const ResourceEntries& dependencies);
+
+        [[nodiscard]] virtual std::vector<std::string> getCustomExports() const { return {}; }
 
         [[nodiscard]] const std::vector<ExportData>& getExports() const { return m_exports; }
 
@@ -87,10 +103,9 @@ namespace gflow::parser
         [[nodiscard]] uint32_t getID() const { return m_id; }
 
     protected:
-        explicit Resource(const std::string_view path, Project* project) : m_path(path), m_parent(project) {}
+        explicit Resource(const std::string_view path, Project* project) : m_isSubresource(path.empty()), m_path(path), m_parent(project) {}
 
-        [[nodiscard]] std::string getList(const ExportData& exportData) const;
-
+        bool m_isSubresource;
         std::string m_path;
         uint32_t m_id = ++s_idCounter;
         Project* m_parent;
@@ -129,14 +144,13 @@ namespace gflow::parser
         else if constexpr (std::is_same_v<T, int>) data.type = INT;
         else if constexpr (std::is_same_v<T, float>) data.type = FLOAT;
         else if constexpr (std::is_same_v<T, bool>) data.type = BOOL;
-        else if constexpr (std::is_same_v<T, Resource::Ref>) data.type = REF;
-        else if constexpr (std::is_same_v<T, Resource::Ref>) data.type = REF;
-        else if constexpr (std::is_same_v<T, std::vector<EnumExport>>) data.type = ENUM;
-        else if constexpr (std::is_same_v<T, std::vector<std::string>>) data.type = LIST_STRING;
-        else if constexpr (std::is_same_v<T, std::vector<int>>) data.type = LIST_INT;
-        else if constexpr (std::is_same_v<T, std::vector<float>>) data.type = LIST_FLOAT;
-        else if constexpr (std::is_same_v<T, std::vector<bool>>) data.type = LIST_BOOL;
-        else if constexpr (std::is_same_v<T, std::vector<Resource::Ref>>) data.type = LIST_REF;
+        else if constexpr (std::is_same_v<T, EnumExport>) data.type = ENUM;
+        else if constexpr (std::is_pointer_v<T> && std::is_base_of_v<Resource, std::remove_pointer_t<T>>)
+        {
+            data.type = RESOURCE;
+            this->m_data = static_cast<T>(std::remove_pointer_t<T>::create("", parent->m_parent));
+            data.data = this->m_data;
+        }
         else data.type = NONE;
 
         if (data.type == NONE)

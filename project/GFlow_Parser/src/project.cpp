@@ -12,7 +12,7 @@
 
 namespace gflow::parser
 {
-    std::unordered_map<std::string, std::function<Resource* (std::string_view, Project*)>> Project::s_resourceFactories = {
+    std::unordered_map<std::string, std::function<Resource* (const std::string&, Project*)>> Project::s_resourceFactories = {
             {"Pipeline", gflow::parser::Pipeline::create},
             {"RenderPass", nullptr},
             {"Image", nullptr},
@@ -21,11 +21,12 @@ namespace gflow::parser
             {"Buffer", nullptr}
     };
 
-    Project::Project(const std::string_view name, const std::string_view workingDir) : m_name(name), m_workingDir(workingDir)
+    Project::Project(std::string name, const std::string_view workingDir) : m_name(std::move(name)), m_workingDir(workingDir)
     {
-        // Check if the working directory exists, if it doesn't then create it
         if (!m_workingDir.empty())
         {
+            if (m_workingDir.back() != '/')
+                m_workingDir += '/';
             const std::filesystem::path dir{ m_workingDir };
             if (!std::filesystem::exists(dir))
                 std::filesystem::create_directories(dir);
@@ -34,7 +35,7 @@ namespace gflow::parser
 
     Resource& Project::loadResource(const std::string& path)
     {
-        std::string resolvedPath = m_workingDir.empty() ? path : m_workingDir + "/" + path;
+        std::string resolvedPath = m_workingDir + path;
         std::ifstream file{ resolvedPath };
         if (!file.is_open() && !m_workingDir.empty())
         {
@@ -49,36 +50,30 @@ namespace gflow::parser
             return *m_resources[resolvedPath];
 
         std::string resourceType;
-        std::string content{ std::istreambuf_iterator<char>{file}, std::istreambuf_iterator<char>{} };
-        const std::vector<std::string> lines = string::split(content, "\n");
-        std::unordered_map<std::string, std::string> tokens;
-        for (std::string line : lines)
+        for (std::string line; std::getline(file, line);)
         {
+            if (line.empty()) continue;
+
             std::erase_if(line, isspace);
             if (line[0] == '[')
             {
-                std::string header = content.substr(0, content.find('\n'));
-                std::erase_if(header, isspace);
-                resourceType = string::reduce(header);
-                continue;
+                line = string::reduce(line);
+                std::string type;
+                bool isMain = false;
+                for (const std::string& part : string::split(line, ","))
+                {
+                    const auto [key, value] = string::tokenize(part, "=");
+                    if (key == "type") type = value;
+                    else if (key == "level") isMain = value != "Subresource";
+                }
+                if (isMain)
+                {
+                    resourceType = type;
+                    break;
+                }
             }
-            std::pair<std::string, std::string> parts = string::tokenize(line, "=");
-            if (parts.second.empty())
-            {
-                Logger::print("Invalid token" + parts.first + " in resource " + path + ", ignoring", Logger::WARN);
-                continue;
-            }
-            tokens.insert(parts);
         }
-
-        Resource& res = createResource(resourceType, resolvedPath);
-
-        for (const auto& [key, value] : tokens)
-        {
-            res.set(key, value);
-        }
-
-        return res;
+        return createResource(resourceType, path);
     }
 
     Resource& Project::createResource(const std::string& type, const std::string& path)
@@ -98,7 +93,7 @@ namespace gflow::parser
 
     Resource& Project::getResource(const std::string& path) const
     {
-        if (!m_resources.contains(path))
+        if (!hasResource(path))
             throw std::runtime_error("Resource not found");
         return *m_resources.at(path);
     }
@@ -122,6 +117,48 @@ namespace gflow::parser
                 resources.push_back(path);
         }
         return resources;
+    }
+
+    std::string Project::getType() const
+    {
+        return "Project";
+    }
+
+    std::vector<std::string> Project::getCustomExports() const
+    {
+        std::vector<std::string> exports;
+        for (const auto& resource : m_resources | std::views::values)
+        {
+            exports.push_back("resources" + std::to_string(resource->getID()));
+        }
+        return exports;
+    }
+
+    std::pair<std::string, std::string> Project::get(const std::string& variable)
+    {
+        if (string::contains(variable, "resources"))
+        {
+            if (!string::contains(variable, "/"))
+            {
+                uint32_t id = 0;
+                try
+                {
+                    id = std::stoi(string::tokenize(variable, "/").second);
+                    return {getResource(id).getPath(), ""};
+                }
+                catch (const std::exception& e)
+                {
+                    Logger::print("Failed to parse resource index: " + std::string(e.what()), Logger::ERR);
+                    return {"", ""};
+                }
+            }
+        }
+        return Resource::get(variable);
+    }
+
+    void Project::set(const std::string& variable, const std::string& value, const ResourceEntries& dependencies)
+    {
+        Resource::set(variable, value, dependencies);
     }
 
     bool Project::hasResource(const std::string& path) const

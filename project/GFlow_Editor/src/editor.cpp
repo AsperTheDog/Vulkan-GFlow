@@ -56,7 +56,6 @@ void Editor::init()
     m_project = gflow::parser::Project("Test", "assets");
     s_projectLoadedSignal.emit();
     m_project->createResource("Pipeline", "test.ppln");
-    s_resourceSelectedSignal.emit("test.ppln");
 }
 
 void Editor::run()
