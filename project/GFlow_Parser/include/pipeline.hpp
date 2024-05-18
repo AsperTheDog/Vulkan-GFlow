@@ -1,6 +1,8 @@
 #pragma once
 #include "resource.hpp"
-#include <test.hpp>
+#include "list.hpp"
+
+#include "test.hpp"
 
 namespace gflow::parser
 {
@@ -10,11 +12,7 @@ namespace gflow::parser
         [[nodiscard]] std::string getType() const override;
 
     private:
-        EXPORT(std::string, name);
-        EXPORT_ENUM(topology, s_primitiveTopology);
-        EXPORT(Test*, test);
-        EXPORT(bool, enabled);
-        EXPORT(int, count);
+        EXPORT_LIST(Test*, testList);
 
         explicit Pipeline(const std::string& path);
         static Resource* create(const std::string& path);
@@ -25,5 +23,3 @@ namespace gflow::parser
         static EnumContext s_primitiveTopology;
     };
 }
-
-

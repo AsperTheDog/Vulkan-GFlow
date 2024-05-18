@@ -105,6 +105,7 @@ void ImGuiResourceEditorWindow::drawResource(const std::string& stackedName, voi
             break;
         }
     }
+    (*resource)->exportsChanged();
 }
 
 void ImGuiResourceEditorWindow::drawSubresource(const std::string& name, std::string stackedName, const gflow::parser::Resource::ExportData& data) const

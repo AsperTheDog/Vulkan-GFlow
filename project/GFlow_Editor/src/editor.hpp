@@ -10,7 +10,7 @@ class ImGuiEditorWindow;
 class Editor
 {
 public: // Internal Management
-	static void init();
+	static void init(const std::string& projectPath = "");
 	static void run();
 
 	static void cleanup();

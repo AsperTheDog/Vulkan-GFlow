@@ -202,7 +202,8 @@ namespace gflow::parser
 
     void ResourceManager::resetWorkingDir(const std::string& path)
     {
-        m_workingDir = path.back() == '/' ? path : path + "/";
+        const std::string absPath = std::filesystem::absolute(path).generic_string();
+        m_workingDir = absPath + "/";
         m_resources.clear();
         m_fileTree.reset();
         obtainResources(m_workingDir);

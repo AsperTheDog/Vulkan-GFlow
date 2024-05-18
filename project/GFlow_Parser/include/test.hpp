@@ -26,6 +26,9 @@ namespace gflow::parser
 
         template <typename T>
         friend class Export;
+
+        template <typename T>
+        friend class List;
     };
 }
 

@@ -1,8 +1,15 @@
 #include "editor.hpp"
 
-int main(int argc, char* argv[])
+int main(const int argc, char* argv[])
 {
-    Editor::init();
+    if (argc > 1)
+    {
+        Editor::init(argv[1]);
+    }
+    else
+    {
+        Editor::init();
+    }
     Editor::run();
     
     Editor::cleanup();

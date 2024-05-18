@@ -25,6 +25,7 @@
     <ClInclude Include="include\pipeline.hpp" />
     <ClInclude Include="include\test.hpp" />
     <ClInclude Include="include\resource_manager.hpp" />
+    <ClInclude Include="include\list.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\resource_manager.cpp" />

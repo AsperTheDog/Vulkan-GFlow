@@ -86,7 +86,8 @@ void ImGuiResourcesWindow::draw()
 
     ImGui::Begin(m_name.c_str(), &open);
 
-    if (ImGui::Button("Refresh")) projectLoaded();
+    if (ImGui::Button("Refresh")) 
+        gflow::parser::ResourceManager::resetWorkingDir(gflow::parser::ResourceManager::getWorkingDir());
 
     ImGui::Separator();
 
@@ -127,4 +128,5 @@ void ImGuiResourcesWindow::draw()
 void ImGuiResourcesWindow::projectLoaded()
 {
     Editor::resourceSelected("");
+    m_selectedResource = "";
 }

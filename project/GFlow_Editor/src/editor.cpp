@@ -18,7 +18,7 @@
 #include "windows/imgui_resources.hpp"
 #include "windows/imgui_resource_editor.hpp"
 
-void Editor::init()
+void Editor::init(const std::string& projectPath)
 {
     Logger::setLevels(Logger::ALL);
     Logger::setRootContext("Window init");
@@ -47,6 +47,12 @@ void Editor::init()
     s_imguiWindows.push_back(new ImGuiTestWindow("Test"));
     getWindow("Test")->open = false;
 #endif
+
+    if (!projectPath.empty())
+    {
+        gflow::parser::ResourceManager::loadProject(projectPath);
+        s_projectLoadedSignal.emit();
+    }
 }
 
 void Editor::run()

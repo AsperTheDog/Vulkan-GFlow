@@ -55,7 +55,7 @@ namespace gflow::parser
         std::string str;
         std::string dependencies;
         str += "[id=" + std::to_string(m_id) + ", type=" + getType() + ", level=" + (m_isSubresource ? "Subresource" : "Main") + "]\n";
-        for (const ExportData& exportData : m_exports)
+        for (const ExportData& exportData : getExports())
         {
             if (exportData.data == nullptr) continue;
             auto [value, subresources] = get(exportData.name);
@@ -114,7 +114,7 @@ namespace gflow::parser
 
     std::pair<std::string, std::string> Resource::get(const std::string& variable)
     {
-        for (const ExportData& exportData : m_exports)
+        for (const ExportData& exportData : getExports())
         {
             if (variable != exportData.name) continue;
             switch (exportData.type)
@@ -147,7 +147,7 @@ namespace gflow::parser
 
     bool Resource::set(const std::string& variable, const std::string& value, const ResourceEntries& dependencies)
     {
-        for (const ExportData& exportData : m_exports)
+        for (const ExportData& exportData : getExports())
         {
             if (variable != exportData.name) continue;
             switch (exportData.type)
@@ -204,6 +204,15 @@ namespace gflow::parser
             }
         }
         return false;
+    }
+
+    std::vector<Resource::ExportData> Resource::getExports()
+    {
+        std::vector<ExportData> exports = m_exports;
+        std::vector<ExportData> custom = getCustomExports();
+        if (!custom.empty())
+            exports.insert(exports.end(), custom.begin(), custom.end());
+        return exports;
     }
 
     void Resource::setID(const uint32_t id)

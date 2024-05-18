@@ -8,10 +8,8 @@
 #include "utils/logger.hpp"
 
 #define EXPORT(type, name) Export<type> ##name{#name, this}
-#define EXPORT_LIST(type, name) Export<std::vector<(type)>> ##name{#name, this}
 #define EXPORT_GROUP(name, title) Export<bool> _##name{title, this, true}
 #define EXPORT_ENUM(name, context) Export<EnumExport> ##name{#name, this, context}
-#define EXPORT_ENUM_LIST(name, context) Export<std::vector<EnumExport>> ##name{#name, this, context}
 
 namespace gflow::parser
 {
@@ -50,9 +48,6 @@ namespace gflow::parser
         bool m_isGroup = false;
         std::string m_name;
         T m_data;
-
-
-        
     };
 
     class Resource
@@ -95,9 +90,11 @@ namespace gflow::parser
         virtual std::pair<std::string, std::string> get(const std::string& variable);
         virtual bool set(const std::string& variable, const std::string& value, const ResourceEntries& dependencies);
 
-        [[nodiscard]] virtual std::vector<std::string> getCustomExports() const { return {}; }
+        virtual void exportsChanged() {}
+        virtual void exportChanged(const std::string& variable) {}
+        [[nodiscard]] virtual std::vector<ExportData> getCustomExports() { return {}; }
 
-        [[nodiscard]] const std::vector<ExportData>& getExports() const { return m_exports; }
+        [[nodiscard]] std::vector<ExportData> getExports();
 
         [[nodiscard]] virtual std::string getType() const = 0;
 
@@ -149,7 +146,6 @@ namespace gflow::parser
         else if constexpr (std::is_same_v<T, int>) data.type = INT;
         else if constexpr (std::is_same_v<T, float>) data.type = FLOAT;
         else if constexpr (std::is_same_v<T, bool>) data.type = BOOL;
-        else if constexpr (std::is_same_v<T, EnumExport>) data.type = ENUM;
         else if constexpr (std::is_pointer_v<T> && std::is_base_of_v<Resource, std::remove_pointer_t<T>>)
         {
             data.type = RESOURCE;
