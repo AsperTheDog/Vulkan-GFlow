@@ -1,6 +1,8 @@
 #pragma once
+#include <functional>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 #include "utils/logger.hpp"
@@ -41,6 +43,7 @@ namespace gflow::parser
         Export(std::string_view name, Resource* parent, bool group = false);
         Export(std::string_view name, Resource* parent, EnumContext& enumContext);
 
+        const T& operator*() const { return m_data; }
         T& operator*() { return m_data; }
 
     private:
@@ -49,12 +52,7 @@ namespace gflow::parser
         T m_data;
 
 
-        static_assert(std::is_same_v<T, std::string> 
-            || std::is_same_v<T, int> 
-            || std::is_same_v<T, float> 
-            || std::is_same_v<T, bool> 
-            || std::is_same_v<T, EnumExport> 
-            || (std::is_pointer_v<T> && std::is_base_of_v<Resource, std::remove_pointer_t<T>>), "Invalid export type");
+        
     };
 
     class Resource
@@ -65,7 +63,11 @@ namespace gflow::parser
             DataType type;
             std::string name;
             void* data = nullptr;
-            EnumContext* enumContext = nullptr;
+            union
+            {
+                EnumContext* enumContext = nullptr;
+                Resource* (*resourceFactory)(const std::string&);
+            };
         };
 
         struct ResourceData
@@ -80,7 +82,7 @@ namespace gflow::parser
 
 
     public:
-        Resource() = default;
+        Resource() { setID(0); }
         virtual ~Resource() = default;
 
         struct Ref { std::string path; };
@@ -91,7 +93,7 @@ namespace gflow::parser
         bool deserialize(std::string filename = "");
 
         virtual std::pair<std::string, std::string> get(const std::string& variable);
-        virtual void set(const std::string& variable, const std::string& value, const ResourceEntries& dependencies);
+        virtual bool set(const std::string& variable, const std::string& value, const ResourceEntries& dependencies);
 
         [[nodiscard]] virtual std::vector<std::string> getCustomExports() const { return {}; }
 
@@ -103,22 +105,25 @@ namespace gflow::parser
         [[nodiscard]] uint32_t getID() const { return m_id; }
 
     protected:
-        explicit Resource(const std::string_view path, Project* project) : m_isSubresource(path.empty()), m_path(path), m_parent(project) {}
+        explicit Resource(const std::string_view path) : m_isSubresource(path.empty()), m_path(path) { setID(0); }
 
         bool m_isSubresource;
         std::string m_path;
-        uint32_t m_id = ++s_idCounter;
-        Project* m_parent;
+        uint32_t m_id;
 
         std::vector<ExportData> m_exports;
 
         void registerExport(const ExportData& data) { m_exports.push_back(data); }
 
     private:
-        inline static uint32_t s_idCounter = 0;
+        void setID(uint32_t id = 0);
+
+        inline static std::unordered_set<uint32_t> s_ids;
 
         template <typename T>
         friend class Export;
+
+        friend class Project;
     };
 
     //***************************************************************
@@ -148,13 +153,12 @@ namespace gflow::parser
         else if constexpr (std::is_pointer_v<T> && std::is_base_of_v<Resource, std::remove_pointer_t<T>>)
         {
             data.type = RESOURCE;
-            this->m_data = static_cast<T>(std::remove_pointer_t<T>::create("", parent->m_parent));
-            data.data = this->m_data;
+            data.resourceFactory = std::remove_pointer_t<T>::create;
+            data.data = &this->m_data;
         }
-        else data.type = NONE;
-
-        if (data.type == NONE)
+        else
         {
+            data.type = NONE;
             Logger::print("Export type not supported", Logger::ERR);
             return;
         }

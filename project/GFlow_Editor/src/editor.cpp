@@ -5,6 +5,7 @@
 
 #include "context.hpp"
 #include "imgui.h"
+#include "resource_manager.hpp"
 #include "string_helper.hpp"
 #include "vulkan_context.hpp"
 #include "backends/imgui_impl_vulkan.h"
@@ -34,12 +35,6 @@ void Editor::init()
 
     s_imguiWindows.push_back(new ImGuiResourcesWindow("Resources"));
     s_projectLoadedSignal.connect(dynamic_cast<ImGuiResourcesWindow*>(s_imguiWindows.back()), &ImGuiResourcesWindow::projectLoaded);
-    s_folderCreatedSignal.connect(dynamic_cast<ImGuiResourcesWindow*>(s_imguiWindows.back()), &ImGuiResourcesWindow::folderCreated);
-    s_folderDeletedSignal.connect(dynamic_cast<ImGuiResourcesWindow*>(s_imguiWindows.back()), &ImGuiResourcesWindow::folderDeleted);
-    s_folderRenamedSignal.connect(dynamic_cast<ImGuiResourcesWindow*>(s_imguiWindows.back()), &ImGuiResourcesWindow::folderRenamed);
-    s_resourceCreatedSignal.connect(dynamic_cast<ImGuiResourcesWindow*>(s_imguiWindows.back()), &ImGuiResourcesWindow::resourceCreated);
-    s_resourceDeletedSignal.connect(dynamic_cast<ImGuiResourcesWindow*>(s_imguiWindows.back()), &ImGuiResourcesWindow::resourceDeleted);
-    s_resourceRenamedSignal.connect(dynamic_cast<ImGuiResourcesWindow*>(s_imguiWindows.back()), &ImGuiResourcesWindow::resourceRenamed);
     s_imguiWindows.push_back(new ImGuiResourceEditorWindow("Resource Editor"));
     s_resourceSelectedSignal.connect(dynamic_cast<ImGuiResourceEditorWindow*>(s_imguiWindows.back()), &ImGuiResourceEditorWindow::resourceSelected);
     s_imguiWindows.push_back(new ImGuiExecutionWindow("Execution"));
@@ -52,10 +47,6 @@ void Editor::init()
     s_imguiWindows.push_back(new ImGuiTestWindow("Test"));
     getWindow("Test")->open = false;
 #endif
-
-    m_project = gflow::parser::Project("Test", "assets");
-    s_projectLoadedSignal.emit();
-    m_project->createResource("Pipeline", "test.ppln");
 }
 
 void Editor::run()
@@ -202,6 +193,7 @@ void Editor::initImgui()
 void Editor::connectSignals()
 {
     s_window.getResizeSignal().connect(Editor::recreateSwapchain);
+    s_window.getSaveInputSignal().connect(Editor::saveProject);
 }
 
 bool Editor::renderImgui()
@@ -246,16 +238,16 @@ void Editor::drawImgui()
     {
         if (ImGui::MenuItem("New project"))
         {
-
+            s_showNewProjectModal = true;
         }
         if (ImGui::MenuItem("Load project"))
         {
-
+            s_showLoadProjectModal = true;
         }
         ImGui::Separator();
         if (ImGui::MenuItem("Save project"))
         {
-
+            saveProject();
         }
         ImGui::Separator();
         ImGui::MenuItem("Project Settings", "", &getWindow("Project Settings")->open);
@@ -286,6 +278,12 @@ void Editor::drawImgui()
     createFolderModal();
     deleteFolderModal();
     renameFolderModal();
+    createResourceModal();
+    deleteResourceModal();
+    renameResourceModal();
+
+    newProjectModal();
+    loadProjectModal();
 }
 
 void Editor::updateImguiWindows()
@@ -314,6 +312,11 @@ void Editor::recreateSwapchain(const uint32_t width, const uint32_t height)
     Logger::popContext();
 }
 
+void Editor::saveProject()
+{
+    gflow::parser::ResourceManager::saveAll();
+}
+
 ImGuiEditorWindow* Editor::getWindow(const std::string_view& name)
 {
     for (ImGuiEditorWindow* window : s_imguiWindows)
@@ -326,23 +329,9 @@ ImGuiEditorWindow* Editor::getWindow(const std::string_view& name)
     return nullptr;
 }
 
-gflow::parser::Project& Editor::getProject()
-{
-    if (!m_project.has_value())
-    {
-        throw std::runtime_error("Project not loaded");
-    }
-    return m_project.value();
-}
-
 void Editor::resourceSelected(const std::string& path)
 {
     s_resourceSelectedSignal.emit(path);
-}
-
-bool Editor::hasProject()
-{
-    return m_project.has_value();
 }
 
 void Editor::showCreateFolderModal(const std::string& path)
@@ -396,12 +385,11 @@ void Editor::createFolderModal()
         ImGui::BeginDisabled(strcmp(folderName, "") == 0);
         if (ImGui::Button("Create"))
         {
-            const std::string baseDir = (getProject().getWorkingDir().empty() ? "" : getProject().getWorkingDir() + "/") + s_modalBasePath;
-            const std::string folderPath = baseDir + folderName;
+            const std::string folderPath = gflow::parser::ResourceManager::getWorkingDir() + folderName;
             if (std::filesystem::create_directory(folderPath))
             {
                 Logger::print("Folder created at: " + folderPath, Logger::INFO);
-                s_folderCreatedSignal.emit(s_modalBasePath + folderName + "/");
+                gflow::parser::ResourceManager::getTree().addPath(s_modalBasePath + folderName + "/");
             }
             else
             {
@@ -433,10 +421,10 @@ void Editor::deleteFolderModal()
         ImGui::Text("Are you sure you want to delete this folder?");
         if (ImGui::Button("Confirm"))
         {
-            const std::string baseDir = (getProject().getWorkingDir().empty() ? "" : getProject().getWorkingDir() + "/") + s_modalBasePath;
+            const std::string baseDir = gflow::parser::ResourceManager::getWorkingDir() + s_modalBasePath;
             std::filesystem::remove_all(baseDir);
             Logger::print("Folder deleted at: " + baseDir, Logger::INFO);
-            s_folderDeletedSignal.emit(s_modalBasePath);
+            gflow::parser::ResourceManager::getTree().removePath(s_modalBasePath);
             ImGui::CloseCurrentPopup();
         }
         ImGui::SameLine();
@@ -466,13 +454,127 @@ void Editor::renameFolderModal()
         static char folderName[128] = "";
         ImGui::InputText("New folder Name", folderName, IM_ARRAYSIZE(folderName));
         ImGui::BeginDisabled(strcmp(folderName, "") == 0 || strcmp(folderName, renameFolderName.c_str()) == 0);
-        if (ImGui::Button("Create"))
+        if (ImGui::Button("Rename"))
         {
-            const std::string baseDir = (getProject().getWorkingDir().empty() ? "" : getProject().getWorkingDir() + "/") + s_modalBasePath;
+            const std::string baseDir = gflow::parser::ResourceManager::getWorkingDir() + s_modalBasePath;
             const std::string folderPath = gflow::string::replacePathFilename(baseDir, folderName);
             std::filesystem::rename(baseDir, folderPath);
             Logger::print("Folder renamed from: " + baseDir + " to: " + folderPath, Logger::INFO);
-            s_folderRenamedSignal.emit(gflow::string::replacePathFilename(s_modalBasePath, renameFolderName), folderName);
+            gflow::parser::ResourceManager::getTree().renamePath(gflow::string::replacePathFilename(s_modalBasePath, renameFolderName), folderName);
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndDisabled();
+        ImGui::SameLine();
+        if (ImGui::Button("Cancel"))
+        {
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndPopup();
+    }
+}
+
+void Editor::createResourceModal()
+{
+    if (s_showCreateResourceModal)
+    {
+        ImGui::OpenPopup("Create Resource");
+        s_showCreateResourceModal = false;
+    }
+
+    if (ImGui::BeginPopupModal("Create Resource", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+    {
+        static char resourceName[128] = "";
+        ImGui::InputText("Resource Name", resourceName, IM_ARRAYSIZE(resourceName));
+        const std::vector<std::string> types = gflow::parser::ResourceManager::getResourceTypes();
+        static uint32_t currentSelection = 0;
+        if (ImGui::BeginCombo("Resource type", types[currentSelection].c_str(), 0))
+        {
+            for (uint32_t n = 0; n < types.size(); n++)
+            {
+                const bool isSelected = currentSelection == n;
+                if (ImGui::Selectable(types[n].c_str(), isSelected))
+                    currentSelection = n;
+
+                if (isSelected)
+                    ImGui::SetItemDefaultFocus();
+            }
+            ImGui::EndCombo();
+        }
+        ImGui::BeginDisabled(strcmp(resourceName, "") == 0);
+        if (ImGui::Button("Create"))
+        {
+            gflow::parser::ResourceManager::createResource(types[currentSelection], s_modalBasePath + resourceName);
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndDisabled();
+        ImGui::SameLine();
+        if (ImGui::Button("Cancel"))
+        {
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndPopup();
+    }
+}
+
+void Editor::deleteResourceModal()
+{
+}
+
+void Editor::renameResourceModal()
+{
+}
+
+void Editor::newProjectModal()
+{
+    if (s_showNewProjectModal)
+    {
+        ImGui::OpenPopup("New Project");
+        s_showNewProjectModal = false;
+    }
+
+    if (ImGui::BeginPopupModal("New Project", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+    {
+        static char projectName[128] = "";
+        ImGui::InputText("Project Name", projectName, IM_ARRAYSIZE(projectName));
+        static char projectPath[128] = "";
+        ImGui::InputText("Project Path", projectPath, IM_ARRAYSIZE(projectPath));
+
+        ImGui::BeginDisabled(strcmp(projectName, "") == 0 || strcmp(projectPath, "") == 0 || !std::filesystem::exists(projectPath) || !std::filesystem::is_empty(projectPath));
+        if (ImGui::Button("Create"))
+        {
+            gflow::parser::ResourceManager::resetWorkingDir(projectPath);
+            gflow::parser::ResourceManager::createProject(projectName);
+            s_projectLoadedSignal.emit();
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndDisabled();
+        ImGui::SameLine();
+        if (ImGui::Button("Cancel"))
+        {
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndPopup();
+    }
+}
+
+void Editor::loadProjectModal()
+{
+    if (s_showLoadProjectModal)
+    {
+        ImGui::OpenPopup("Load Project");
+        s_showLoadProjectModal = false;
+    }
+
+    if (ImGui::BeginPopupModal("Load Project", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+    {
+        static char projectPath[128] = "";
+        ImGui::InputText("Project Path", projectPath, IM_ARRAYSIZE(projectPath));
+
+        ImGui::BeginDisabled(strcmp(projectPath, "") == 0 || !std::filesystem::exists(projectPath));
+        if (ImGui::Button("Load"))
+        {
+            gflow::parser::ResourceManager::loadProject(projectPath);
+            s_projectLoadedSignal.emit();
             ImGui::CloseCurrentPopup();
         }
         ImGui::EndDisabled();

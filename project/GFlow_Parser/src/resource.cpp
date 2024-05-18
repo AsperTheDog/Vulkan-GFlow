@@ -4,6 +4,7 @@
 #include <fstream>
 
 #include "project.hpp"
+#include "resource_manager.hpp"
 #include "string_helper.hpp"
 
 namespace gflow::parser
@@ -44,10 +45,10 @@ namespace gflow::parser
         std::ofstream file;
         if (!m_isSubresource)
         {
-            file.open(m_parent->getWorkingDir() + m_path);
+            file.open(ResourceManager::getWorkingDir() + m_path);
             if (!file.is_open())
             {
-                Logger::print("Failed to open file " + m_parent->getWorkingDir() + m_path, Logger::ERR);
+                Logger::print("Failed to open file " + ResourceManager::getWorkingDir() + m_path, Logger::ERR);
                 return "";
             }
         }
@@ -76,7 +77,7 @@ namespace gflow::parser
         if (filename.empty()) filename = m_path;
         ResourceEntries dependencies;
         ResourceData mainResource;
-        std::ifstream file(m_parent->getWorkingDir() + filename);
+        std::ifstream file(ResourceManager::getWorkingDir() + filename);
         if (!file.is_open()) return false;
         std::string entry;
         std::string line;
@@ -129,7 +130,14 @@ namespace gflow::parser
             case ENUM:
                 return { std::to_string(static_cast<EnumExport*>(exportData.data)->id), "" };
             case RESOURCE:
-                return { std::to_string(static_cast<Resource*>(exportData.data)->getID()), static_cast<Resource*>(exportData.data)->serialize() };
+            {
+                Resource** resource = static_cast<Resource**>(exportData.data);
+                if (*resource == nullptr)
+                    return { "null", "" };
+                if (!(*resource)->m_isSubresource)
+                    return { (*resource)->getPath(), "" };
+                return { std::to_string((*resource)->getID()),(*resource)->serialize() };
+            }
             case NONE:
                 Logger::print("Export type not supported", Logger::ERR);
             }
@@ -137,7 +145,7 @@ namespace gflow::parser
         return { "", "" };
     }
 
-    void Resource::set(const std::string& variable, const std::string& value, const ResourceEntries& dependencies)
+    bool Resource::set(const std::string& variable, const std::string& value, const ResourceEntries& dependencies)
     {
         for (const ExportData& exportData : m_exports)
         {
@@ -146,37 +154,63 @@ namespace gflow::parser
             {
             case STRING:
                 *static_cast<std::string*>(exportData.data) = value;
-                break;
+                return true;
             case INT:
                 *static_cast<int*>(exportData.data) = std::stoi(value);
-                break;
+                return true;
             case FLOAT:
                 *static_cast<float*>(exportData.data) = std::stof(value);
-                break;
+                return true;
             case BOOL:
-                *static_cast<bool*>(exportData.data) = value == "true";
-                break;
+                *static_cast<bool*>(exportData.data) = value != "0";
+                return true;
             case ENUM:
                 static_cast<EnumExport*>(exportData.data)->id = std::stoi(value);
-                break;
+                return true;
             case RESOURCE:
             {
-                const uint32_t id = std::stoi(value);
-                if (id == m_id)
+                if (value == "null")
                 {
-                    Logger::print("Resource with id " + std::to_string(id) + " cannot be a dependency of itself", Logger::ERR);
-                    return;
+                    *static_cast<Resource**>(exportData.data) = nullptr;
+                    break;
                 }
-                if (dependencies.contains(id))
-                    static_cast<Resource*>(exportData.data)->deserialize(dependencies.at(id), dependencies);
-                else
+                try
+                {
+                    const uint32_t id = std::stoi(value);
+                    if (id == m_id)
+                    {
+                        Logger::print("Resource with id " + std::to_string(id) + " cannot be a dependency of itself", Logger::ERR);
+                        return false;
+                    }
+                    if (dependencies.contains(id))
+                    {
+                        *static_cast<Resource**>(exportData.data) = exportData.resourceFactory("");
+                        (*static_cast<Resource**>(exportData.data))->deserialize(dependencies.at(id), dependencies);
+                        return true;
+                    }
                     Logger::print("Resource with id " + std::to_string(id) + " not found in dependencies", Logger::ERR);
+                }
+                catch (const std::invalid_argument&)
+                {
+                    Resource& res = ResourceManager::loadResource(value);
+                    *static_cast<Resource**>(exportData.data) = &res;
+                    return true;
+                }
                 break;
             }
             default:
                 Logger::print("Export type not supported for export " + variable, Logger::ERR);
-                return;
+                return false;
             }
         }
+        return false;
+    }
+
+    void Resource::setID(const uint32_t id)
+    {
+        m_id = id;
+        while (m_id == 0 || s_ids.contains(m_id))
+            m_id = rand();
+        s_ids.insert(m_id);
     }
 }

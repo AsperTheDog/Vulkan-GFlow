@@ -4,16 +4,16 @@
 
 namespace gflow::parser
 {
-    Pipeline::Pipeline(const std::string& path, Project* parent) : Resource(path, parent) {}
+    Pipeline::Pipeline(const std::string& path) : Resource(path) {}
 
     std::string Pipeline::getType() const
     {
         return "Pipeline";
     }
 
-    Resource* Pipeline::create(const std::string& path, Project* parent)
+    Resource* Pipeline::create(const std::string& path)
     {
-        Pipeline* pipeline = new Pipeline(path, parent);
+        Pipeline* pipeline = new Pipeline(path);
         if (!pipeline->deserialize())
             pipeline->serialize();
         return pipeline;

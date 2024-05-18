@@ -28,6 +28,8 @@ private:
 	static void updateImguiWindows();
 	static void recreateSwapchain(uint32_t width, uint32_t height);
 
+    static void saveProject();
+
 	inline static SDLWindow s_window{};
 	inline static uint32_t s_environment = UINT32_MAX;
 	inline static uint32_t s_imguiRenderPass = UINT32_MAX;
@@ -39,10 +41,7 @@ private:
 
     
 public: // Editor Management
-    [[nodiscard]] static gflow::parser::Project& getProject();
     static void resourceSelected(const std::string& path);
-
-    [[nodiscard]] static bool hasProject();
     
     static void showCreateFolderModal(const std::string& path);
     static void showRenameFolderModal(const std::string& path);
@@ -55,8 +54,13 @@ private:
     static void createFolderModal();
     static void deleteFolderModal();
     static void renameFolderModal();
+    static void createResourceModal();
+    static void deleteResourceModal();
+    static void renameResourceModal();
 
-    inline static std::optional<gflow::parser::Project> m_project;
+
+    static void newProjectModal();
+    static void loadProjectModal();
 
     inline static bool s_showCreateFolderModal;
     inline static bool s_showRenameFolderModal;
@@ -66,15 +70,11 @@ private:
     inline static bool s_showDeleteResourceModal;
     inline static std::string s_modalBasePath;
 
+    inline static bool s_showNewProjectModal;
+    inline static bool s_showLoadProjectModal;
+
     inline static Signal<> s_projectLoadedSignal;
 
-    inline static Signal<const std::string&> s_folderCreatedSignal;
-    inline static Signal<const std::string&> s_folderDeletedSignal;
-    inline static Signal<const std::string&, const std::string&> s_folderRenamedSignal;
-    inline static Signal<const std::string&> s_resourceCreatedSignal;
-    inline static Signal<const std::string&> s_resourceDeletedSignal;
-    inline static Signal<const std::string&, const std::string&> s_resourceRenamedSignal;
-
-    inline static Signal<std::string_view> s_resourceSelectedSignal;
+    inline static Signal<const std::string&> s_resourceSelectedSignal;
 };
 

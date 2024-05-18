@@ -30,6 +30,9 @@
     <ClInclude Include="include\test.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\resource_manager.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\resource.cpp">
@@ -39,6 +42,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\pipeline.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\resource_manager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

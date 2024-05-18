@@ -10,18 +10,19 @@ namespace gflow::parser
 
     private:
         EXPORT(std::string, name);
+        EXPORT(Test*, test);
         EXPORT_GROUP(gp1, "Group 1");
         EXPORT(int, random1);
-        EXPORT(int, random2);
+        EXPORT(bool, random2);
         EXPORT(int, random3);
-        EXPORT(int, random4);
+        EXPORT(bool, random4);
         EXPORT_GROUP(gp2, "Group 2");
         EXPORT(int, random5);
-        EXPORT(int, random6);
+        EXPORT(bool, random6);
         EXPORT(int, random7);
 
-        Test(const std::string& path, Project* parent) : Resource(path, parent) {}
-        static Resource* create(const std::string& path, Project* parent) { return new Test(path, parent); }
+        explicit Test(const std::string& path) : Resource(path) {}
+        static Resource* create(const std::string& path) { return new Test(path); }
 
         template <typename T>
         friend class Export;

@@ -45,6 +45,7 @@ public:
 	void shutdownImgui() const;
 
 	[[nodiscard]] Signal<uint32_t, uint32_t>& getResizeSignal();
+    [[nodiscard]] Signal<>& getSaveInputSignal();
 
 private:
 	SDL_Window* m_SDLHandle = nullptr;
@@ -53,6 +54,7 @@ private:
 	VkSurfaceKHR m_surface = nullptr;
 
 	Signal<uint32_t, uint32_t> m_resizeSignal;
+    Signal<> m_saveInput;
 
 	friend class Surface;
 	friend class VulkanGPU;
