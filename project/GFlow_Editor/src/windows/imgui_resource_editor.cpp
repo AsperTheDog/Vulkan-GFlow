@@ -143,14 +143,16 @@ void ImGuiResourceEditorWindow::drawSubresource(const std::string& name, std::st
         bool shouldReturn = false;
         if (ImGui::MenuItem("Create embedded"))
         {
-            *resource = data.resourceFactory("");
+            *resource = data.resourceFactory("", &data);
             m_nestedResourcesOpened[stackedName] = true;
             shouldReturn = true;
         }
+        ImGui::BeginDisabled(gflow::parser::ResourceManager::isTypeSubresource(data.getType()));
         if (ImGui::MenuItem("Load"))
         {
 
         }
+        ImGui::EndDisabled();
         if (ImGui::MenuItem("Clear"))
         {
             *resource = nullptr;

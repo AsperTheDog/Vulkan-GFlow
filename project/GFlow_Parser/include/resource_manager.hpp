@@ -3,10 +3,11 @@
 #include <map>
 #include <string>
 
+#include "resource.hpp"
+
 namespace gflow::parser
 {
     class Project;
-    class Resource;
 
     class FileTree
     {
@@ -65,6 +66,8 @@ namespace gflow::parser
         [[nodiscard]] static std::string getProjectPath() { return m_workingDir + m_project; }
         [[nodiscard]] static bool hasProject() { return !m_project.empty(); }
 
+        static bool isTypeSubresource(const std::string& type);
+
         static std::vector<std::string> getResourcePaths(const std::string& type = "");
 
         static void saveAll();
@@ -78,7 +81,7 @@ namespace gflow::parser
 
         inline static FileTree m_fileTree{ "root" };
 
-        static std::unordered_map<std::string, std::function<Resource* (const std::string&)>> s_resourceFactories;
+        static std::unordered_map<std::string, std::function<Resource* (const std::string&, const Resource::ExportData*)>> s_resourceFactories;
     };
 }
 

@@ -10,6 +10,15 @@
 #define EXPORT(type, name) Export<type> ##name{#name, this}
 #define EXPORT_GROUP(name, title) Export<bool> _##name{title, this, true}
 #define EXPORT_ENUM(name, context) Export<EnumExport> ##name{#name, this, context}
+#define EXPORT_RESOURCE(type, name) Export<type*> ##name{#name, this}
+
+#define DECLARE_RESOURCE(type)                                                        \
+        static Resource* create(const std::string& path, const ExportData* metadata); \
+        [[nodiscard]] static std::string getTypeStatic() { return #type; }            \
+        [[nodiscard]] std::string getType() const override { return #type; }          \
+        friend class ResourceManager;                                                 \
+        template <typename U> friend class Export;
+
 
 namespace gflow::parser
 {
@@ -58,11 +67,9 @@ namespace gflow::parser
             DataType type;
             std::string name;
             void* data = nullptr;
-            union
-            {
-                EnumContext* enumContext = nullptr;
-                Resource* (*resourceFactory)(const std::string&);
-            };
+            EnumContext* enumContext = nullptr;
+            Resource* (*resourceFactory)(const std::string&, const Resource::ExportData*);
+            std::string (*getType)();
         };
 
         struct ResourceData
@@ -150,6 +157,7 @@ namespace gflow::parser
         {
             data.type = RESOURCE;
             data.resourceFactory = std::remove_pointer_t<T>::create;
+            data.getType = std::remove_pointer_t<T>::getTypeStatic;
             data.data = &this->m_data;
         }
         else

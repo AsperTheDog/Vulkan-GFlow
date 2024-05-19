@@ -7,7 +7,6 @@
 #include "pipeline.hpp"
 #include "project.hpp"
 #include "string_helper.hpp"
-#include "resource.hpp"
 
 namespace gflow::parser
 {
@@ -157,7 +156,7 @@ namespace gflow::parser
         root = FileDirectory(root.name);
     }
 
-    std::unordered_map<std::string, std::function<Resource* (const std::string&)>> ResourceManager::s_resourceFactories = {
+    std::unordered_map<std::string, std::function<Resource* (const std::string&, const Resource::ExportData*)>> ResourceManager::s_resourceFactories = {
             {"Pipeline", gflow::parser::Pipeline::create},
             {"RenderPass", nullptr},
             {"Image", nullptr},
@@ -179,6 +178,11 @@ namespace gflow::parser
                 return true;
         }
         return false;
+    }
+
+    bool ResourceManager::isTypeSubresource(const std::string& type)
+    {
+        return !s_resourceFactories.contains(type);
     }
 
     std::vector<std::string> ResourceManager::getResourcePaths(const std::string& type)
@@ -263,7 +267,7 @@ namespace gflow::parser
         if (s_resourceFactories[type] == nullptr)
             throw std::runtime_error("Resource type " + type + " is not implemented yet");
 
-        m_resources[path] = s_resourceFactories[type](path);
+        m_resources[path] = s_resourceFactories[type](path, nullptr);
         m_fileTree.addPath(path);
         return *m_resources[path];
     }
@@ -274,7 +278,7 @@ namespace gflow::parser
             return *dynamic_cast<Project*>(m_resources[path]);
 
         resetWorkingDir(string::getPathDirectory(path));
-        m_resources[path] = Project::create(string::getPathFilename(path));
+        m_resources[path] = Project::create(string::getPathFilename(path), nullptr);
         m_project = path;
         return *dynamic_cast<Project*>(m_resources[path]);
     }
@@ -285,7 +289,7 @@ namespace gflow::parser
         if (m_resources.contains(path))
             throw std::runtime_error("Resource already exists");
 
-        m_resources[path] = Project::create(path);
+        m_resources[path] = Project::create(path, nullptr);
         *dynamic_cast<Project*>(m_resources[path])->name = name;
         m_project = path;
         return *dynamic_cast<Project*>(m_resources[path]);

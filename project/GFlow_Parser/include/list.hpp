@@ -2,7 +2,8 @@
 #include "resource.hpp"
 
 #define EXPORT_LIST(type, name) Export<List<type>*> ##name{#name, this}
-#define EXPORT_LIST_ENUM(name, context) Export<List<EnumExport>*> ##name{#name, this, context}
+#define EXPORT_ENUM_LIST(name, context) Export<List<EnumExport>*> ##name{#name, this, context}
+#define EXPORT_RESOURCE_LIST(type, name) Export<List<type*>*> ##name{#name, this}
 
 namespace gflow::parser
 {
@@ -11,7 +12,6 @@ namespace gflow::parser
     class List final : public Resource
     {
     public:
-        [[nodiscard]] std::string getType() const override { return "List"; }
         [[nodiscard]] EnumContext* getEnumContext() const { return m_enumContext; }
 
         [[nodiscard]] int size() const { return m_size; }
@@ -19,6 +19,7 @@ namespace gflow::parser
         [[nodiscard]] T& operator[](int index) { return m_data[index]; }
 
         void setEnumContext(EnumContext* enumContext) { m_enumContext = enumContext; }
+        void setResourceType(const std::string& resourceType) { m_resourceType = resourceType; }
 
         bool set(const std::string& variable, const std::string& value, const ResourceEntries& dependencies) override;
         [[nodiscard]] std::vector<ExportData> getCustomExports() override;
@@ -29,18 +30,13 @@ namespace gflow::parser
         int m_size = 0;
         std::vector<T> m_data;
         EnumContext* m_enumContext = nullptr;
+        std::string m_resourceType;
 
         explicit List(const std::string& path);
-        static Resource* create(const std::string& path);
 
-    public:
+        DECLARE_RESOURCE(List)
 
     private:
-        friend class ResourceManager;
-
-        template <typename U>
-        friend class Export;
-
         static_assert(!std::is_same_v<T, bool>, "bool is not allowed as the template parameter for MyClass");
     };
 
@@ -114,12 +110,11 @@ namespace gflow::parser
     List<T>::List(const std::string& path) : Resource(path) {}
 
     template <typename T>
-    Resource* List<T>::create(const std::string& path)
+    Resource* List<T>::create(const std::string& path, const  ExportData* metadata)
     {
-        List* list = new List(path);
-        if (!list->deserialize())
-            list->serialize();
-        return list;
+        List* lst = new List(path);
+        if (metadata) lst->setEnumContext(metadata->enumContext);
+        return lst;
     }
 
     template <typename T>
@@ -145,6 +140,7 @@ namespace gflow::parser
         data.name = name;
         data.type = RESOURCE;
         data.resourceFactory = List<T>::create;
+        data.getType = List<T>::getTypeStatic;
         data.data = &this->m_data;
 
         parent->registerExport(data);
@@ -158,7 +154,8 @@ namespace gflow::parser
         data.name = name;
         data.type = RESOURCE;
         data.resourceFactory = List<T>::create;
-        m_data.setEnumContext(&enumContext);
+        data.getType = List<T>::getTypeStatic;
+        data.enumContext = &enumContext;
         data.data = &this->m_data;
 
         parent->registerExport(data);

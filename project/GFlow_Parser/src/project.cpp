@@ -9,12 +9,7 @@ namespace gflow::parser
 {
     Project::Project(const std::string& path) : Resource(path) {}
 
-    std::string Project::getType() const
-    {
-        return "Project";
-    }
-
-    Resource* Project::create(const std::string& path)
+    Resource* Project::create(const std::string& path, const ExportData* metadata)
     {
         Project* project = new Project(path);
         if (!project->deserialize())

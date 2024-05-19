@@ -184,7 +184,7 @@ namespace gflow::parser
                     }
                     if (dependencies.contains(id))
                     {
-                        *static_cast<Resource**>(exportData.data) = exportData.resourceFactory("");
+                        *static_cast<Resource**>(exportData.data) = exportData.resourceFactory("", &exportData);
                         (*static_cast<Resource**>(exportData.data))->deserialize(dependencies.at(id), dependencies);
                         return true;
                     }

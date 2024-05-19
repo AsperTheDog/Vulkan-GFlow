@@ -12,15 +12,13 @@ namespace gflow::parser
     {
     public:
         [[nodiscard]] std::string getName() const { return *name; }
-        [[nodiscard]] std::string getType() const override;
 
     private:
         EXPORT(std::string, name);
 
         explicit Project(const std::string& path);
-        static Resource* create(const std::string& path);
 
-        friend class ResourceManager;
+        DECLARE_RESOURCE(Project)
     };
 }
 

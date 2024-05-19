@@ -8,16 +8,15 @@ namespace gflow::parser
 {
     class Pipeline final : public Resource
     {
-    public:
-        [[nodiscard]] std::string getType() const override;
-
     private:
-        EXPORT_LIST(Test*, testList);
+        EXPORT_RESOURCE_LIST(Test, testList);
+        EXPORT_ENUM(testEnum, s_primitiveTopology);
+        EXPORT_ENUM_LIST(testEnumList, s_primitiveTopology);
+        EXPORT_RESOURCE(Pipeline, parent);
 
         explicit Pipeline(const std::string& path);
-        static Resource* create(const std::string& path);
 
-        friend class ResourceManager;
+        DECLARE_RESOURCE(Pipeline)
 
     private:
         static EnumContext s_primitiveTopology;
