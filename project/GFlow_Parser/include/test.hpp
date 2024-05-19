@@ -7,7 +7,7 @@ namespace gflow::parser
     {
     private:
         EXPORT(std::string, name);
-        EXPORT(Test*, test);
+        EXPORT_RESOURCE(Test, test);
         EXPORT_GROUP(gp1, "Group 1");
         EXPORT(int, random1);
         EXPORT(bool, random2);

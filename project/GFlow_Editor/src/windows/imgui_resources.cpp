@@ -35,21 +35,21 @@ bool ImGuiResourcesWindow::addTreeNode(const std::string& name, const std::strin
         ImGui::Text(("Make changes to " + name).c_str());
         ImGui::SeparatorEx(ImGuiSeparatorFlags_Horizontal, 3.0f);
         ImGui::BeginDisabled(path.empty());
-        if (ImGui::MenuItem("Delete"))
+        if (ImGui::MenuItem(IMGUI_NAME("Delete")))
         {
             Editor::showDeleteFolderModal(path);
         }
-        if (ImGui::MenuItem("Rename"))
+        if (ImGui::MenuItem(IMGUI_NAME("Rename")))
         {
             Editor::showRenameFolderModal(path);
         }
         ImGui::EndDisabled();
         ImGui::Separator();
-        if (ImGui::MenuItem("Create folder"))
+        if (ImGui::MenuItem(IMGUI_NAME("Create folder")))
         {
             Editor::showCreateFolderModal(path);
         }
-        if (ImGui::MenuItem("Create resource"))
+        if (ImGui::MenuItem(IMGUI_NAME("Create resource")))
         {
             Editor::showCreateResourceModal(path);
         }
@@ -60,16 +60,16 @@ bool ImGuiResourcesWindow::addTreeNode(const std::string& name, const std::strin
 
 bool ImGuiResourcesWindow::addSelectable(const std::string& name, const bool selected) const
 {
-    const bool ret = ImGui::Selectable(name.c_str(), selected);
+    const bool ret = ImGui::Selectable(IMGUI_NAME(name), selected);
     if (ImGui::BeginPopupContextItem())
     {
         ImGui::Text(("Make changes to " + name).c_str());
         ImGui::SeparatorEx(ImGuiSeparatorFlags_Horizontal, 3.0f);
-        if (ImGui::MenuItem("Delete"))
+        if (ImGui::MenuItem(IMGUI_NAME("Delete")))
         {
 
         }
-        if (ImGui::MenuItem("Rename"))
+        if (ImGui::MenuItem(IMGUI_NAME("Rename")))
         {
 
         }
@@ -80,22 +80,23 @@ bool ImGuiResourcesWindow::addSelectable(const std::string& name, const bool sel
 
 void ImGuiResourcesWindow::draw()
 {
+    ImGui::Begin(m_name.c_str(), &open);
+    drawContent();
+    ImGui::End();
+}
+
+void ImGuiResourcesWindow::drawContent()
+{
     if (!gflow::parser::ResourceManager::hasProject()) return;
 
     std::vector<std::pair<std::string, bool>> folderStack;
 
-    ImGui::Begin(m_name.c_str(), &open);
-
-    if (ImGui::Button("Refresh")) 
+    if (ImGui::Button(IMGUI_NAME("Refresh")))
         gflow::parser::ResourceManager::resetWorkingDir(gflow::parser::ResourceManager::getWorkingDir());
 
     ImGui::Separator();
 
-    if (!addTreeNode("root", ""))
-    {
-        ImGui::End();
-        return;
-    }
+    if (!addTreeNode(IMGUI_NAME("root"), "")) return;
 
     const std::vector<std::string> orderedPaths = gflow::parser::ResourceManager::getTree().getOrderedPaths();
     for (const std::string& path : orderedPaths)
@@ -114,19 +115,20 @@ void ImGuiResourcesWindow::draw()
             pushFolder(folderStack, path, name);
             continue;
         }
-        if (gflow::parser::ResourceManager::hasResource(path) && addSelectable(name, path == m_selectedResource) && path != m_selectedResource)
+        if (gflow::parser::ResourceManager::hasResource(path) && (m_typeFilter.empty() || gflow::parser::ResourceManager::getResourceType(path) == m_typeFilter))
         {
-            m_selectedResource = path;
-            Editor::resourceSelected(path);
+            if (addSelectable(name, path == m_selectedResource) && path != m_selectedResource)
+            {
+                m_selectedResource = path;
+                m_resourceSelectedSignal.emit(m_selectedResource);
+            }
         }
     }
-
     ImGui::TreePop();
-    ImGui::End();
 }
 
 void ImGuiResourcesWindow::projectLoaded()
 {
-    Editor::resourceSelected("");
     m_selectedResource = "";
+    m_resourceSelectedSignal.emit(m_selectedResource);
 }

@@ -101,14 +101,14 @@ void ImGuiResourceEditorWindow::drawResource(const std::string& stackedName, voi
             drawEnum(exportElem.name, exportElem.data, exportElem.enumContext);
             break;
         case gflow::parser::DataType::RESOURCE:
-            drawSubresource(exportElem.name, stackedName, exportElem);
+            drawSubresource(exportElem.name, stackedName, exportElem, *resource);
             break;
         }
     }
     (*resource)->exportsChanged();
 }
 
-void ImGuiResourceEditorWindow::drawSubresource(const std::string& name, std::string stackedName, const gflow::parser::Resource::ExportData& data) const
+void ImGuiResourceEditorWindow::drawSubresource(const std::string& name, std::string stackedName, const gflow::parser::Resource::ExportData& data, gflow::parser::Resource* parent) const
 {
     stackedName += "." + name;
 
@@ -150,11 +150,15 @@ void ImGuiResourceEditorWindow::drawSubresource(const std::string& name, std::st
         ImGui::BeginDisabled(gflow::parser::ResourceManager::isTypeSubresource(data.getType()));
         if (ImGui::MenuItem("Load"))
         {
-
+            Editor::showResourcePickerModal(parent, name);
         }
         ImGui::EndDisabled();
         if (ImGui::MenuItem("Clear"))
         {
+            if (*resource != nullptr && (*resource)->isSubresource())
+            {
+                delete *resource;
+            }
             *resource = nullptr;
             m_nestedResourcesOpened[stackedName] = false;
             shouldReturn = true;

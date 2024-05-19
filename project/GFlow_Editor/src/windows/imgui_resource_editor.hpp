@@ -22,7 +22,7 @@ private:
     void drawString(const std::string& name, void* data) const;
     void drawBool(const std::string& name, void* data) const;
     void drawResource(const std::string& stackedName, void* data) const;
-    void drawSubresource(const std::string& name, std::string stackedName, const gflow::parser::Resource::ExportData& data) const;
+    void drawSubresource(const std::string& name, std::string stackedName, const gflow::parser::Resource::ExportData& data, gflow::parser::Resource* parent) const;
     void drawEnum(const std::string& name, void* data, const gflow::parser::EnumContext* context) const;
 
 

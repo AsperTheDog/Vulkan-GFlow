@@ -1,6 +1,8 @@
 #pragma once
 #include <string>
 
+#define IMGUI_NAME(name) (name + std::string("##") + m_name).c_str()
+
 class ImGuiEditorWindow
 {
 public:

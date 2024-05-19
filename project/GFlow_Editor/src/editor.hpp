@@ -1,11 +1,9 @@
 #pragma once
-#include <optional>
 
 #include "ImNodeFlow.h"
 #include "project.hpp"
 #include "sdl_window.hpp"
-
-class ImGuiEditorWindow;
+#include "windows/imgui_resources.hpp"
 
 class Editor
 {
@@ -50,6 +48,8 @@ public: // Editor Management
     static void showRenameResourceModal(const std::string& path);
     static void showDeleteResourceModal(const std::string& path);
 
+    static void showResourcePickerModal(gflow::parser::Resource* parent, const std::string& variable);
+
 private:
     static void createFolderModal();
     static void deleteFolderModal();
@@ -58,9 +58,10 @@ private:
     static void deleteResourceModal();
     static void renameResourceModal();
 
-
     static void newProjectModal();
     static void loadProjectModal();
+
+    static void resourcePickerModal();
 
     inline static bool s_showCreateFolderModal;
     inline static bool s_showRenameFolderModal;
@@ -72,6 +73,12 @@ private:
 
     inline static bool s_showNewProjectModal;
     inline static bool s_showLoadProjectModal;
+
+    inline static bool s_showResourcePickerModal;
+    inline static gflow::parser::Resource* s_resourcePickerParent;
+    inline static std::string s_resourcePickerElement;
+
+    inline static ImGuiResourcesWindow s_getResourceRefWindow{"Resource Picker"};
 
     inline static Signal<> s_projectLoadedSignal;
 

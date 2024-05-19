@@ -35,6 +35,7 @@ void Editor::init(const std::string& projectPath)
 
     s_imguiWindows.push_back(new ImGuiResourcesWindow("Resources"));
     s_projectLoadedSignal.connect(dynamic_cast<ImGuiResourcesWindow*>(s_imguiWindows.back()), &ImGuiResourcesWindow::projectLoaded);
+    dynamic_cast<ImGuiResourcesWindow*>(s_imguiWindows.back())->getResourceSelectedSignal().connect(Editor::resourceSelected);
     s_imguiWindows.push_back(new ImGuiResourceEditorWindow("Resource Editor"));
     s_resourceSelectedSignal.connect(dynamic_cast<ImGuiResourceEditorWindow*>(s_imguiWindows.back()), &ImGuiResourceEditorWindow::resourceSelected);
     s_imguiWindows.push_back(new ImGuiExecutionWindow("Execution"));
@@ -290,6 +291,8 @@ void Editor::drawImgui()
 
     newProjectModal();
     loadProjectModal();
+
+    resourcePickerModal();
 }
 
 void Editor::updateImguiWindows()
@@ -374,6 +377,43 @@ void Editor::showDeleteResourceModal(const std::string& path)
 {
     s_showDeleteResourceModal = true;
     s_modalBasePath = path;
+}
+
+void Editor::showResourcePickerModal(gflow::parser::Resource* parent, const std::string& variable)
+{
+    s_resourcePickerParent = parent;
+    s_resourcePickerElement = variable;
+    s_showResourcePickerModal = true;
+}
+
+void Editor::resourcePickerModal()
+{
+    if (s_showResourcePickerModal)
+    {
+        ImGui::OpenPopup("Resource Picker");
+        s_showResourcePickerModal = false;
+    }
+
+    if (ImGui::BeginPopupModal("Resource Picker", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+    {
+        ImGui::Text("Select a resource to edit");
+        ImGui::BeginChild("Picker filetree", ImVec2(400, 500), ImGuiChildFlags_Border);
+        s_getResourceRefWindow.drawContent();
+        ImGui::EndChild();
+        ImGui::BeginDisabled(s_getResourceRefWindow.getSelectedResource().empty());
+        if (ImGui::Button("Select##Picker"))
+        {
+            s_resourcePickerParent->set(s_resourcePickerElement, s_getResourceRefWindow.getSelectedResource(), {});
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndDisabled();
+        ImGui::SameLine();
+        if (ImGui::Button("Cancel##Picker"))
+        {
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndPopup();
+    }
 }
 
 void Editor::createFolderModal()

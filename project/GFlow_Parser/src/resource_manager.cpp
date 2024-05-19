@@ -180,6 +180,13 @@ namespace gflow::parser
         return false;
     }
 
+    std::string ResourceManager::getResourceType(const std::string& path)
+    {
+        if (!hasResource(path))
+            return "";
+        return m_resources.at(path)->getType();
+    }
+
     bool ResourceManager::isTypeSubresource(const std::string& type)
     {
         return !s_resourceFactories.contains(type);
@@ -215,7 +222,11 @@ namespace gflow::parser
 
     Resource& ResourceManager::loadResource(const std::string& path)
     {
+        if (m_resources.contains(path))
+            return *m_resources[path];
+
         std::string resolvedPath = m_workingDir + path;
+
         std::ifstream file{ resolvedPath };
         if (!file.is_open() && !m_workingDir.empty())
         {
@@ -225,9 +236,6 @@ namespace gflow::parser
 
         if (!file.is_open())
             throw std::runtime_error("Failed to open resource file " + path);
-
-        if (m_resources.contains(resolvedPath))
-            return *m_resources[resolvedPath];
 
         std::string resourceType;
         for (std::string line; std::getline(file, line);)

@@ -107,6 +107,7 @@ namespace gflow::parser
 
         [[nodiscard]] std::string getPath() const { return m_path; }
         [[nodiscard]] uint32_t getID() const { return m_id; }
+        [[nodiscard]] bool isSubresource() const { return m_isSubresource; }
 
     protected:
         explicit Resource(const std::string_view path) : m_isSubresource(path.empty()), m_path(path) { setID(0); }

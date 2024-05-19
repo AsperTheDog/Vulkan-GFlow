@@ -19,7 +19,6 @@ namespace gflow::parser
         [[nodiscard]] T& operator[](int index) { return m_data[index]; }
 
         void setEnumContext(EnumContext* enumContext) { m_enumContext = enumContext; }
-        void setResourceType(const std::string& resourceType) { m_resourceType = resourceType; }
 
         bool set(const std::string& variable, const std::string& value, const ResourceEntries& dependencies) override;
         [[nodiscard]] std::vector<ExportData> getCustomExports() override;
@@ -30,7 +29,6 @@ namespace gflow::parser
         int m_size = 0;
         std::vector<T> m_data;
         EnumContext* m_enumContext = nullptr;
-        std::string m_resourceType;
 
         explicit List(const std::string& path);
 
@@ -79,6 +77,7 @@ namespace gflow::parser
             {
                 data.type = RESOURCE;
                 data.resourceFactory = std::remove_pointer_t<T>::create;
+                data.getType = std::remove_pointer_t<T>::getTypeStatic;
             }
             data.name = std::to_string(i);
             exports.push_back(data);
@@ -113,7 +112,10 @@ namespace gflow::parser
     Resource* List<T>::create(const std::string& path, const  ExportData* metadata)
     {
         List* lst = new List(path);
-        if (metadata) lst->setEnumContext(metadata->enumContext);
+        if (metadata)
+        {
+            lst->setEnumContext(metadata->enumContext);
+        }
         return lst;
     }
 
