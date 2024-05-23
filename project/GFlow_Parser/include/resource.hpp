@@ -1,15 +1,16 @@
 #pragma once
-#include <functional>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
+#include "enum_contexts.hpp"
 #include "utils/logger.hpp"
 
 #define EXPORT(type, name) Export<type> ##name{#name, this}
 #define EXPORT_GROUP(name, title) Export<bool> _##name{title, this, true}
 #define EXPORT_ENUM(name, context) Export<EnumExport> ##name{#name, this, context}
+#define EXPORT_BITMASK(name, context) Export<EnumBitmask> ##name{#name, this, context}
 #define EXPORT_RESOURCE(type, name) Export<type*> ##name{#name, this}
 
 #define DECLARE_RESOURCE(type)                                                        \
@@ -32,16 +33,20 @@ namespace gflow::parser
         INT,
         FLOAT,
         BOOL,
+        VEC2,
+        VEC3,
+        VEC4,
         ENUM,
+        ENUM_BITMASK,
         RESOURCE
     };
 
     struct EnumExport { uint32_t id; };
-    struct EnumContext
-    {
-        std::vector<const char*> names;
-        std::vector<uint32_t> values;
-    };
+    struct EnumBitmask { uint32_t mask; };
+
+    struct Vec2 { float x, y; };
+    struct Vec3 { float x, y, z; };
+    struct Vec4 { float x, y, z, w; };
 
     template <typename T>
     class Export
@@ -154,6 +159,9 @@ namespace gflow::parser
         else if constexpr (std::is_same_v<T, int>) data.type = INT;
         else if constexpr (std::is_same_v<T, float>) data.type = FLOAT;
         else if constexpr (std::is_same_v<T, bool>) data.type = BOOL;
+        else if constexpr (std::is_same_v<T, Vec2>) data.type = VEC2;
+        else if constexpr (std::is_same_v<T, Vec3>) data.type = VEC3;
+        else if constexpr (std::is_same_v<T, Vec4>) data.type = VEC4;
         else if constexpr (std::is_pointer_v<T> && std::is_base_of_v<Resource, std::remove_pointer_t<T>>)
         {
             data.type = RESOURCE;
@@ -179,7 +187,14 @@ namespace gflow::parser
         data.name = name;
         data.enumContext = &enumContext;
         data.data = &this->m_data;
-        data.type = ENUM;
+        if constexpr (std::is_same_v<T, EnumExport>) data.type = ENUM;
+        else if constexpr (std::is_same_v<T, EnumBitmask>) data.type = ENUM_BITMASK;
+        else
+        {
+            data.type = NONE;
+            Logger::print("Export type not supported for enum export", Logger::ERR);
+            return;
+        }
         parent->registerExport(data);
     }
 }

@@ -4,8 +4,8 @@
 #include <fstream>
 #include <ranges>
 
-#include "pipeline.hpp"
-#include "project.hpp"
+#include "resources/pipeline.hpp"
+#include "resources/project.hpp"
 #include "string_helper.hpp"
 
 namespace gflow::parser
@@ -157,12 +157,11 @@ namespace gflow::parser
     }
 
     std::unordered_map<std::string, std::function<Resource* (const std::string&, const Resource::ExportData*)>> ResourceManager::s_resourceFactories = {
-            {"Pipeline", gflow::parser::Pipeline::create},
-            {"RenderPass", nullptr},
-            {"Image", nullptr},
-            {"VertexBuffer", nullptr},
-            {"IndexBuffer", nullptr},
-            {"Buffer", nullptr}
+        {gflow::parser::Pipeline::getTypeStatic(), gflow::parser::Pipeline::create},
+        {gflow::parser::PipelineVertexInputState::getTypeStatic(), gflow::parser::PipelineVertexInputState::create},
+        {gflow::parser::PipelineInputAssemblyState::getTypeStatic(), gflow::parser::PipelineInputAssemblyState::create},
+        {gflow::parser::PipelineRasterizationState::getTypeStatic(), gflow::parser::PipelineRasterizationState::create},
+        {gflow::parser::PipelineDepthStencilState::getTypeStatic(), gflow::parser::PipelineDepthStencilState::create}
     };
 
     bool ResourceManager::hasResource(const std::string& path)

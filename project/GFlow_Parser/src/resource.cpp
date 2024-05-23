@@ -3,7 +3,7 @@
 #include <filesystem>
 #include <fstream>
 
-#include "project.hpp"
+#include "resources/project.hpp"
 #include "resource_manager.hpp"
 #include "string_helper.hpp"
 
@@ -127,6 +127,13 @@ namespace gflow::parser
                 return { std::to_string(*static_cast<float*>(exportData.data)), "" };
             case BOOL:
                 return { std::to_string(*static_cast<bool*>(exportData.data)), "" };
+            case VEC2:
+                return { std::to_string(static_cast<Vec2*>(exportData.data)->x) + ", " + std::to_string(static_cast<Vec2*>(exportData.data)->y), "" };
+            case VEC3:
+                return { std::to_string(static_cast<Vec3*>(exportData.data)->x) + ", " + std::to_string(static_cast<Vec3*>(exportData.data)->y) + ", " + std::to_string(static_cast<Vec3*>(exportData.data)->z), "" };
+            case VEC4:
+                return { std::to_string(static_cast<Vec4*>(exportData.data)->x) + ", " + std::to_string(static_cast<Vec4*>(exportData.data)->y) + ", " + std::to_string(static_cast<Vec4*>(exportData.data)->z) + ", " + std::to_string(static_cast<Vec4*>(exportData.data)->w), "" };
+            case ENUM_BITMASK:
             case ENUM:
                 return { std::to_string(static_cast<EnumExport*>(exportData.data)->id), "" };
             case RESOURCE:
@@ -164,6 +171,49 @@ namespace gflow::parser
             case BOOL:
                 *static_cast<bool*>(exportData.data) = value != "0";
                 return true;
+            case VEC2:
+            {
+                Vec2* vec = static_cast<Vec2*>(exportData.data);
+                const std::vector<std::string> values = string::split(value, ", ");
+                if (values.size() != 2)
+                {
+                    Logger::print("Invalid value for Vec2: " + value, Logger::ERR);
+                    return false;
+                }
+                vec->x = std::stof(values[0]);
+                vec->y = std::stof(values[1]);
+                return true;
+            }
+            case VEC3:
+            {
+                Vec3* vec = static_cast<Vec3*>(exportData.data);
+                const std::vector<std::string> values = string::split(value, ", ");
+                if (values.size() != 3)
+                {
+                    Logger::print("Invalid value for Vec3: " + value, Logger::ERR);
+                    return false;
+                }
+                vec->x = std::stof(values[0]);
+                vec->y = std::stof(values[1]);
+                vec->z = std::stof(values[2]);
+                return true;
+            }
+            case VEC4:
+            {
+                Vec4* vec = static_cast<Vec4*>(exportData.data);
+                const std::vector<std::string> values = string::split(value, ", ");
+                if (values.size() != 4)
+                {
+                    Logger::print("Invalid value for Vec3: " + value, Logger::ERR);
+                    return false;
+                }
+                vec->x = std::stof(values[0]);
+                vec->y = std::stof(values[1]);
+                vec->z = std::stof(values[2]);
+                vec->w = std::stof(values[3]);
+                return true;
+            }
+            case ENUM_BITMASK:
             case ENUM:
                 static_cast<EnumExport*>(exportData.data)->id = std::stoi(value);
                 return true;
@@ -196,7 +246,6 @@ namespace gflow::parser
                     *static_cast<Resource**>(exportData.data) = &res;
                     return true;
                 }
-                break;
             }
             default:
                 Logger::print("Export type not supported for export " + variable, Logger::ERR);

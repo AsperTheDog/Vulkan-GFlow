@@ -20,17 +20,17 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\resource.hpp" />
-    <ClInclude Include="include\project.hpp" />
+    <ClInclude Include="include\enum_contexts.hpp" />
+    <ClInclude Include="include\resources\project.hpp" />
+    <ClInclude Include="include\resources\vertex_binding.hpp" />
     <ClInclude Include="include\string_helper.hpp" />
-    <ClInclude Include="include\pipeline.hpp" />
-    <ClInclude Include="include\test.hpp" />
+    <ClInclude Include="include\resources\pipeline.hpp" />
     <ClInclude Include="include\resource_manager.hpp" />
-    <ClInclude Include="include\list.hpp" />
+    <ClInclude Include="include\resources\list.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\enum_contexts.cpp" />
     <ClCompile Include="src\resource_manager.cpp" />
-    <ClCompile Include="src\pipeline.cpp" />
-    <ClCompile Include="src\project.cpp" />
     <ClCompile Include="src\resource.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

@@ -16,10 +16,18 @@ namespace gflow::parser
     private:
         EXPORT(std::string, name);
 
-        explicit Project(const std::string& path);
+        explicit Project(const std::string& path) : Resource(path) {}
 
         DECLARE_RESOURCE(Project)
     };
+
+    inline Resource* Project::create(const std::string& path, const ExportData* metadata)
+    {
+        Project* project = new Project(path);
+        if (!project->deserialize())
+            project->serialize();
+        return project;
+    }
 }
 
 

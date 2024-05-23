@@ -2,9 +2,11 @@
 
 #include "editor.hpp"
 #include "imgui.h"
-#include "project.hpp"
+#include "resources/project.hpp"
 #include "resource.hpp"
 #include "resource_manager.hpp"
+
+#define SAMELINE_OFFSET 200
 
 ImGuiResourceEditorWindow::ImGuiResourceEditorWindow(const std::string_view& name) : ImGuiEditorWindow(name)
 {
@@ -35,7 +37,7 @@ void ImGuiResourceEditorWindow::draw()
 void ImGuiResourceEditorWindow::drawFloat(const std::string& name, void* data) const
 {
     ImGui::Text(name.c_str());
-    ImGui::SameLine(150);
+    ImGui::SameLine(SAMELINE_OFFSET);
     ImGui::InputFloat(("##" + name).c_str(), static_cast<float*>(data), 0.1f, 1.0f);
     ImGui::Spacing();
 }
@@ -43,7 +45,7 @@ void ImGuiResourceEditorWindow::drawFloat(const std::string& name, void* data) c
 void ImGuiResourceEditorWindow::drawInt(const std::string& name, void* data) const
 {
     ImGui::Text(name.c_str());
-    ImGui::SameLine(150);
+    ImGui::SameLine(SAMELINE_OFFSET);
     ImGui::InputInt(("##" + name).c_str(), static_cast<int*>(data), 1, 10);
     ImGui::Spacing();
 }
@@ -54,7 +56,7 @@ void ImGuiResourceEditorWindow::drawString(const std::string& name, void* data) 
     char buff[256] = "";
     if (!str->empty()) strcpy_s(buff, str->c_str());
     ImGui::Text(name.c_str());
-    ImGui::SameLine(150);
+    ImGui::SameLine(SAMELINE_OFFSET);
     ImGui::InputText(("##" + name).c_str(), buff, 256);
     str->assign(buff);
     ImGui::Spacing();
@@ -63,8 +65,32 @@ void ImGuiResourceEditorWindow::drawString(const std::string& name, void* data) 
 void ImGuiResourceEditorWindow::drawBool(const std::string& name, void* data) const
 {
     ImGui::Text(name.c_str());
-    ImGui::SameLine(150);
+    ImGui::SameLine(SAMELINE_OFFSET);
     ImGui::Checkbox(("##" + name).c_str(), static_cast<bool*>(data));
+    ImGui::Spacing();
+}
+
+void ImGuiResourceEditorWindow::drawVec2(const std::string& name, void* data) const
+{
+    ImGui::Text(name.c_str());
+    ImGui::SameLine(SAMELINE_OFFSET);
+    ImGui::InputFloat2(("##" + name).c_str(), static_cast<float*>(data));
+    ImGui::Spacing();
+}
+
+void ImGuiResourceEditorWindow::drawVec3(const std::string& name, void* data) const
+{
+    ImGui::Text(name.c_str());
+    ImGui::SameLine(SAMELINE_OFFSET);
+    ImGui::InputFloat3(("##" + name).c_str(), static_cast<float*>(data));
+    ImGui::Spacing();
+}
+
+void ImGuiResourceEditorWindow::drawVec4(const std::string& name, void* data) const
+{
+    ImGui::Text(name.c_str());
+    ImGui::SameLine(SAMELINE_OFFSET);
+    ImGui::InputFloat4(("##" + name).c_str(), static_cast<float*>(data));
     ImGui::Spacing();
 }
 
@@ -77,7 +103,7 @@ void ImGuiResourceEditorWindow::drawResource(const std::string& stackedName, voi
     {
         if (exportElem.data == nullptr)
         {
-	        isHeaderOpen = ImGui::CollapsingHeader(exportElem.name.data());
+            isHeaderOpen = ImGui::CollapsingHeader(exportElem.name.data());
             ImGui::Spacing();
             continue;
         }
@@ -97,8 +123,20 @@ void ImGuiResourceEditorWindow::drawResource(const std::string& stackedName, voi
         case gflow::parser::DataType::BOOL:
             drawBool(exportElem.name, exportElem.data);
             break;
+        case gflow::parser::DataType::VEC2:
+            drawVec2(exportElem.name, exportElem.data);
+            break;
+        case gflow::parser::DataType::VEC3:
+            drawVec3(exportElem.name, exportElem.data);
+            break;
+        case gflow::parser::DataType::VEC4:
+            drawVec4(exportElem.name, exportElem.data);
+            break;
         case gflow::parser::DataType::ENUM:
             drawEnum(exportElem.name, exportElem.data, exportElem.enumContext);
+            break;
+        case gflow::parser::DataType::ENUM_BITMASK:
+            drawBitmask(exportElem.name, exportElem.data, exportElem.enumContext);
             break;
         case gflow::parser::DataType::RESOURCE:
             drawSubresource(exportElem.name, stackedName, exportElem, *resource);
@@ -119,9 +157,9 @@ void ImGuiResourceEditorWindow::drawSubresource(const std::string& name, std::st
         subResource = (*resource)->getType();
     }
 
-    if (!m_nestedResourcesOpened.contains(stackedName)) 
+    if (!m_nestedResourcesOpened.contains(stackedName))
         m_nestedResourcesOpened.emplace(stackedName, false);
-    
+
     bool childBegan = false;
     if (m_nestedResourcesOpened[stackedName])
     {
@@ -130,7 +168,7 @@ void ImGuiResourceEditorWindow::drawSubresource(const std::string& name, std::st
     }
 
     ImGui::Text(name.c_str());
-    ImGui::SameLine(150);
+    ImGui::SameLine(SAMELINE_OFFSET);
     if (ImGui::Button((subResource + "##" + stackedName).c_str()) && *resource != nullptr)
     {
         m_nestedResourcesOpened[stackedName] = !m_nestedResourcesOpened[stackedName];
@@ -157,7 +195,7 @@ void ImGuiResourceEditorWindow::drawSubresource(const std::string& name, std::st
         {
             if (*resource != nullptr && (*resource)->isSubresource())
             {
-                delete *resource;
+                delete* resource;
             }
             *resource = nullptr;
             m_nestedResourcesOpened[stackedName] = false;
@@ -174,7 +212,6 @@ void ImGuiResourceEditorWindow::drawSubresource(const std::string& name, std::st
     if (m_nestedResourcesOpened[stackedName])
     {
         ImGui::Separator();
-        ImGui::Indent();
         drawResource(stackedName, data.data);
         ImGui::EndChild();
     }
@@ -184,7 +221,7 @@ void ImGuiResourceEditorWindow::drawSubresource(const std::string& name, std::st
 void ImGuiResourceEditorWindow::drawEnum(const std::string& name, void* data, const gflow::parser::EnumContext* context) const
 {
     ImGui::Text(name.c_str());
-    ImGui::SameLine(150);
+    ImGui::SameLine(SAMELINE_OFFSET);
     uint32_t currentSelection = *static_cast<uint32_t*>(data);
     if (ImGui::BeginCombo(("##" + name).c_str(), context->names[currentSelection], 0))
     {
@@ -200,5 +237,24 @@ void ImGuiResourceEditorWindow::drawEnum(const std::string& name, void* data, co
         ImGui::EndCombo();
     }
     *static_cast<uint32_t*>(data) = currentSelection;
+    ImGui::Spacing();
+}
+
+void ImGuiResourceEditorWindow::drawBitmask(const std::string& name, void* data, const gflow::parser::EnumContext* context) const
+{
+    ImGui::Text(name.c_str());
+    ImGui::SameLine(SAMELINE_OFFSET);
+    uint32_t currentMask = *static_cast<uint32_t*>(data);
+    if (ImGui::BeginCombo(("##" + name).c_str(), "Bitmask...", 0))
+    {
+        for (uint32_t n = 0; n < context->names.size(); n++)
+        {
+            bool isSelected = currentMask & context->values[n];
+            ImGui::MenuItem(context->names[n], "", &isSelected);
+            currentMask = isSelected ? currentMask | context->values[n] : currentMask & ~context->values[n];
+        }
+        ImGui::EndCombo();
+    }
+    *static_cast<uint32_t*>(data) = currentMask;
     ImGui::Spacing();
 }

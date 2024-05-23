@@ -1,7 +1,7 @@
 #pragma once
 
 #include "ImNodeFlow.h"
-#include "project.hpp"
+#include "resources/project.hpp"
 #include "sdl_window.hpp"
 #include "windows/imgui_resources.hpp"
 
