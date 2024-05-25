@@ -156,12 +156,11 @@ namespace gflow::parser
         root = FileDirectory(root.name);
     }
 
-    std::unordered_map<std::string, std::function<Resource* (const std::string&, const Resource::ExportData*)>> ResourceManager::s_resourceFactories = {
-        {gflow::parser::Pipeline::getTypeStatic(), gflow::parser::Pipeline::create},
-        {gflow::parser::PipelineVertexInputState::getTypeStatic(), gflow::parser::PipelineVertexInputState::create},
-        {gflow::parser::PipelineInputAssemblyState::getTypeStatic(), gflow::parser::PipelineInputAssemblyState::create},
-        {gflow::parser::PipelineRasterizationState::getTypeStatic(), gflow::parser::PipelineRasterizationState::create},
-        {gflow::parser::PipelineDepthStencilState::getTypeStatic(), gflow::parser::PipelineDepthStencilState::create}
+    std::unordered_map<std::string, std::function<Resource* (const std::string&, Resource::ExportData*)>> ResourceManager::s_resourceFactories = {
+        {gflow::parser::Pipeline::getTypeStatic(), gflow::parser::Resource::create<Pipeline>},
+        {gflow::parser::PipelineInputAssemblyState::getTypeStatic(), gflow::parser::Resource::create<PipelineInputAssemblyState>},
+        {gflow::parser::PipelineRasterizationState::getTypeStatic(), gflow::parser::Resource::create<PipelineRasterizationState>},
+        {gflow::parser::PipelineDepthStencilState::getTypeStatic(), gflow::parser::Resource::create<PipelineDepthStencilState>}
     };
 
     bool ResourceManager::hasResource(const std::string& path)
@@ -171,7 +170,7 @@ namespace gflow::parser
 
     bool ResourceManager::hasResource(const uint32_t id)
     {
-        for (const auto& [path, resource] : m_resources)
+        for (const Resource* resource : m_resources | std::views::values)
         {
             if (resource->getID() == id)
                 return true;
@@ -285,7 +284,7 @@ namespace gflow::parser
             return *dynamic_cast<Project*>(m_resources[path]);
 
         resetWorkingDir(string::getPathDirectory(path));
-        m_resources[path] = Project::create(string::getPathFilename(path), nullptr);
+        m_resources[path] = Resource::create<Project>(string::getPathFilename(path), nullptr);
         m_project = path;
         return *dynamic_cast<Project*>(m_resources[path]);
     }
@@ -296,7 +295,7 @@ namespace gflow::parser
         if (m_resources.contains(path))
             throw std::runtime_error("Resource already exists");
 
-        m_resources[path] = Project::create(path, nullptr);
+        m_resources[path] = Resource::create<Project>(path, nullptr);
         *dynamic_cast<Project*>(m_resources[path])->name = name;
         m_project = path;
         return *dynamic_cast<Project*>(m_resources[path]);

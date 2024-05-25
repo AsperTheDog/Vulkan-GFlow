@@ -20,14 +20,6 @@ namespace gflow::parser
 
         DECLARE_RESOURCE(Project)
     };
-
-    inline Resource* Project::create(const std::string& path, const ExportData* metadata)
-    {
-        Project* project = new Project(path);
-        if (!project->deserialize())
-            project->serialize();
-        return project;
-    }
 }
 
 

@@ -48,7 +48,7 @@ public: // Editor Management
     static void showRenameResourceModal(const std::string& path);
     static void showDeleteResourceModal(const std::string& path);
 
-    static void showResourcePickerModal(gflow::parser::Resource* parent, const std::string& variable);
+    static void showResourcePickerModal(gflow::parser::Resource* parent, const std::string& variable, const std::string& filter);
 
 private:
     static void createFolderModal();

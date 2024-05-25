@@ -33,9 +33,6 @@
     <ClInclude Include="include\resources\list.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\resources\vertex_binding.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="include\enum_contexts.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>

@@ -24,8 +24,9 @@ private:
     void drawVec2(const std::string& name, void* data) const;
     void drawVec3(const std::string& name, void* data) const;
     void drawVec4(const std::string& name, void* data) const;
-    void drawResource(const std::string& stackedName, void* data) const;
-    void drawSubresource(const std::string& name, std::string stackedName, const gflow::parser::Resource::ExportData& data, gflow::parser::Resource* parent) const;
+    void drawResource(const std::string& stackedName, void* data, const std::vector<gflow::parser::Resource*>& parentPath) const;
+    void drawSubresource(const std::string& name, std::string stackedName, gflow::parser::Resource::ExportData& data, const std::vector<gflow::
+                         parser::Resource*>& parentPath) const;
     void drawEnum(const std::string& name, void* data, const gflow::parser::EnumContext* context) const;
     void drawBitmask(const std::string& name, void* data, const gflow::parser::EnumContext* context) const;
 

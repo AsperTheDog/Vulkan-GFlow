@@ -29,7 +29,7 @@ void ImGuiResourceEditorWindow::draw()
     ImGui::Begin(m_name.c_str(), &open);
     if (m_selectedResource)
     {
-        drawResource(m_selectedResource->getType(), &m_selectedResource);
+        drawResource(m_selectedResource->getType(), &m_selectedResource, {});
     }
     ImGui::End();
 }
@@ -94,13 +94,15 @@ void ImGuiResourceEditorWindow::drawVec4(const std::string& name, void* data) co
     ImGui::Spacing();
 }
 
-void ImGuiResourceEditorWindow::drawResource(const std::string& stackedName, void* data) const
+void ImGuiResourceEditorWindow::drawResource(const std::string& stackedName, void* data, const std::vector<gflow::parser::Resource*>& parentPath) const
 {
     bool isHeaderOpen = true;
     gflow::parser::Resource** resource = static_cast<gflow::parser::Resource**>(data);
     if (*resource == nullptr) return;
-    for (const gflow::parser::Resource::ExportData& exportElem : (*resource)->getExports())
+    for (gflow::parser::Resource::ExportData& exportElem : (*resource)->getExports())
     {
+        if (!(*resource)->isUsed(exportElem.name, parentPath)) continue;
+
         if (exportElem.data == nullptr)
         {
             isHeaderOpen = ImGui::CollapsingHeader(exportElem.name.data());
@@ -139,14 +141,18 @@ void ImGuiResourceEditorWindow::drawResource(const std::string& stackedName, voi
             drawBitmask(exportElem.name, exportElem.data, exportElem.enumContext);
             break;
         case gflow::parser::DataType::RESOURCE:
-            drawSubresource(exportElem.name, stackedName, exportElem, *resource);
-            break;
+            {
+                std::vector<gflow::parser::Resource*> resourcePath = parentPath;
+                resourcePath.push_back(*resource);
+                drawSubresource(exportElem.name, stackedName, exportElem, resourcePath);
+                break;
+            }
         }
     }
     (*resource)->exportsChanged();
 }
 
-void ImGuiResourceEditorWindow::drawSubresource(const std::string& name, std::string stackedName, const gflow::parser::Resource::ExportData& data, gflow::parser::Resource* parent) const
+void ImGuiResourceEditorWindow::drawSubresource(const std::string& name, std::string stackedName, gflow::parser::Resource::ExportData& data, const std::vector<gflow::parser::Resource*>& parentPath) const
 {
     stackedName += "." + name;
 
@@ -188,7 +194,7 @@ void ImGuiResourceEditorWindow::drawSubresource(const std::string& name, std::st
         ImGui::BeginDisabled(gflow::parser::ResourceManager::isTypeSubresource(data.getType()));
         if (ImGui::MenuItem("Load"))
         {
-            Editor::showResourcePickerModal(parent, name);
+            Editor::showResourcePickerModal(parentPath.back(), name, data.getType());
         }
         ImGui::EndDisabled();
         if (ImGui::MenuItem("Clear"))
@@ -212,7 +218,7 @@ void ImGuiResourceEditorWindow::drawSubresource(const std::string& name, std::st
     if (m_nestedResourcesOpened[stackedName])
     {
         ImGui::Separator();
-        drawResource(stackedName, data.data);
+        drawResource(stackedName, data.data, parentPath);
         ImGui::EndChild();
     }
     ImGui::Spacing();

@@ -379,10 +379,11 @@ void Editor::showDeleteResourceModal(const std::string& path)
     s_modalBasePath = path;
 }
 
-void Editor::showResourcePickerModal(gflow::parser::Resource* parent, const std::string& variable)
+void Editor::showResourcePickerModal(gflow::parser::Resource* parent, const std::string& variable, const std::string& filter)
 {
     s_resourcePickerParent = parent;
     s_resourcePickerElement = variable;
+    s_getResourceRefWindow.setFilter(filter);
     s_showResourcePickerModal = true;
 }
 

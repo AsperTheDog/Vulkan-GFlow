@@ -82,7 +82,7 @@ namespace gflow::parser
 
         inline static FileTree m_fileTree{ "root" };
 
-        static std::unordered_map<std::string, std::function<Resource* (const std::string&, const Resource::ExportData*)>> s_resourceFactories;
+        static std::unordered_map<std::string, std::function<Resource* (const std::string&, Resource::ExportData*)>> s_resourceFactories;
     };
 }
 

@@ -14,11 +14,11 @@
 #define EXPORT_RESOURCE(type, name) Export<type*> ##name{#name, this}
 
 #define DECLARE_RESOURCE(type)                                                        \
-        static Resource* create(const std::string& path, const ExportData* metadata); \
         [[nodiscard]] static std::string getTypeStatic() { return #type; }            \
         [[nodiscard]] std::string getType() const override { return #type; }          \
         friend class ResourceManager;                                                 \
-        template <typename U> friend class Export;
+        template <typename U> friend class Export;                                    \
+        friend class Resource;
 
 
 namespace gflow::parser
@@ -58,10 +58,14 @@ namespace gflow::parser
         const T& operator*() const { return m_data; }
         T& operator*() { return m_data; }
 
+        Resource* getParent() const { return m_parent; }
+
     private:
         bool m_isGroup = false;
         std::string m_name;
         T m_data;
+
+        Resource* m_parent;
     };
 
     class Resource
@@ -73,7 +77,8 @@ namespace gflow::parser
             std::string name;
             void* data = nullptr;
             EnumContext* enumContext = nullptr;
-            Resource* (*resourceFactory)(const std::string&, const Resource::ExportData*);
+            Resource* (*resourceFactory)(const std::string&, Resource::ExportData*);
+            Resource* parent = nullptr;
             std::string (*getType)();
         };
 
@@ -87,12 +92,13 @@ namespace gflow::parser
 
         typedef std::unordered_map<uint32_t, ResourceData> ResourceEntries;
 
-
     public:
         Resource() { setID(0); }
         virtual ~Resource() = default;
 
         struct Ref { std::string path; };
+
+        virtual void initContext(ExportData* metadata);
 
         virtual std::string serialize();
         virtual void deserialize(const ResourceData& data, const ResourceEntries& dependencies);
@@ -101,6 +107,10 @@ namespace gflow::parser
 
         virtual std::pair<std::string, std::string> get(const std::string& variable);
         virtual bool set(const std::string& variable, const std::string& value, const ResourceEntries& dependencies);
+        virtual bool isUsed(const std::string& variable, const std::vector<Resource*>& parentPath = {}) { return true; }
+
+        template <typename T>
+        T getValue(const std::string& variable);
 
         virtual void exportsChanged() {}
         virtual void exportChanged(const std::string& variable) {}
@@ -125,6 +135,9 @@ namespace gflow::parser
 
         void registerExport(const ExportData& data) { m_exports.push_back(data); }
 
+        template <typename T>
+        static Resource* create(const std::string& path, ExportData* metadata);
+
     private:
         void setID(uint32_t id = 0);
 
@@ -133,6 +146,7 @@ namespace gflow::parser
         template <typename T>
         friend class Export;
 
+        friend class ResourceManager;
         friend class Project;
     };
 
@@ -141,7 +155,7 @@ namespace gflow::parser
     //***************************************************************
 
     template <typename T>
-    Export<T>::Export(std::string_view name, Resource* parent, const bool group)
+    Export<T>::Export(std::string_view name, Resource* parent, const bool group) : m_parent(parent)
     {
         m_isGroup = group;
         Resource::ExportData data;
@@ -165,7 +179,7 @@ namespace gflow::parser
         else if constexpr (std::is_pointer_v<T> && std::is_base_of_v<Resource, std::remove_pointer_t<T>>)
         {
             data.type = RESOURCE;
-            data.resourceFactory = std::remove_pointer_t<T>::create;
+            data.resourceFactory = &Resource::create<std::remove_pointer_t<T>>;
             data.getType = std::remove_pointer_t<T>::getTypeStatic;
             data.data = &this->m_data;
         }
@@ -180,7 +194,7 @@ namespace gflow::parser
     }
 
     template <typename T>
-    Export<T>::Export(std::string_view name, Resource* parent, EnumContext& enumContext)
+    Export<T>::Export(std::string_view name, Resource* parent, EnumContext& enumContext) : m_parent(parent)
     {
         Resource::ExportData data;
         this->m_name = name;
@@ -196,6 +210,27 @@ namespace gflow::parser
             return;
         }
         parent->registerExport(data);
+    }
+
+    template <typename T>
+    T Resource::getValue(const std::string& variable)
+    {
+        for (const auto& exportData : m_exports)
+        {
+            if (exportData.name == variable)
+            {
+                return *static_cast<T*>(exportData.data);
+            }
+        }
+        throw std::runtime_error("Variable not found");
+    }
+
+    template <typename T>
+    Resource* Resource::create(const std::string& path, ExportData* metadata)
+    {
+        T* newRes = new T(path);
+        newRes->initContext(metadata);
+        return newRes;
     }
 }
 

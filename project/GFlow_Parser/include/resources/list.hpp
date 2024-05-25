@@ -18,6 +18,8 @@ namespace gflow::parser
         [[nodiscard]] const T& operator[](int index) const { return m_data[index]; }
         [[nodiscard]] T& operator[](int index) { return m_data[index]; }
 
+        void initContext(ExportData* metadata) override;
+
         void setEnumContext(EnumContext* enumContext) { m_enumContext = enumContext; }
 
         bool set(const std::string& variable, const std::string& value, const ResourceEntries& dependencies) override;
@@ -30,6 +32,8 @@ namespace gflow::parser
         std::vector<T> m_data;
         EnumContext* m_enumContext = nullptr;
 
+        Resource* m_parent = nullptr;
+
         explicit List(const std::string& path);
 
         DECLARE_RESOURCE(List)
@@ -37,6 +41,12 @@ namespace gflow::parser
     private:
         static_assert(!std::is_same_v<T, bool>, "bool is not allowed as the template parameter for MyClass");
     };
+
+    template <typename T>
+    void List<T>::initContext(ExportData* metadata)
+    {
+        setEnumContext(metadata->enumContext);
+    }
 
     template <typename T>
     bool List<T>::set(const std::string& variable, const std::string& value, const ResourceEntries& dependencies)
@@ -76,7 +86,7 @@ namespace gflow::parser
             else if constexpr (std::is_pointer_v<T> && std::is_base_of_v<Resource, std::remove_pointer_t<T>>)
             {
                 data.type = RESOURCE;
-                data.resourceFactory = std::remove_pointer_t<T>::create;
+                data.resourceFactory = &Resource::create<std::remove_pointer_t<T>>;
                 data.getType = std::remove_pointer_t<T>::getTypeStatic;
             }
             data.name = std::to_string(i);
@@ -109,17 +119,6 @@ namespace gflow::parser
     List<T>::List(const std::string& path) : Resource(path) {}
 
     template <typename T>
-    Resource* List<T>::create(const std::string& path, const  ExportData* metadata)
-    {
-        List* lst = new List(path);
-        if (metadata)
-        {
-            lst->setEnumContext(metadata->enumContext);
-        }
-        return lst;
-    }
-
-    template <typename T>
     class Export<List<T>*>
     {
     public:
@@ -132,16 +131,18 @@ namespace gflow::parser
     private:
         std::string m_name;
         List<T>* m_data;
+
+        Resource* m_parent;
     };
 
     template <typename T>
-    Export<List<T>*>::Export(std::string_view name, Resource* parent)
+    Export<List<T>*>::Export(std::string_view name, Resource* parent) : m_parent(parent)
     {
         Resource::ExportData data;
         this->m_name = name;
         data.name = name;
         data.type = RESOURCE;
-        data.resourceFactory = List<T>::create;
+        data.resourceFactory = &Resource::create<List<T>>;
         data.getType = List<T>::getTypeStatic;
         data.data = &this->m_data;
 
@@ -149,13 +150,13 @@ namespace gflow::parser
     }
 
     template <typename T>
-    Export<List<T>*>::Export(std::string_view name, Resource* parent, EnumContext& enumContext)
+    Export<List<T>*>::Export(std::string_view name, Resource* parent, EnumContext& enumContext) : m_parent(parent)
     {
         Resource::ExportData data;
         this->m_name = name;
         data.name = name;
         data.type = RESOURCE;
-        data.resourceFactory = List<T>::create;
+        data.resourceFactory = &Resource::create<List<T>>;
         data.getType = List<T>::getTypeStatic;
         data.enumContext = &enumContext;
         data.data = &this->m_data;

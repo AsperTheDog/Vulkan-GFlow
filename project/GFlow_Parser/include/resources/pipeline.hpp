@@ -1,20 +1,10 @@
 #pragma once
 #include "resource.hpp"
 #include "list.hpp"
-#include "vertex_binding.hpp"
 
 
 namespace gflow::parser
 {
-    class PipelineVertexInputState final : public Resource
-    {
-        EXPORT_RESOURCE_LIST(VertexBinding, vertexBindings);
-
-        explicit PipelineVertexInputState(const std::string& path) : Resource(path) {}
-
-        DECLARE_RESOURCE(VertexInputState)
-    };
-
     class PipelineInputAssemblyState final : public Resource
     {
         EXPORT_ENUM(topology, EnumContexts::primitiveTopology);
@@ -60,6 +50,10 @@ namespace gflow::parser
 
         explicit PipelineColorBlendAttachment(const std::string& path) : Resource(path) {}
 
+        void initContext(ExportData* metadata) override {}
+
+        bool isUsed(const std::string& variable, const std::vector<Resource*>& parentPath = {}) override;
+
         DECLARE_RESOURCE(PipelineColorBlendAttachment)
 
         template <typename T>
@@ -70,10 +64,12 @@ namespace gflow::parser
     {
         EXPORT(bool, logicOpEnable);
         EXPORT_ENUM(logicOp, EnumContexts::blendOp);
-        EXPORT_RESOURCE_LIST(PipelineColorBlendAttachment, colorBlendAttachments);
         EXPORT(Vec4, colorBlendConstants);
+        EXPORT_RESOURCE_LIST(PipelineColorBlendAttachment, colorBlendAttachments);
 
         explicit PipelineColorBlendState(const std::string& path) : Resource(path) {}
+
+        bool isUsed(const std::string& variable, const std::vector<Resource*>& parentPath = {}) override;
 
         DECLARE_RESOURCE(PipelineColorBlendState)
     };
@@ -81,7 +77,6 @@ namespace gflow::parser
     class Pipeline final : public Resource
     {
     private:
-        EXPORT_RESOURCE(PipelineVertexInputState, vertexInputState);
         EXPORT_RESOURCE(PipelineInputAssemblyState, inputAssemblyState);
         EXPORT_RESOURCE(PipelineRasterizationState, rasterizationState);
         EXPORT_RESOURCE(PipelineDepthStencilState, depthStencilState);
@@ -92,59 +87,23 @@ namespace gflow::parser
         DECLARE_RESOURCE(Pipeline)
     };
 
-    inline Resource* PipelineVertexInputState::create(const std::string& path, const ExportData* metadata)
+    // ********************
+    // Function definitions
+    // ********************
+
+    inline bool PipelineColorBlendAttachment::isUsed(const std::string& variable, const std::vector<Resource*>& parentPath)
     {
-        PipelineVertexInputState* vertexInputState = new PipelineVertexInputState(path);
-        if (!vertexInputState->deserialize())
-            vertexInputState->serialize();
-        return vertexInputState;
+        if (parentPath.size() > 1 && parentPath[parentPath.size() - 2]->getValue<bool>("logicOpEnable"))
+            return variable == "colorWriteMask";
+        if (variable == "blendEnable")
+            return true;
+        return *blendEnable;
     }
 
-    inline Resource* PipelineInputAssemblyState::create(const std::string& path, const ExportData* metadata)
+    inline bool PipelineColorBlendState::isUsed(const std::string& variable, const std::vector<Resource*>& parentPath)
     {
-        PipelineInputAssemblyState* inputAssemblyState = new PipelineInputAssemblyState(path);
-        if (!inputAssemblyState->deserialize())
-            inputAssemblyState->serialize();
-        return inputAssemblyState;
-    }
-
-    inline Resource* PipelineRasterizationState::create(const std::string& path, const ExportData* metadata)
-    {
-        PipelineRasterizationState* rasterizationState = new PipelineRasterizationState(path);
-        if (!rasterizationState->deserialize())
-            rasterizationState->serialize();
-        return rasterizationState;
-    }
-
-    inline Resource* PipelineDepthStencilState::create(const std::string& path, const ExportData* metadata)
-    {
-        PipelineDepthStencilState* depthStencilState = new PipelineDepthStencilState(path);
-        if (!depthStencilState->deserialize())
-            depthStencilState->serialize();
-        return depthStencilState;
-    }
-
-    inline Resource* PipelineColorBlendAttachment::create(const std::string& path, const ExportData* metadata)
-    {
-        PipelineColorBlendAttachment* colorBlendAttachment = new PipelineColorBlendAttachment(path);
-        if (!colorBlendAttachment->deserialize())
-            colorBlendAttachment->serialize();
-        return colorBlendAttachment;
-    }
-
-    inline Resource* PipelineColorBlendState::create(const std::string& path, const ExportData* metadata)
-    {
-        PipelineColorBlendState* colorBlendState = new PipelineColorBlendState(path);
-        if (!colorBlendState->deserialize())
-            colorBlendState->serialize();
-        return colorBlendState;
-    }
-
-    inline Resource* Pipeline::create(const std::string& path, const ExportData* metadata)
-    {
-        Pipeline* pipeline = new Pipeline(path);
-        if (!pipeline->deserialize())
-            pipeline->serialize();
-        return pipeline;
+        if (variable == "logicOpEnable" || variable == "colorBlendAttachments")
+            return true;
+        return *logicOpEnable;
     }
 }

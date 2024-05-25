@@ -40,6 +40,12 @@ namespace gflow::parser
         return data;
     }
 
+    void Resource::initContext(ExportData* metadata)
+    {
+        if (!deserialize())
+            serialize();
+    }
+
     std::string Resource::serialize()
     {
         std::ofstream file;
@@ -154,7 +160,7 @@ namespace gflow::parser
 
     bool Resource::set(const std::string& variable, const std::string& value, const ResourceEntries& dependencies)
     {
-        for (const ExportData& exportData : getExports())
+        for (ExportData& exportData : getExports())
         {
             if (variable != exportData.name) continue;
             switch (exportData.type)
