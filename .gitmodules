@@ -10,4 +10,4 @@
 	url = https://github.com/AsperTheDog/VkPlayground
 [submodule "vendor/ImGui/nodeRepo"]
 	path = vendor/ImGui/nodeRepo
-	url = https://github.com/Fattorino/ImNodeFlow
+	url = https://github.com/AsperTheDog/ImNodeFlow

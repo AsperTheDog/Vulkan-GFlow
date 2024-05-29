@@ -9,9 +9,8 @@ namespace gflow::parser
     {
         EXPORT_ENUM(topology, EnumContexts::primitiveTopology);
         EXPORT(bool, restartEnable);
-
-        explicit PipelineInputAssemblyState(const std::string& path) : Resource(path) {}
-
+        
+    public:
         DECLARE_RESOURCE(PipelineInputAssemblyState)
     };
 
@@ -20,9 +19,8 @@ namespace gflow::parser
         EXPORT_ENUM(polygonMode, EnumContexts::polygonMode);
         EXPORT_ENUM(cullMode, EnumContexts::cullMode);
         EXPORT_ENUM(frontFace, EnumContexts::frontFace);
-
-        explicit PipelineRasterizationState(const std::string& path) : Resource(path) {}
-
+        
+    public:
         DECLARE_RESOURCE(PipelineRasterizationState)
     };
 
@@ -31,9 +29,8 @@ namespace gflow::parser
         EXPORT(bool, depthTestEnable);
         EXPORT(bool, stencilTestEnable);
         EXPORT_ENUM(depthCompareOp, EnumContexts::compareOp);
-
-        explicit PipelineDepthStencilState(const std::string& path) : Resource(path) {}
-
+        
+    public:
         DECLARE_RESOURCE(PipelineDepthStencilState)
     };
 
@@ -48,12 +45,10 @@ namespace gflow::parser
         EXPORT_ENUM(alphaBlendOp, EnumContexts::blendOp);
         EXPORT_BITMASK(colorWriteMask, EnumContexts::colorWriteMaskBits);
 
-        explicit PipelineColorBlendAttachment(const std::string& path) : Resource(path) {}
-
         void initContext(ExportData* metadata) override {}
-
         bool isUsed(const std::string& variable, const std::vector<Resource*>& parentPath = {}) override;
-
+        
+    public:
         DECLARE_RESOURCE(PipelineColorBlendAttachment)
 
         template <typename T>
@@ -67,10 +62,9 @@ namespace gflow::parser
         EXPORT(Vec4, colorBlendConstants);
         EXPORT_RESOURCE_LIST(PipelineColorBlendAttachment, colorBlendAttachments);
 
-        explicit PipelineColorBlendState(const std::string& path) : Resource(path) {}
-
         bool isUsed(const std::string& variable, const std::vector<Resource*>& parentPath = {}) override;
-
+        
+    public:
         DECLARE_RESOURCE(PipelineColorBlendState)
     };
 
@@ -81,9 +75,8 @@ namespace gflow::parser
         EXPORT_RESOURCE(PipelineRasterizationState, rasterizationState);
         EXPORT_RESOURCE(PipelineDepthStencilState, depthStencilState);
         EXPORT_RESOURCE(PipelineColorBlendState, colorBlendState);
-
-        explicit Pipeline(const std::string& path) : Resource(path) {}
-
+        
+    public:
         DECLARE_RESOURCE(Pipeline)
     };
 

@@ -11,7 +11,6 @@
 #include "backends/imgui_impl_vulkan.h"
 #include "utils/logger.hpp"
 #include "windows/imgui_execution.hpp"
-#include "windows/imgui_pipeline.hpp"
 #include "windows/imgui_project_settings.hpp"
 #include "windows/imgui_renderpass.hpp"
 
@@ -40,7 +39,7 @@ void Editor::init(const std::string& projectPath)
     s_resourceSelectedSignal.connect(dynamic_cast<ImGuiResourceEditorWindow*>(s_imguiWindows.back()), &ImGuiResourceEditorWindow::resourceSelected);
     s_imguiWindows.push_back(new ImGuiExecutionWindow("Execution"));
     s_imguiWindows.push_back(new ImGuiRenderPassWindow("RenderPass"));
-    s_imguiWindows.push_back(new ImGuiPipelineWindow("Pipeline"));
+    s_resourceSelectedSignal.connect(dynamic_cast<ImGuiRenderPassWindow*>(s_imguiWindows.back()), &ImGuiRenderPassWindow::resourceSelected);
     s_imguiWindows.push_back(new ImGuiProjectSettingsWindow("Project Settings"));
     s_imguiWindows.back()->open = false;
 

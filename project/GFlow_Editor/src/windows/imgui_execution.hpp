@@ -10,7 +10,7 @@ public:
     void draw() override;
 
 private:
-    void rightClick(ImFlow::BaseNode* node) const;
+    void rightClick(const ImFlow::BaseNode* node) const;
 
     ImFlow::ImNodeFlow m_grid{"Execution"};
 };

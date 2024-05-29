@@ -33,9 +33,8 @@ namespace gflow::parser
         EnumContext* m_enumContext = nullptr;
 
         Resource* m_parent = nullptr;
-
-        explicit List(const std::string& path);
-
+        
+    public:
         DECLARE_RESOURCE(List)
 
     private:
@@ -114,9 +113,6 @@ namespace gflow::parser
                 m_data.resize(m_size);
         }
     }
-
-    template <typename T>
-    List<T>::List(const std::string& path) : Resource(path) {}
 
     template <typename T>
     class Export<List<T>*>

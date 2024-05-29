@@ -14,6 +14,7 @@
 #define EXPORT_RESOURCE(type, name) Export<type*> ##name{#name, this}
 
 #define DECLARE_RESOURCE(type)                                                        \
+        explicit type(const std::string& path) : Resource(path) {}                    \
         [[nodiscard]] static std::string getTypeStatic() { return #type; }            \
         [[nodiscard]] std::string getType() const override { return #type; }          \
         friend class ResourceManager;                                                 \

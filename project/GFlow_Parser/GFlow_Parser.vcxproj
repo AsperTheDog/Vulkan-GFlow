@@ -22,6 +22,7 @@
     <ClInclude Include="include\resource.hpp" />
     <ClInclude Include="include\enum_contexts.hpp" />
     <ClInclude Include="include\resources\project.hpp" />
+    <ClInclude Include="include\resources\render_pass.hpp" />
     <ClInclude Include="include\string_helper.hpp" />
     <ClInclude Include="include\resources\pipeline.hpp" />
     <ClInclude Include="include\resource_manager.hpp" />

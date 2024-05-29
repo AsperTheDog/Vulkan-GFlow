@@ -7,6 +7,7 @@
 #include "resources/pipeline.hpp"
 #include "resources/project.hpp"
 #include "string_helper.hpp"
+#include "resources/render_pass.hpp"
 
 namespace gflow::parser
 {
@@ -157,12 +158,14 @@ namespace gflow::parser
     }
 
     std::unordered_map<std::string, std::function<Resource* (const std::string&, Resource::ExportData*)>> ResourceManager::s_resourceFactories = {
+        {gflow::parser::RenderPass::getTypeStatic(), gflow::parser::Resource::create<RenderPass>},
         {gflow::parser::Pipeline::getTypeStatic(), gflow::parser::Resource::create<Pipeline>},
         {gflow::parser::PipelineInputAssemblyState::getTypeStatic(), gflow::parser::Resource::create<PipelineInputAssemblyState>},
         {gflow::parser::PipelineRasterizationState::getTypeStatic(), gflow::parser::Resource::create<PipelineRasterizationState>},
-        {gflow::parser::PipelineDepthStencilState::getTypeStatic(), gflow::parser::Resource::create<PipelineDepthStencilState>}
+        {gflow::parser::PipelineDepthStencilState::getTypeStatic(), gflow::parser::Resource::create<PipelineDepthStencilState>},
+        {gflow::parser::PipelineColorBlendState::getTypeStatic(), gflow::parser::Resource::create<PipelineColorBlendState>}
     };
-
+    
     bool ResourceManager::hasResource(const std::string& path)
     {
         return m_resources.contains(path);

@@ -60,12 +60,12 @@ namespace gflow::parser
         [[nodiscard]] static Resource& getResource(uint32_t id);
         [[nodiscard]] static bool hasResource(const std::string& path);
         [[nodiscard]] static bool hasResource(uint32_t id);
+        [[nodiscard]] static std::string getResourceType(const std::string& path);
 
         [[nodiscard]] static std::string getWorkingDir() { return m_workingDir; }
         [[nodiscard]] static Resource& getProject() { return *m_resources[m_project]; }
         [[nodiscard]] static std::string getProjectPath() { return m_workingDir + m_project; }
         [[nodiscard]] static bool hasProject() { return !m_project.empty(); }
-        [[nodiscard]] static std::string getResourceType(const std::string& path);
 
         static bool isTypeSubresource(const std::string& type);
 

@@ -1,13 +1,10 @@
 #include "imgui_execution.hpp"
 
 #include "imgui.h"
-#include "nodes/test_node.hpp"
 
 ImGuiExecutionWindow::ImGuiExecutionWindow(const std::string_view& name) : ImGuiEditorWindow(name)
 {
-    m_grid.rightClickPopUpContent([this](ImFlow::BaseNode* node){this->rightClick(node);});
-    m_grid.addNode<TestNode>({0, 0});
-    m_grid.addNode<TestNode>({0, 0});
+    m_grid.rightClickPopUpContent([this](const ImFlow::BaseNode* node){this->rightClick(node);});
 }
 
 void ImGuiExecutionWindow::draw()
@@ -17,7 +14,7 @@ void ImGuiExecutionWindow::draw()
     ImGui::End();
 }
 
-void ImGuiExecutionWindow::rightClick(ImFlow::BaseNode* node) const
+void ImGuiExecutionWindow::rightClick(const ImFlow::BaseNode* node) const
 {
     if (node == nullptr)
     {

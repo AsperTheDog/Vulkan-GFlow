@@ -140,7 +140,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="src\windows\imgui_pipeline.hpp" />
+    <ClInclude Include="src\windows\nodes\node_pin.hpp" />
     <ClInclude Include="src\windows\imgui_project_settings.hpp" />
     <ClInclude Include="src\windows\imgui_renderpass.hpp" />
     <ClInclude Include="src\windows\imgui_execution.hpp" />
@@ -150,13 +150,12 @@
     <ClInclude Include="src\editor.hpp" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="src\sdl_window.hpp" />
-    <ClInclude Include="src\windows\nodes\test_node.hpp" />
+    <ClInclude Include="src\windows\nodes\subpass_node.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="GFLow_Editor.rc" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\windows\imgui_pipeline.cpp" />
     <ClCompile Include="src\windows\imgui_project_settings.cpp" />
     <ClCompile Include="src\windows\imgui_renderpass.cpp" />
     <ClCompile Include="src\windows\imgui_execution.cpp" />
@@ -165,7 +164,7 @@
     <ClCompile Include="src\editor.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\sdl_window.cpp" />
-    <ClCompile Include="src\windows\nodes\test_node.cpp" />
+    <ClCompile Include="src\windows\nodes\subpass_node.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

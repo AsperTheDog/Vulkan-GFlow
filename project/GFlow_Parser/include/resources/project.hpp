@@ -15,9 +15,8 @@ namespace gflow::parser
 
     private:
         EXPORT(std::string, name);
-
-        explicit Project(const std::string& path) : Resource(path) {}
-
+        
+    public:
         DECLARE_RESOURCE(Project)
     };
 }
