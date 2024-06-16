@@ -1,4 +1,7 @@
-#include "subpass_node.hpp"
+#include "graphics_pass_node.hpp"
+
+#include "editor.hpp"
+#include "resource_manager.hpp"
 
 
 SubpassFlowInputPin::SubpassFlowInputPin(ImFlow::BaseNode* parent, const std::string& name) : NodePin(parent, name)
@@ -8,7 +11,7 @@ SubpassFlowInputPin::SubpassFlowInputPin(ImFlow::BaseNode* parent, const std::st
 
 void SubpassFlowInputPin::addStaticPins()
 {
-    m_parent->addIN<uint32_t>(m_name, 0, SubpassFlowInputPin::filter, ImFlow::PinStyle::white());
+    m_parent->addIN<uint32_t>(m_name, UINT32_MAX, SubpassFlowInputPin::filter, ImFlow::PinStyle::white());
 }
 
 bool SubpassFlowInputPin::filter(ImFlow::Pin* src, ImFlow::Pin* dst)
@@ -28,9 +31,13 @@ bool SubpassFlowOutputPin::filter(ImFlow::Pin* src, ImFlow::Pin* dst)
 
 uint32_t SubpassFlowOutputPin::behavior() const
 {
-    if (const SubpassNode* node = dynamic_cast<SubpassNode*>(m_parent); node != nullptr)
+    if (const GraphicsPassNode* node = dynamic_cast<GraphicsPassNode*>(m_parent); node != nullptr)
+    {
+        if (node->getIndex() == UINT32_MAX)
+            return UINT32_MAX;
         return node->getIndex() + 1;
-    if (const InitSubpassNode* node = dynamic_cast<InitSubpassNode*>(m_parent); node != nullptr)
+    }
+    if (const InitRenderpassNode* node = dynamic_cast<InitRenderpassNode*>(m_parent); node != nullptr)
         return 1;
     throw std::runtime_error("Invalid node type, this should never happen");
 }
@@ -45,7 +52,7 @@ bool AttachmentInputPin::filter(ImFlow::Pin* src, ImFlow::Pin* dst)
     return true;
 }
 
-InitSubpassNode::InitSubpassNode()
+InitRenderpassNode::InitRenderpassNode()
 {
     setTitle("Start");
     setStyle(std::make_shared<ImFlow::NodeStyle>(IM_COL32(71,142,173,255), ImColor(233,241,244,255), 3.5f));
@@ -53,9 +60,9 @@ InitSubpassNode::InitSubpassNode()
     m_subpassFlowOut.addStaticPins();
 }
 
-SubpassNode::SubpassNode(const uint32_t subpassIndex) : m_subpassIndex(subpassIndex)
+GraphicsPassNode::GraphicsPassNode(const uint32_t subpassIndex) : m_subpassIndex(subpassIndex)
 {
-    setTitle("Subpass");
+    setTitle("Graphics");
     setStyle(std::make_shared<ImFlow::NodeStyle>(IM_COL32(180,70,70,255), ImColor(233,241,244,255), 3.5f));
 
     m_subpassFlowIn.addStaticPins();
@@ -63,22 +70,15 @@ SubpassNode::SubpassNode(const uint32_t subpassIndex) : m_subpassIndex(subpassIn
     m_depthAttachment.addStaticPins();
 }
 
-void SubpassNode::draw()
+void GraphicsPassNode::draw()
 {
     const uint32_t index = getInVal<uint32_t, std::string>(m_subpassFlowIn.getName());
     if (index != m_subpassIndex)
     {
         m_subpassIndex = index;
-        if (m_subpassIndex == 0)
-        {
-            setTitle("Subpass");
+        if (m_subpassIndex == UINT32_MAX)
             setStyle(std::make_shared<ImFlow::NodeStyle>(IM_COL32(180,70,70,255), ImColor(233,241,244,255), 3.5f));
-        }
         else
-        {
-            setTitle("Subpass " + std::to_string(index));
             setStyle(std::make_shared<ImFlow::NodeStyle>(IM_COL32(40,150,45,255), ImColor(233,241,244,255), 3.5f));
-        }
     }
-    
 }

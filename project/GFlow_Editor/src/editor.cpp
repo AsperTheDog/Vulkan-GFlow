@@ -31,22 +31,7 @@ void Editor::init(const std::string& projectPath)
     createEnv();
     initImgui();
     connectSignals();
-
-    s_imguiWindows.push_back(new ImGuiResourcesWindow("Resources"));
-    s_projectLoadedSignal.connect(dynamic_cast<ImGuiResourcesWindow*>(s_imguiWindows.back()), &ImGuiResourcesWindow::projectLoaded);
-    dynamic_cast<ImGuiResourcesWindow*>(s_imguiWindows.back())->getResourceSelectedSignal().connect(Editor::resourceSelected);
-    s_imguiWindows.push_back(new ImGuiResourceEditorWindow("Resource Editor"));
-    s_resourceSelectedSignal.connect(dynamic_cast<ImGuiResourceEditorWindow*>(s_imguiWindows.back()), &ImGuiResourceEditorWindow::resourceSelected);
-    s_imguiWindows.push_back(new ImGuiExecutionWindow("Execution"));
-    s_imguiWindows.push_back(new ImGuiRenderPassWindow("RenderPass"));
-    s_resourceSelectedSignal.connect(dynamic_cast<ImGuiRenderPassWindow*>(s_imguiWindows.back()), &ImGuiRenderPassWindow::resourceSelected);
-    s_imguiWindows.push_back(new ImGuiProjectSettingsWindow("Project Settings"));
-    s_imguiWindows.back()->open = false;
-
-#ifdef _DEBUG
-    s_imguiWindows.push_back(new ImGuiTestWindow("Test"));
-    getWindow("Test")->open = false;
-#endif
+    createWindows();
 
     if (!projectPath.empty())
     {
@@ -202,6 +187,37 @@ void Editor::connectSignals()
     s_window.getSaveInputSignal().connect(Editor::saveProject);
 }
 
+void Editor::createWindows()
+{
+    s_imguiWindows.push_back(new ImGuiResourcesWindow("Resources"));
+    s_imguiWindows.push_back(new ImGuiResourceEditorWindow("Resource Editor"));
+    s_imguiWindows.push_back(new ImGuiExecutionWindow("Execution"));
+    s_imguiWindows.push_back(new ImGuiRenderPassWindow("RenderPass"));
+    s_resourceSelectedSignal.connect(dynamic_cast<ImGuiRenderPassWindow*>(s_imguiWindows.back()), &ImGuiRenderPassWindow::resourceSelected);
+    s_imguiWindows.push_back(new ImGuiProjectSettingsWindow("Project Settings"));
+    s_imguiWindows.back()->open = false;
+#ifdef _DEBUG
+    s_imguiWindows.push_back(new ImGuiTestWindow("Test", false));
+#endif
+
+    {
+        // Setup resources window
+        ImGuiResourcesWindow* resourcesWindow = dynamic_cast<ImGuiResourcesWindow*>(getWindow("Resources"));
+        s_projectLoadedSignal.connect(resourcesWindow, &ImGuiResourcesWindow::projectLoaded);
+        resourcesWindow->getResourceSelectedSignal().connect(&Editor::resourceSelected);
+    }
+    {
+        // Setup resource editor window
+        ImGuiResourceEditorWindow* resourceEditorWindow = dynamic_cast<ImGuiResourceEditorWindow*>(getWindow("Resource Editor"));
+        s_resourceSelectedSignal.connect(resourceEditorWindow, &ImGuiResourceEditorWindow::resourceSelected);
+    }
+    {
+        // Setup renderpass window
+        ImGuiRenderPassWindow* renderPassWindow = dynamic_cast<ImGuiRenderPassWindow*>(getWindow("RenderPass"));
+        s_resourceSelectedSignal.connect(renderPassWindow, &ImGuiRenderPassWindow::resourceSelected);
+    }
+}
+
 bool Editor::renderImgui()
 {
     ImGui_ImplVulkan_NewFrame();
@@ -340,6 +356,12 @@ ImGuiEditorWindow* Editor::getWindow(const std::string_view& name)
 void Editor::resourceSelected(const std::string& path)
 {
     s_resourceSelectedSignal.emit(path);
+    s_selectedResource = path;
+}
+
+gflow::parser::Resource& Editor::getSelectedResource() const
+{
+    return gflow::parser::ResourceManager::getResource(s_selectedResource);
 }
 
 void Editor::showCreateFolderModal(const std::string& path)

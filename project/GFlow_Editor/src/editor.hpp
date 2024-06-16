@@ -17,6 +17,7 @@ private:
 	static void createEnv();
 	static void initImgui();
 	static void connectSignals();
+    static void createWindows();
 
 	static void renderFrame();
 	static bool renderImgui();
@@ -40,6 +41,7 @@ private:
     
 public: // Editor Management
     static void resourceSelected(const std::string& path);
+    [[nodiscard]] gflow::parser::Resource& getSelectedResource() const;
     
     static void showCreateFolderModal(const std::string& path);
     static void showRenameFolderModal(const std::string& path);
@@ -79,6 +81,8 @@ private:
     inline static std::string s_resourcePickerElement;
 
     inline static ImGuiResourcesWindow s_getResourceRefWindow{"Resource Picker"};
+
+    inline static std::string s_selectedResource;
 
     inline static Signal<> s_projectLoadedSignal;
 

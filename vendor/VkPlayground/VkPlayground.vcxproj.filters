@@ -72,6 +72,9 @@
     <ClInclude Include="repo\include\vulkan_swapchain.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="repo\vendor\spirVReflect\spirv_reflect.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="repo\src\vulkan_binding.cpp">
@@ -120,6 +123,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="repo\src\vulkan_swapchain.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="repo\vendor\spirVReflect\spirv_reflect.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

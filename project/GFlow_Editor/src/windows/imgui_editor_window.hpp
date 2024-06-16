@@ -7,12 +7,12 @@ class ImGuiEditorWindow
 {
 public:
     virtual ~ImGuiEditorWindow() = default;
-    explicit ImGuiEditorWindow(const std::string_view name) : m_name(name) {}
+    explicit ImGuiEditorWindow(const std::string_view name, const bool defaultOpen) : open(defaultOpen), m_name(name) {}
 
     virtual void draw() = 0;
     [[nodiscard]] std::string getName() const { return m_name; }
 
-    bool open = true;
+    bool open;
 
 protected:
     std::string m_name;
@@ -24,7 +24,7 @@ protected:
 class ImGuiTestWindow final : public ImGuiEditorWindow
 {
 public:
-    explicit ImGuiTestWindow(const std::string_view name) : ImGuiEditorWindow(name) {}
+    explicit ImGuiTestWindow(const std::string_view name, const bool defaultOpen = true) : ImGuiEditorWindow(name, defaultOpen) {}
 
     void draw() override
     {

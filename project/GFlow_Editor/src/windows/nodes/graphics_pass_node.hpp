@@ -1,4 +1,5 @@
 #pragma once
+#include "resources/render_pass.hpp"
 #include "windows/nodes/node_pin.hpp"
 
 class SubpassFlowInputPin final : public NodePin
@@ -32,10 +33,10 @@ public:
 
 // NODES
 
-class InitSubpassNode final : public ImFlow::BaseNode
+class InitRenderpassNode final : public ImFlow::BaseNode
 {
 public:
-    explicit InitSubpassNode();
+    explicit InitRenderpassNode();
     [[nodiscard]] uint32_t getIndex() const { return m_subpassIndex; }
 
     void destroy() override {}
@@ -46,10 +47,10 @@ private:
     uint32_t m_subpassIndex;
 };
 
-class SubpassNode final : public ImFlow::BaseNode
+class GraphicsPassNode final : public ImFlow::BaseNode
 {
 public:
-    explicit SubpassNode(uint32_t subpassIndex);
+    explicit GraphicsPassNode(uint32_t subpassIndex);
     [[nodiscard]] uint32_t getIndex() const { return m_subpassIndex; }
 
     void draw() override;
@@ -59,6 +60,7 @@ private:
     SubpassFlowOutputPin m_subpassFlowOut{this, "EXIT"};
     AttachmentInputPin m_depthAttachment{this, "depth attachment"};
 
-    uint32_t m_subpassIndex;
+    uint32_t m_stepIndex = UINT32_MAX;
+    uint32_t m_subpassIndex = 0;
 };
 

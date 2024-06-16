@@ -9,7 +9,7 @@ public:
     virtual void addStaticPins() {}
     virtual void drawDynamicPins() {}
 
-    std::string getName() const { return m_name; }
+    [[nodiscard]] std::string getName() const { return m_name; }
 
 protected:
     ImFlow::BaseNode* m_parent = nullptr;

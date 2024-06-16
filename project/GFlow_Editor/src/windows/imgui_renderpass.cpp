@@ -2,14 +2,14 @@
 
 #include "imgui.h"
 #include "resource_manager.hpp"
-#include "nodes/subpass_node.hpp"
+#include "nodes/graphics_pass_node.hpp"
 #include "resources/render_pass.hpp"
 
-ImGuiRenderPassWindow::ImGuiRenderPassWindow(const std::string_view& name) : ImGuiEditorWindow(name)
+ImGuiRenderPassWindow::ImGuiRenderPassWindow(const std::string_view& name, const bool defaultOpen) : ImGuiEditorWindow(name, defaultOpen)
 {
     m_grid.rightClickPopUpContent([this](ImFlow::BaseNode* node){this->rightClick(node);});
 
-    m_grid.addNode<InitSubpassNode>({2, 2});
+    m_grid.addNode<InitRenderpassNode>({2, 2});
 }
 
 void ImGuiRenderPassWindow::resourceSelected(const std::string& resource)
@@ -36,7 +36,7 @@ void ImGuiRenderPassWindow::rightClick(ImFlow::BaseNode* node)
         {
             if (ImGui::MenuItem("Subpass"))
             {
-                m_grid.placeNode<SubpassNode, uint32_t>(0);
+                m_grid.placeNode<GraphicsPassNode, uint32_t>(0);
             }
             if (ImGui::MenuItem("Attachment reference"))
             {
@@ -47,7 +47,7 @@ void ImGuiRenderPassWindow::rightClick(ImFlow::BaseNode* node)
     }
     else
     {
-        if (const InitSubpassNode* init = dynamic_cast<InitSubpassNode*>(node); init != nullptr)
+        if (const InitRenderpassNode* init = dynamic_cast<InitRenderpassNode*>(node); init != nullptr)
         {
             ImGui::Text("Testing on init subpass node");
         }

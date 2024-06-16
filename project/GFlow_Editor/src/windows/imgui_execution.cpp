@@ -2,7 +2,7 @@
 
 #include "imgui.h"
 
-ImGuiExecutionWindow::ImGuiExecutionWindow(const std::string_view& name) : ImGuiEditorWindow(name)
+ImGuiExecutionWindow::ImGuiExecutionWindow(const std::string_view& name, const bool defaultOpen) : ImGuiEditorWindow(name, defaultOpen)
 {
     m_grid.rightClickPopUpContent([this](const ImFlow::BaseNode* node){this->rightClick(node);});
 }

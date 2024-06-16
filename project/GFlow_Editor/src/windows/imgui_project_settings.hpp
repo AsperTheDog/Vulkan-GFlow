@@ -4,7 +4,7 @@
 class ImGuiProjectSettingsWindow : public ImGuiEditorWindow
 {
 public:
-    explicit ImGuiProjectSettingsWindow(const std::string_view& name);
+    explicit ImGuiProjectSettingsWindow(const std::string_view& name, const bool defaultOpen = true);
 
     void draw() override;
 };

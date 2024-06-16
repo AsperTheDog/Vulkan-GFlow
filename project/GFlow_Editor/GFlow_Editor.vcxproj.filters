@@ -11,7 +11,7 @@
     <ClCompile Include="src\windows\imgui_execution.cpp" />
     <ClCompile Include="src\windows\imgui_renderpass.cpp" />
     <ClCompile Include="src\windows\imgui_project_settings.cpp" />
-    <ClCompile Include="src\windows\nodes\subpass_node.cpp" />
+    <ClCompile Include="src\windows\nodes\graphics_pass_node.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource.h" />
@@ -27,8 +27,8 @@
     <ClInclude Include="src\windows\imgui_execution.hpp" />
     <ClInclude Include="src\windows\imgui_renderpass.hpp" />
     <ClInclude Include="src\windows\imgui_project_settings.hpp" />
-    <ClInclude Include="src\windows\nodes\subpass_node.hpp" />
     <ClInclude Include="src\windows\nodes\node_pin.hpp" />
+    <ClInclude Include="src\windows\nodes\graphics_pass_node.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="GFLow_Editor.rc" />

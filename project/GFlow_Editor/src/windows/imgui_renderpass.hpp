@@ -10,7 +10,7 @@ namespace gflow::parser
 class ImGuiRenderPassWindow final : public ImGuiEditorWindow
 {
 public:
-    explicit ImGuiRenderPassWindow(const std::string_view& name);
+    explicit ImGuiRenderPassWindow(const std::string_view& name, const bool defaultOpen = true);
     void resourceSelected(const std::string& resource);
 
     void draw() override;

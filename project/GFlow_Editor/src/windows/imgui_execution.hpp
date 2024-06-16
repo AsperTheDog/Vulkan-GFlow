@@ -5,7 +5,7 @@
 class ImGuiExecutionWindow : public ImGuiEditorWindow
 {
 public:
-    explicit ImGuiExecutionWindow(const std::string_view& name);
+    explicit ImGuiExecutionWindow(const std::string_view& name, const bool defaultOpen = true);
 
     void draw() override;
 
