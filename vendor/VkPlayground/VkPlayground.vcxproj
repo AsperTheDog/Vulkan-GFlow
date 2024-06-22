@@ -105,12 +105,16 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(VULKAN_SDK)\Include;$(ProjectDir)repo\include;$(ProjectDir)repo\vendor\spirVReflect;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(VULKAN_SDK)\Include;$(ProjectDir)repo\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <Lib>
+      <AdditionalLibraryDirectories>$(VULKAN_SDK)\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>spirv-cross-cored.lib;spirv-cross-glsld.lib;vulkan-1.lib;shaderc_combinedd.lib</AdditionalDependencies>
+    </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -129,6 +133,12 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <Lib>
+      <AdditionalDependencies>spirv-cross-core.lib;spirv-cross-glsl.lib;vulkan-1.lib;shaderc_combined.lib</AdditionalDependencies>
+    </Lib>
+    <Lib>
+      <AdditionalLibraryDirectories>$(VULKAN_SDK)\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="repo\include\utils\identifiable.hpp" />
@@ -150,7 +160,6 @@
     <ClInclude Include="repo\include\vulkan_shader.hpp" />
     <ClInclude Include="repo\include\vulkan_swapchain.hpp" />
     <ClInclude Include="repo\include\vulkan_sync.hpp" />
-    <ClInclude Include="repo\vendor\spirVReflect\spirv_reflect.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="repo\src\vulkan_binding.cpp" />
@@ -169,7 +178,6 @@
     <ClCompile Include="repo\src\vulkan_shader.cpp" />
     <ClCompile Include="repo\src\vulkan_swapchain.cpp" />
     <ClCompile Include="repo\src\vulkan_sync.cpp" />
-    <ClCompile Include="repo\vendor\spirVReflect\spirv_reflect.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

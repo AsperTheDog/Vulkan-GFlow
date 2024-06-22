@@ -193,9 +193,7 @@ void Editor::createWindows()
     s_imguiWindows.push_back(new ImGuiResourceEditorWindow("Resource Editor"));
     s_imguiWindows.push_back(new ImGuiExecutionWindow("Execution"));
     s_imguiWindows.push_back(new ImGuiRenderPassWindow("RenderPass"));
-    s_resourceSelectedSignal.connect(dynamic_cast<ImGuiRenderPassWindow*>(s_imguiWindows.back()), &ImGuiRenderPassWindow::resourceSelected);
-    s_imguiWindows.push_back(new ImGuiProjectSettingsWindow("Project Settings"));
-    s_imguiWindows.back()->open = false;
+    s_imguiWindows.push_back(new ImGuiProjectSettingsWindow("Project Settings", false));
 #ifdef _DEBUG
     s_imguiWindows.push_back(new ImGuiTestWindow("Test", false));
 #endif

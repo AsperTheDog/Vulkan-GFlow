@@ -7,11 +7,11 @@
 #include "enum_contexts.hpp"
 #include "utils/logger.hpp"
 
-#define EXPORT(type, name) Export<type> ##name{#name, this}
-#define EXPORT_GROUP(name, title) Export<bool> _##name{title, this, true}
-#define EXPORT_ENUM(name, context) Export<EnumExport> ##name{#name, this, context}
-#define EXPORT_BITMASK(name, context) Export<EnumBitmask> ##name{#name, this, context}
-#define EXPORT_RESOURCE(type, name) Export<type*> ##name{#name, this}
+#define EXPORT(type, name) gflow::parser::Export<type> ##name{#name, this}
+#define EXPORT_GROUP(name, title) gflow::parser::Export<bool> _##name{title, this, true}
+#define EXPORT_ENUM(name, context) gflow::parser::Export<EnumExport> ##name{#name, this, context}
+#define EXPORT_BITMASK(name, context) gflow::parser::Export<EnumBitmask> ##name{#name, this, context}
+#define EXPORT_RESOURCE(type, name) gflow::parser::Export<type*> ##name{#name, this}
 
 #define DECLARE_RESOURCE(type)                                                        \
         explicit type(const std::string& path) : Resource(path) {}                    \
@@ -156,7 +156,7 @@ namespace gflow::parser
     //***************************************************************
 
     template <typename T>
-    Export<T>::Export(std::string_view name, Resource* parent, const bool group) : m_parent(parent)
+    Export<T>::Export(std::string_view name, Resource* parent, const bool group) : m_data{}, m_parent(parent)
     {
         m_isGroup = group;
         Resource::ExportData data;

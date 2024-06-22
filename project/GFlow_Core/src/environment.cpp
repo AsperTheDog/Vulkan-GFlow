@@ -415,7 +415,7 @@ namespace gflow
 				{
 					if (memory.flags & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT)
 					{
-						scores[i] += memory.size / (10ULL * 1024 * 1024);
+						scores[i] += static_cast<uint32_t>(memory.size / (10ULL * 1024 * 1024));
 					}
 				}
 			}

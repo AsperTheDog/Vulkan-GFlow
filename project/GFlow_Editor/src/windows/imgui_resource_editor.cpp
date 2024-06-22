@@ -24,6 +24,12 @@ void ImGuiResourceEditorWindow::resourceSelected(const std::string& resource)
     m_nestedResourcesOpened.clear();
 }
 
+void ImGuiResourceEditorWindow::resourceSelected(gflow::parser::Resource* resource)
+{
+    m_selectedResource = resource;
+    m_nestedResourcesOpened.clear();
+}
+
 void ImGuiResourceEditorWindow::draw()
 {
     ImGui::Begin(m_name.c_str(), &open);
@@ -32,6 +38,11 @@ void ImGuiResourceEditorWindow::draw()
         drawResource(m_selectedResource->getType(), &m_selectedResource, {});
     }
     ImGui::End();
+}
+
+gflow::parser::Resource* ImGuiResourceEditorWindow::getSelectedResource() const
+{
+    return m_selectedResource;
 }
 
 void ImGuiResourceEditorWindow::drawFloat(const std::string& name, void* data) const

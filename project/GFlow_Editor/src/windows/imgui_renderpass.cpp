@@ -2,14 +2,15 @@
 
 #include "imgui.h"
 #include "resource_manager.hpp"
-#include "nodes/graphics_pass_node.hpp"
+#include "nodes/renderpass/init_renderpass.hpp"
+#include "nodes/renderpass/subpass_node.hpp"
 #include "resources/render_pass.hpp"
 
 ImGuiRenderPassWindow::ImGuiRenderPassWindow(const std::string_view& name, const bool defaultOpen) : ImGuiEditorWindow(name, defaultOpen)
 {
     m_grid.rightClickPopUpContent([this](ImFlow::BaseNode* node){this->rightClick(node);});
 
-    m_grid.addNode<InitRenderpassNode>({2, 2});
+    m_grid.addNode<InitRenderpassNode>(ImVec2(1, 1));
 }
 
 void ImGuiRenderPassWindow::resourceSelected(const std::string& resource)
@@ -26,6 +27,7 @@ void ImGuiRenderPassWindow::draw()
     if (m_selectedPass != nullptr)
         m_grid.update();
     ImGui::End();
+    m_sidePanel.draw();
 }
 
 void ImGuiRenderPassWindow::rightClick(ImFlow::BaseNode* node)
@@ -34,27 +36,37 @@ void ImGuiRenderPassWindow::rightClick(ImFlow::BaseNode* node)
     {
         if (ImGui::BeginMenu("Add node"))
         {
-            if (ImGui::MenuItem("Subpass"))
+            if (ImGui::BeginMenu("Structure"))
             {
-                m_grid.placeNode<GraphicsPassNode, uint32_t>(0);
+                if (ImGui::MenuItem("Subpass"))
+                {
+                    m_grid.placeNode<SubpassNode>();
+                }
+                if (ImGui::MenuItem("Pipeline"))
+                {
+
+                }
+                ImGui::EndMenu();
             }
-            if (ImGui::MenuItem("Attachment reference"))
+            if (ImGui::BeginMenu("Resources"))
             {
-                
+                if (ImGui::MenuItem("Attachment"))
+                {
+
+                }
             }
             ImGui::EndMenu();
         }
     }
-    else
+    else if (GFlowNode* gfNode = dynamic_cast<GFlowNode*>(node); gfNode != nullptr)
     {
-        if (const InitRenderpassNode* init = dynamic_cast<InitRenderpassNode*>(node); init != nullptr)
+        if (ImGui::MenuItem("Inspect"))
         {
-            ImGui::Text("Testing on init subpass node");
+            if (m_sidePanelTarget != nullptr)
+                m_sidePanelTarget->setInspectionStatus(false);
+            m_sidePanelTarget = gfNode;
+            m_sidePanel.resourceSelected(m_sidePanelTarget->getLinkedResource());
+            m_sidePanelTarget->setInspectionStatus(true);
         }
-        else
-        {
-            ImGui::Text("Testing on node");
-        }
-        
     }
 }
