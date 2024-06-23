@@ -18,6 +18,8 @@ public:
     void draw() override;
     gflow::parser::Resource* getSelectedResource() const;
 
+    void setInlinePadding(const float padding) { m_inlinePadding = padding; }
+
 private:
     void drawFloat(const std::string& name, void* data) const;
     void drawInt(const std::string& name, void* data) const;
@@ -35,5 +37,8 @@ private:
     gflow::parser::Resource* m_selectedResource = nullptr;
 
     mutable std::unordered_map<std::string, bool> m_nestedResourcesOpened;
+
+private:
+    float m_inlinePadding = 200.0f;
 };
 

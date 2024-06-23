@@ -8,6 +8,7 @@
 
 ImGuiRenderPassWindow::ImGuiRenderPassWindow(const std::string_view& name, const bool defaultOpen) : ImGuiEditorWindow(name, defaultOpen)
 {
+    m_sidePanel.setInlinePadding(100.0f);
     m_grid.rightClickPopUpContent([this](ImFlow::BaseNode* node){this->rightClick(node);});
 
     m_grid.addNode<InitRenderpassNode>(ImVec2(1, 1));
@@ -27,7 +28,17 @@ void ImGuiRenderPassWindow::draw()
     if (m_selectedPass != nullptr)
         m_grid.update();
     ImGui::End();
-    m_sidePanel.draw();
+    if (m_sidePanelTarget != nullptr)
+        m_sidePanel.draw();
+}
+
+void ImGuiRenderPassWindow::onNodeDestroyed(GFlowNode* node)
+{
+    if (node == m_sidePanelTarget)
+    {
+        m_sidePanelTarget->setInspectionStatus(false);
+        m_sidePanelTarget = nullptr;
+    }
 }
 
 void ImGuiRenderPassWindow::rightClick(ImFlow::BaseNode* node)
@@ -40,7 +51,8 @@ void ImGuiRenderPassWindow::rightClick(ImFlow::BaseNode* node)
             {
                 if (ImGui::MenuItem("Subpass"))
                 {
-                    m_grid.placeNode<SubpassNode>();
+                    const std::shared_ptr<SubpassNode> newNode = m_grid.placeNode<SubpassNode>();
+                    newNode->getDestroyedSignal().connect(this, &ImGuiRenderPassWindow::onNodeDestroyed);
                 }
                 if (ImGui::MenuItem("Pipeline"))
                 {

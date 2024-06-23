@@ -21,7 +21,9 @@ public:
     ImFlow::ImNodeFlow m_grid{"RenderPass"};
 
 private:
+    void onNodeDestroyed(GFlowNode* node);
     void rightClick(ImFlow::BaseNode* node);
+
     gflow::parser::Resource* m_selectedPass = nullptr;
     GFlowNode* m_sidePanelTarget = nullptr;
     ImGuiResourceEditorWindow m_sidePanel{"Side Panel", false};

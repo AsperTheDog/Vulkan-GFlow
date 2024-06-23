@@ -6,7 +6,6 @@ class SubpassNodeResource final : public gflow::parser::Resource
     EXPORT(int, example);
 
     void initContext(ExportData* metadata) override {}
-
 public:
     DECLARE_RESOURCE(SubpassNodeResource)
 };

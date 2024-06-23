@@ -4,7 +4,7 @@
 class InitRenderpassNode final : public GFlowNode
 {
 public:
-    InitRenderpassNode() : GFlowNode("Init Renderpass") {}
+    InitRenderpassNode() : GFlowNode("START") {}
 
     void destroy() override {}
 

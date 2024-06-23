@@ -6,7 +6,6 @@
 #include "resource.hpp"
 #include "resource_manager.hpp"
 
-#define SAMELINE_OFFSET 200
 
 ImGuiResourceEditorWindow::ImGuiResourceEditorWindow(const std::string_view& name, const bool defaultOpen) : ImGuiEditorWindow(name, defaultOpen)
 {
@@ -48,7 +47,7 @@ gflow::parser::Resource* ImGuiResourceEditorWindow::getSelectedResource() const
 void ImGuiResourceEditorWindow::drawFloat(const std::string& name, void* data) const
 {
     ImGui::Text(name.c_str());
-    ImGui::SameLine(SAMELINE_OFFSET);
+    ImGui::SameLine(m_inlinePadding);
     ImGui::InputFloat(("##" + name).c_str(), static_cast<float*>(data), 0.1f, 1.0f);
     ImGui::Spacing();
 }
@@ -56,7 +55,7 @@ void ImGuiResourceEditorWindow::drawFloat(const std::string& name, void* data) c
 void ImGuiResourceEditorWindow::drawInt(const std::string& name, void* data) const
 {
     ImGui::Text(name.c_str());
-    ImGui::SameLine(SAMELINE_OFFSET);
+    ImGui::SameLine(m_inlinePadding);
     ImGui::InputInt(("##" + name).c_str(), static_cast<int*>(data), 1, 10);
     ImGui::Spacing();
 }
@@ -67,7 +66,7 @@ void ImGuiResourceEditorWindow::drawString(const std::string& name, void* data) 
     char buff[256] = "";
     if (!str->empty()) strcpy_s(buff, str->c_str());
     ImGui::Text(name.c_str());
-    ImGui::SameLine(SAMELINE_OFFSET);
+    ImGui::SameLine(m_inlinePadding);
     ImGui::InputText(("##" + name).c_str(), buff, 256);
     str->assign(buff);
     ImGui::Spacing();
@@ -76,7 +75,7 @@ void ImGuiResourceEditorWindow::drawString(const std::string& name, void* data) 
 void ImGuiResourceEditorWindow::drawBool(const std::string& name, void* data) const
 {
     ImGui::Text(name.c_str());
-    ImGui::SameLine(SAMELINE_OFFSET);
+    ImGui::SameLine(m_inlinePadding);
     ImGui::Checkbox(("##" + name).c_str(), static_cast<bool*>(data));
     ImGui::Spacing();
 }
@@ -84,7 +83,7 @@ void ImGuiResourceEditorWindow::drawBool(const std::string& name, void* data) co
 void ImGuiResourceEditorWindow::drawVec2(const std::string& name, void* data) const
 {
     ImGui::Text(name.c_str());
-    ImGui::SameLine(SAMELINE_OFFSET);
+    ImGui::SameLine(m_inlinePadding);
     ImGui::InputFloat2(("##" + name).c_str(), static_cast<float*>(data));
     ImGui::Spacing();
 }
@@ -92,7 +91,7 @@ void ImGuiResourceEditorWindow::drawVec2(const std::string& name, void* data) co
 void ImGuiResourceEditorWindow::drawVec3(const std::string& name, void* data) const
 {
     ImGui::Text(name.c_str());
-    ImGui::SameLine(SAMELINE_OFFSET);
+    ImGui::SameLine(m_inlinePadding);
     ImGui::InputFloat3(("##" + name).c_str(), static_cast<float*>(data));
     ImGui::Spacing();
 }
@@ -100,7 +99,7 @@ void ImGuiResourceEditorWindow::drawVec3(const std::string& name, void* data) co
 void ImGuiResourceEditorWindow::drawVec4(const std::string& name, void* data) const
 {
     ImGui::Text(name.c_str());
-    ImGui::SameLine(SAMELINE_OFFSET);
+    ImGui::SameLine(m_inlinePadding);
     ImGui::InputFloat4(("##" + name).c_str(), static_cast<float*>(data));
     ImGui::Spacing();
 }
@@ -185,7 +184,7 @@ void ImGuiResourceEditorWindow::drawSubresource(const std::string& name, std::st
     }
 
     ImGui::Text(name.c_str());
-    ImGui::SameLine(SAMELINE_OFFSET);
+    ImGui::SameLine(m_inlinePadding);
     if (ImGui::Button((subResource + "##" + stackedName).c_str()) && *resource != nullptr)
     {
         m_nestedResourcesOpened[stackedName] = !m_nestedResourcesOpened[stackedName];
@@ -238,7 +237,7 @@ void ImGuiResourceEditorWindow::drawSubresource(const std::string& name, std::st
 void ImGuiResourceEditorWindow::drawEnum(const std::string& name, void* data, const gflow::parser::EnumContext* context) const
 {
     ImGui::Text(name.c_str());
-    ImGui::SameLine(SAMELINE_OFFSET);
+    ImGui::SameLine(m_inlinePadding);
     uint32_t currentSelection = *static_cast<uint32_t*>(data);
     if (ImGui::BeginCombo(("##" + name).c_str(), context->names[currentSelection], 0))
     {
@@ -260,7 +259,7 @@ void ImGuiResourceEditorWindow::drawEnum(const std::string& name, void* data, co
 void ImGuiResourceEditorWindow::drawBitmask(const std::string& name, void* data, const gflow::parser::EnumContext* context) const
 {
     ImGui::Text(name.c_str());
-    ImGui::SameLine(SAMELINE_OFFSET);
+    ImGui::SameLine(m_inlinePadding);
     uint32_t currentMask = *static_cast<uint32_t*>(data);
     if (ImGui::BeginCombo(("##" + name).c_str(), "Bitmask...", 0))
     {
