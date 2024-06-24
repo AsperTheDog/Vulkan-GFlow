@@ -18,6 +18,7 @@ void GFlowNode::setInspectionStatus(const bool status)
         currentStyle->border_color = IM_COL32(30, 38, 41, 140);
         currentStyle->border_selected_color = IM_COL32(170, 190, 205, 230);
     }
+    m_inspectionStatusChanged.emit(status);
 }
 
 void GFlowNode::destroy()

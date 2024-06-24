@@ -15,6 +15,9 @@ public:
 
     [[nodiscard]] Signal<GFlowNode*>& getDestroyedSignal() { return m_destroyed; }
 
+protected:
+    Signal<bool> m_inspectionStatusChanged;
+
 private:
     Signal<GFlowNode*> m_destroyed;
 };

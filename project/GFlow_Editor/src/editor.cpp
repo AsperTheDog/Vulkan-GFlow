@@ -208,6 +208,8 @@ void Editor::createWindows()
         // Setup resource editor window
         ImGuiResourceEditorWindow* resourceEditorWindow = dynamic_cast<ImGuiResourceEditorWindow*>(getWindow("Resource Editor"));
         s_resourceSelectedSignal.connect(resourceEditorWindow, &ImGuiResourceEditorWindow::resourceSelected);
+        // Add simple print to test signal connection
+        resourceEditorWindow->getVariableChangedSignal().connect([](const std::string& name, const std::string& stackedName) { std::cout << name << " from path " << stackedName << std::endl; });
     }
     {
         // Setup renderpass window

@@ -1,17 +1,13 @@
 #pragma once
+#include "imgui_graph_window.hpp"
 #include "ImNodeFlow.h"
-#include "windows/imgui_editor_window.hpp"
 
-class ImGuiExecutionWindow : public ImGuiEditorWindow
+class ImGuiExecutionWindow final : public ImGuiGraphWindow
 {
 public:
-    explicit ImGuiExecutionWindow(const std::string_view& name, const bool defaultOpen = true);
-
-    void draw() override;
+    explicit ImGuiExecutionWindow(const std::string_view& name, bool defaultOpen = true);
 
 private:
-    void rightClick(const ImFlow::BaseNode* node) const;
-
-    ImFlow::ImNodeFlow m_grid{"Execution"};
+    void rightClick(ImFlow::BaseNode* node) override;
 };
 

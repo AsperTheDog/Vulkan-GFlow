@@ -1,5 +1,6 @@
 #pragma once
 #include "resource.hpp"
+#include "utils/signal.hpp"
 #include "windows/imgui_editor_window.hpp"
 
 namespace gflow::parser
@@ -20,23 +21,27 @@ public:
 
     void setInlinePadding(const float padding) { m_inlinePadding = padding; }
 
+    [[nodiscard]] Signal<std::string, std::string>& getVariableChangedSignal() { return m_variableChangedSignal; }
+
 private:
-    void drawFloat(const std::string& name, void* data) const;
-    void drawInt(const std::string& name, void* data) const;
-    void drawString(const std::string& name, void* data) const;
-    void drawBool(const std::string& name, void* data) const;
-    void drawVec2(const std::string& name, void* data) const;
-    void drawVec3(const std::string& name, void* data) const;
-    void drawVec4(const std::string& name, void* data) const;
-    void drawResource(const std::string& stackedName, void* data, const std::vector<gflow::parser::Resource*>& parentPath) const;
-    void drawSubresource(const std::string& name, std::string stackedName, gflow::parser::Resource::ExportData& data, const std::vector<gflow::parser::Resource*>& parentPath) const;
-    void drawEnum(const std::string& name, void* data, const gflow::parser::EnumContext* context) const;
-    void drawBitmask(const std::string& name, void* data, const gflow::parser::EnumContext* context) const;
+    bool drawFloat(const std::string& name, void* data) const;
+    bool drawInt(const std::string& name, void* data) const;
+    bool drawString(const std::string& name, void* data) const;
+    bool drawBool(const std::string& name, void* data) const;
+    bool drawVec2(const std::string& name, void* data) const;
+    bool drawVec3(const std::string& name, void* data) const;
+    bool drawVec4(const std::string& name, void* data) const;
+    void drawResource(const std::string& stackedName, void* data, const std::vector<gflow::parser::Resource*>& parentPath);
+    void drawSubresource(const std::string& name, std::string stackedName, gflow::parser::Resource::ExportData& data, const std::vector<gflow::parser::Resource*>& parentPath);
+    bool drawEnum(const std::string& name, void* data, const gflow::parser::EnumContext* context) const;
+    bool drawBitmask(const std::string& name, void* data, const gflow::parser::EnumContext* context) const;
 
 
     gflow::parser::Resource* m_selectedResource = nullptr;
 
     mutable std::unordered_map<std::string, bool> m_nestedResourcesOpened;
+
+    Signal<std::string, std::string> m_variableChangedSignal;
 
 private:
     float m_inlinePadding = 200.0f;

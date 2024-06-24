@@ -9,8 +9,8 @@
 
 #define EXPORT(type, name) gflow::parser::Export<type> ##name{#name, this}
 #define EXPORT_GROUP(name, title) gflow::parser::Export<bool> _##name{title, this, true}
-#define EXPORT_ENUM(name, context) gflow::parser::Export<EnumExport> ##name{#name, this, context}
-#define EXPORT_BITMASK(name, context) gflow::parser::Export<EnumBitmask> ##name{#name, this, context}
+#define EXPORT_ENUM(name, context) gflow::parser::Export<gflow::parser::EnumExport> ##name{#name, this, context}
+#define EXPORT_BITMASK(name, context) gflow::parser::Export<gflow::parser::EnumBitmask> ##name{#name, this, context}
 #define EXPORT_RESOURCE(type, name) gflow::parser::Export<type*> ##name{#name, this}
 
 #define DECLARE_RESOURCE(type)                                                        \
@@ -45,9 +45,21 @@ namespace gflow::parser
     struct EnumExport { uint32_t id; };
     struct EnumBitmask { uint32_t mask; };
 
-    struct Vec2 { float x, y; };
-    struct Vec3 { float x, y, z; };
-    struct Vec4 { float x, y, z, w; };
+    struct Vec2
+    {
+        float x, y;
+        bool operator==(const Vec2& other) const { return x == other.x && y == other.y; }
+    };
+    struct Vec3
+    {
+        float x, y, z;
+        bool operator==(const Vec3& other) const { return x == other.x && y == other.y && z == other.z; }
+    };
+    struct Vec4
+    {
+        float x, y, z, w;
+        bool operator==(const Vec4& other) const { return x == other.x && y == other.y && z == other.z && w == other.w; }
+    };
 
     template <typename T>
     class Export

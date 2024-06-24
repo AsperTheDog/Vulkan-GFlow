@@ -13,6 +13,8 @@
     <ClCompile Include="src\windows\imgui_project_settings.cpp" />
     <ClCompile Include="src\windows\nodes\base_node.cpp" />
     <ClCompile Include="src\windows\nodes\renderpass\subpass_node.cpp" />
+    <ClCompile Include="src\windows\nodes\renderpass\img_node.cpp" />
+    <ClCompile Include="src\windows\imgui_graph_window.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource.h" />
@@ -32,6 +34,8 @@
     <ClInclude Include="src\windows\nodes\base_node.hpp" />
     <ClInclude Include="src\windows\nodes\renderpass\subpass_node.hpp" />
     <ClInclude Include="src\windows\nodes\renderpass\init_renderpass.hpp" />
+    <ClInclude Include="src\windows\nodes\renderpass\img_node.hpp" />
+    <ClInclude Include="src\windows\imgui_graph_window.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="GFLow_Editor.rc" />

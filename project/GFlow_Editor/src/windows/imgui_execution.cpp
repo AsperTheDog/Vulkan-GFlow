@@ -2,19 +2,11 @@
 
 #include "imgui.h"
 
-ImGuiExecutionWindow::ImGuiExecutionWindow(const std::string_view& name, const bool defaultOpen) : ImGuiEditorWindow(name, defaultOpen)
-{
-    m_grid.rightClickPopUpContent([this](const ImFlow::BaseNode* node){this->rightClick(node);});
-}
+ImGuiExecutionWindow::ImGuiExecutionWindow(const std::string_view& name, const bool defaultOpen)
+: ImGuiGraphWindow(name, defaultOpen)
+{}
 
-void ImGuiExecutionWindow::draw()
-{
-    ImGui::Begin(m_name.c_str(), &open);
-    m_grid.update();
-    ImGui::End();
-}
-
-void ImGuiExecutionWindow::rightClick(const ImFlow::BaseNode* node) const
+void ImGuiExecutionWindow::rightClick(ImFlow::BaseNode* node)
 {
     if (node == nullptr)
     {

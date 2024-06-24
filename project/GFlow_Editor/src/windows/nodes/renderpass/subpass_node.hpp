@@ -13,9 +13,10 @@ public:
 class SubpassNode final : public GFlowNode
 {
 public:
-    SubpassNode() : GFlowNode("Subpass") {}
+    SubpassNode();
 
     gflow::parser::Resource* getLinkedResource() override { return &m_resource; }
+    void onInspectionStatus(bool status);
 
 private:
     SubpassNodeResource m_resource{""};
