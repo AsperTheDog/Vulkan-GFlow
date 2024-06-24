@@ -4,7 +4,7 @@
 class InitRenderpassNode final : public GFlowNode
 {
 public:
-    InitRenderpassNode() : GFlowNode("START") {}
+    explicit InitRenderpassNode(ImGuiGraphWindow* parent) : GFlowNode("START", parent) {}
 
     void destroy() override {}
 

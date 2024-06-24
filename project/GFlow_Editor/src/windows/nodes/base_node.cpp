@@ -1,6 +1,8 @@
 #include "base_node.hpp"
 
-GFlowNode::GFlowNode(const std::string& name)
+#include "windows/imgui_graph_window.hpp"
+
+GFlowNode::GFlowNode(const std::string& name, ImGuiGraphWindow* parent) : m_parent(parent)
 {
     setTitle(name);
 }
@@ -12,6 +14,7 @@ void GFlowNode::setInspectionStatus(const bool status)
     {
         currentStyle->border_color = IM_COL32(255, 85, 0, 255);
         currentStyle->border_selected_color = IM_COL32(255, 141, 84, 255);
+        m_parent->getSidePanelUpdateSignal().connect(this, &GFlowNode::onResourceUpdated, "CurrentNode");
     }
     else
     {

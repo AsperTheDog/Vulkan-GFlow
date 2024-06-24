@@ -1,6 +1,6 @@
 #include "subpass_node.hpp"
 
-SubpassNode::SubpassNode() : GFlowNode("Subpass")
+SubpassNode::SubpassNode(ImGuiGraphWindow* parent) : GFlowNode("Subpass", parent)
 {
 
 }

@@ -9,7 +9,7 @@
 
 ImGuiRenderPassWindow::ImGuiRenderPassWindow(const std::string_view& name, const bool defaultOpen) : ImGuiGraphWindow(name, defaultOpen)
 {
-    m_grid.addNode<InitRenderpassNode>(ImVec2(1, 1));
+    m_grid.addNode<InitRenderpassNode>(ImVec2(1, 1), this);
 }
 
 void ImGuiRenderPassWindow::resourceSelected(const std::string& resource)
@@ -39,7 +39,7 @@ void ImGuiRenderPassWindow::rightClick(ImFlow::BaseNode* node)
             {
                 if (ImGui::MenuItem("Subpass"))
                 {
-                    const std::shared_ptr<SubpassNode> newNode = m_grid.placeNode<SubpassNode>();
+                    const std::shared_ptr<SubpassNode> newNode = m_grid.placeNode<SubpassNode>(this);
                     newNode->getDestroyedSignal().connect(this, &ImGuiRenderPassWindow::onNodeDestroyed);
                 }
                 if (ImGui::MenuItem("Pipeline"))
@@ -52,7 +52,7 @@ void ImGuiRenderPassWindow::rightClick(ImFlow::BaseNode* node)
             {
                 if (ImGui::MenuItem("Attachment"))
                 {
-                    const std::shared_ptr<RenderpassImageNode> newNode = m_grid.placeNode<RenderpassImageNode>();
+                    const std::shared_ptr<RenderpassImageNode> newNode = m_grid.placeNode<RenderpassImageNode>(this);
                     newNode->getDestroyedSignal().connect(this, &ImGuiRenderPassWindow::onNodeDestroyed);
                 }
                 ImGui::EndMenu();

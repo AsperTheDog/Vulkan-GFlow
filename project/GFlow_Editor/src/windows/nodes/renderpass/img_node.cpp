@@ -13,7 +13,14 @@ gflow::parser::EnumContext RenderpassImageNodeResource::s_ImageUsageContext = {
     }
 };
 
-RenderpassImageNode::RenderpassImageNode() : GFlowNode("Image")
+RenderpassImageNode::RenderpassImageNode(ImGuiGraphWindow* parent) : GFlowNode("Image", parent)
 {
     m_resource.set("usage", "0", {});
+}
+
+void RenderpassImageNode::onResourceUpdated(const std::string& name, const std::string& path)
+{
+    if (name != "ID") return;
+    const std::string newID = getLinkedResource()->get("ID").first;
+    setTitle("Image" + (newID.empty() ? "" : " (" + newID + ")"));
 }

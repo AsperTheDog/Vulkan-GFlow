@@ -18,9 +18,10 @@ class RenderpassImageNode final : public GFlowNode
 {
 public:
 
-    explicit RenderpassImageNode();
+    explicit RenderpassImageNode(ImGuiGraphWindow* parent);
 
     gflow::parser::Resource* getLinkedResource() override { return &m_resource; }
+    void onResourceUpdated(const std::string& name, const std::string& path) override;
 
 private:
     RenderpassImageNodeResource m_resource{""};

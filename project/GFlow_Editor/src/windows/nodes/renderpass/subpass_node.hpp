@@ -13,7 +13,7 @@ public:
 class SubpassNode final : public GFlowNode
 {
 public:
-    SubpassNode();
+    explicit SubpassNode(ImGuiGraphWindow* parent);
 
     gflow::parser::Resource* getLinkedResource() override { return &m_resource; }
     void onInspectionStatus(bool status);

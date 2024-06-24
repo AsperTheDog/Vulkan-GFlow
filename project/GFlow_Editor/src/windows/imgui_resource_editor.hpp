@@ -21,7 +21,7 @@ public:
 
     void setInlinePadding(const float padding) { m_inlinePadding = padding; }
 
-    [[nodiscard]] Signal<std::string, std::string>& getVariableChangedSignal() { return m_variableChangedSignal; }
+    [[nodiscard]] Signal<const std::string&, const std::string&>& getVariableChangedSignal() { return m_variableChangedSignal; }
 
 private:
     bool drawFloat(const std::string& name, void* data) const;
@@ -41,7 +41,7 @@ private:
 
     mutable std::unordered_map<std::string, bool> m_nestedResourcesOpened;
 
-    Signal<std::string, std::string> m_variableChangedSignal;
+    Signal<const std::string&, const std::string&> m_variableChangedSignal;
 
 private:
     float m_inlinePadding = 200.0f;
