@@ -5,6 +5,7 @@
 #include "nodes/renderpass/img_node.hpp"
 #include "nodes/renderpass/init_renderpass.hpp"
 #include "nodes/renderpass/subpass_node.hpp"
+#include "nodes/renderpass/subpass_pipeline_node.hpp"
 #include "resources/render_pass.hpp"
 
 ImGuiRenderPassWindow::ImGuiRenderPassWindow(const std::string_view& name, const bool defaultOpen) : ImGuiGraphWindow(name, defaultOpen)
@@ -44,7 +45,8 @@ void ImGuiRenderPassWindow::rightClick(ImFlow::BaseNode* node)
                 }
                 if (ImGui::MenuItem("Pipeline"))
                 {
-
+                    const std::shared_ptr<SubpassPipelineNode> newNode = m_grid.placeNode<SubpassPipelineNode>(this);
+                    newNode->getDestroyedSignal().connect(this, &ImGuiRenderPassWindow::onNodeDestroyed);
                 }
                 ImGui::EndMenu();
             }

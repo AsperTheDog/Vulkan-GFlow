@@ -1,11 +1,15 @@
 #pragma once
+#include "renderpass_node_pins.hpp"
 #include "windows/nodes/base_node.hpp"
 
 class SubpassNodeResource final : public gflow::parser::Resource
 {
-    EXPORT(int, example);
+    EXPORT(int, subpassID);
 
     void initContext(ExportData* metadata) override {}
+
+    bool isUsed(const std::string& variable, const std::vector<Resource*>& parentPath) override;
+
 public:
     DECLARE_RESOURCE(SubpassNodeResource)
 };
@@ -16,9 +20,11 @@ public:
     explicit SubpassNode(ImGuiGraphWindow* parent);
 
     gflow::parser::Resource* getLinkedResource() override { return &m_resource; }
-    void onInspectionStatus(bool status);
 
 private:
     SubpassNodeResource m_resource{""};
+
+    SubpassInputPin m_mainIn{this, "End"};
+    SubpassOutputPin m_mainOut{this, "Begin"};
 };
 

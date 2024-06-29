@@ -15,6 +15,8 @@
     <ClCompile Include="src\windows\nodes\renderpass\subpass_node.cpp" />
     <ClCompile Include="src\windows\nodes\renderpass\img_node.cpp" />
     <ClCompile Include="src\windows\imgui_graph_window.cpp" />
+    <ClCompile Include="src\windows\nodes\renderpass\renderpass_node_pins.cpp" />
+    <ClCompile Include="src\windows\nodes\renderpass\subpass_pipeline_node.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource.h" />
@@ -36,6 +38,8 @@
     <ClInclude Include="src\windows\nodes\renderpass\init_renderpass.hpp" />
     <ClInclude Include="src\windows\nodes\renderpass\img_node.hpp" />
     <ClInclude Include="src\windows\imgui_graph_window.hpp" />
+    <ClInclude Include="src\windows\nodes\renderpass\renderpass_node_pins.hpp" />
+    <ClInclude Include="src\windows\nodes\renderpass\subpass_pipeline_node.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="GFLow_Editor.rc" />

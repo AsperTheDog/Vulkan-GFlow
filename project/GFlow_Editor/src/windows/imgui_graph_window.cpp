@@ -10,6 +10,11 @@ ImGuiGraphWindow::ImGuiGraphWindow(const std::string_view& name, const bool defa
 void ImGuiGraphWindow::draw()
 {
     ImGui::Begin(m_name.c_str(), &open);
+    drawBody();
+}
+
+void ImGuiGraphWindow::drawBody()
+{
     m_grid.update();
     ImGui::End();
     if (m_sidePanelTarget != nullptr)

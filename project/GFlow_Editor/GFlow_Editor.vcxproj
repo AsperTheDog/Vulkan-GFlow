@@ -154,7 +154,9 @@
     <ClInclude Include="src\editor.hpp" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="src\sdl_window.hpp" />
+    <ClInclude Include="src\windows\nodes\renderpass\renderpass_node_pins.hpp" />
     <ClInclude Include="src\windows\nodes\renderpass\subpass_node.hpp" />
+    <ClInclude Include="src\windows\nodes\renderpass\subpass_pipeline_node.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="GFLow_Editor.rc" />
@@ -171,7 +173,9 @@
     <ClCompile Include="src\editor.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\sdl_window.cpp" />
+    <ClCompile Include="src\windows\nodes\renderpass\renderpass_node_pins.cpp" />
     <ClCompile Include="src\windows\nodes\renderpass\subpass_node.cpp" />
+    <ClCompile Include="src\windows\nodes\renderpass\subpass_pipeline_node.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
