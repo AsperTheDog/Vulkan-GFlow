@@ -15,6 +15,7 @@ public:
 
 protected:
     virtual void rightClick(ImFlow::BaseNode* node);
+    void drawBody();
 
     ImFlow::ImNodeFlow m_grid{"RenderPass"};
 

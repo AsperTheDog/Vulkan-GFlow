@@ -235,6 +235,8 @@ void ImGuiResourceEditorWindow::drawSubresource(const std::string& name, std::st
             *resource = data.resourceFactory("", &data);
             m_nestedResourcesOpened[stackedName] = true;
             shouldReturn = true;
+            m_variableChangedSignal.emit(name, stackedName);
+            
         }
         ImGui::BeginDisabled(gflow::parser::ResourceManager::isTypeSubresource(data.getType()));
         if (ImGui::MenuItem("Load"))

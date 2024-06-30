@@ -1,11 +1,12 @@
 #include "subpass_node.hpp"
 
-SubpassNode::SubpassNode(ImGuiGraphWindow* parent) : GFlowNode("Subpass", parent)
+bool SubpassNodeResource::isUsed(const std::string& variable, const std::vector<Resource*>& parentPath)
 {
-
+	return variable != "subpassID";
 }
 
-void SubpassNode::onInspectionStatus(bool status)
+SubpassNode::SubpassNode(ImGuiGraphWindow* parent) : GFlowNode("Subpass", parent)
 {
-
+	m_mainIn.addStaticPins();
+	m_mainOut.addStaticPins();
 }

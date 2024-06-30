@@ -1,9 +1,9 @@
 #pragma once
 #include "resource.hpp"
 
-#define EXPORT_LIST(type, name) Export<List<type>*> ##name{#name, this}
-#define EXPORT_ENUM_LIST(name, context) Export<List<EnumExport>*> ##name{#name, this, context}
-#define EXPORT_RESOURCE_LIST(type, name) Export<List<type*>*> ##name{#name, this}
+#define EXPORT_LIST(type, name) gflow::parser::Export<gflow::parser::List<type>*> ##name{#name, this}
+#define EXPORT_ENUM_LIST(name, context) gflow::parser::Export<List<gflow::parser::EnumExport>*> ##name{#name, this, context}
+#define EXPORT_RESOURCE_LIST(type, name) gflow::parser::Export<List<type*>*> ##name{#name, this}
 
 namespace gflow::parser
 {
