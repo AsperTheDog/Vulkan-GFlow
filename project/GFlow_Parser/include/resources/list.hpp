@@ -2,14 +2,14 @@
 #include "resource.hpp"
 
 #define EXPORT_LIST(type, name) gflow::parser::Export<gflow::parser::List<type>*> ##name{#name, this}
-#define EXPORT_ENUM_LIST(name, context) gflow::parser::Export<List<gflow::parser::EnumExport>*> ##name{#name, this, context}
-#define EXPORT_RESOURCE_LIST(type, name) gflow::parser::Export<List<type*>*> ##name{#name, this}
+#define EXPORT_ENUM_LIST(name, context) gflow::parser::Export<gflow::parser::List<gflow::parser::EnumExport>*> ##name{#name, this, context}
+#define EXPORT_RESOURCE_LIST(type, name) gflow::parser::Export<gflow::parser::List<type*>*> ##name{#name, this}
 
 namespace gflow::parser
 {
     // template cannot be bool
     template <typename T>
-    class List final : public Resource
+    class List : public Resource
     {
     public:
         [[nodiscard]] EnumContext* getEnumContext() const { return m_enumContext; }
@@ -21,16 +21,21 @@ namespace gflow::parser
         void initContext(ExportData* metadata) override;
 
         void setEnumContext(EnumContext* enumContext) { m_enumContext = enumContext; }
+        void setReadonly(const bool readonly) { m_readonlySize = readonly; }
 
         bool set(const std::string& variable, const std::string& value, const ResourceEntries& dependencies) override;
         [[nodiscard]] std::vector<ExportData> getCustomExports() override;
+
         void exportsChanged() override;
         void exportChanged(const std::string& variable) override;
+
+        DataUsage isUsed(const std::string& variable, const std::vector<Resource*>& parentPath = {}) override;
 
     private:
         int m_size = 0;
         std::vector<T> m_data;
         EnumContext* m_enumContext = nullptr;
+        bool m_readonlySize = false;
 
         Resource* m_parent = nullptr;
         
@@ -112,6 +117,14 @@ namespace gflow::parser
             if (m_data.size() != static_cast<size_t>(m_size))
                 m_data.resize(m_size);
         }
+    }
+
+    template <typename T>
+    DataUsage List<T>::isUsed(const std::string& variable, const std::vector<Resource*>& parentPath)
+    {
+        if (m_readonlySize && variable == "size")
+            return READ_ONLY;
+        return USED;
     }
 
     template <typename T>

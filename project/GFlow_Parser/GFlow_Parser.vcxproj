@@ -27,6 +27,7 @@
     <ClInclude Include="include\resources\pipeline.hpp" />
     <ClInclude Include="include\resource_manager.hpp" />
     <ClInclude Include="include\resources\list.hpp" />
+    <ClInclude Include="include\resources\internal_list.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\enum_contexts.cpp" />

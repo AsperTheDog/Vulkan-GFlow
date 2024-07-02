@@ -19,7 +19,7 @@ public:
 private:
 	SubpassPipelineNodeResource m_resource{""};
 
-	PipelineInputPin m_mainIn{this, "Prev"};
-	PipelineOutputPin m_mainOut{this, "Next"};
+	PipelineInputPin m_mainIn{this, ""};
+	PipelineOutputPin m_mainOut{this, ""};
 };
 

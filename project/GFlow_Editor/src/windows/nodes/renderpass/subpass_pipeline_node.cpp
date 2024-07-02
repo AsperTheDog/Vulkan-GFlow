@@ -2,6 +2,7 @@
 
 SubpassPipelineNode::SubpassPipelineNode(ImGuiGraphWindow* parent) : GFlowNode("Pipeline", parent)
 {
+    setStyle(std::make_shared<ImFlow::NodeStyle>(IM_COL32(109,0,181,255), ImColor(233,241,244,255), 3.5f));
 	m_mainIn.addStaticPins();
 	m_mainOut.addStaticPins();
 }

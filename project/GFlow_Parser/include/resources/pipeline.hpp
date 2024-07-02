@@ -47,7 +47,7 @@ namespace gflow::parser
         EXPORT_BITMASK(colorWriteMask, EnumContexts::colorWriteMaskBits);
 
         void initContext(ExportData* metadata) override {}
-        bool isUsed(const std::string& variable, const std::vector<Resource*>& parentPath = {}) override;
+        DataUsage isUsed(const std::string& variable, const std::vector<Resource*>& parentPath = {}) override;
         
     public:
         DECLARE_RESOURCE(PipelineColorBlendAttachment)
@@ -63,7 +63,7 @@ namespace gflow::parser
         EXPORT(Vec4, colorBlendConstants);
         EXPORT_RESOURCE_LIST(PipelineColorBlendAttachment, colorBlendAttachments);
 
-        bool isUsed(const std::string& variable, const std::vector<Resource*>& parentPath = {}) override;
+        DataUsage isUsed(const std::string& variable, const std::vector<Resource*>& parentPath = {}) override;
         
     public:
         DECLARE_RESOURCE(PipelineColorBlendState)
@@ -76,6 +76,8 @@ namespace gflow::parser
         EXPORT_RESOURCE(PipelineRasterizationState, rasterizationState);
         EXPORT_RESOURCE(PipelineDepthStencilState, depthStencilState);
         EXPORT_RESOURCE(PipelineColorBlendState, colorBlendState);
+        EXPORT_GROUP(shaders, "Shaders");
+
         
     public:
         DECLARE_RESOURCE(Pipeline)
@@ -85,19 +87,19 @@ namespace gflow::parser
     // Function definitions
     // ********************
 
-    inline bool PipelineColorBlendAttachment::isUsed(const std::string& variable, const std::vector<Resource*>& parentPath)
+    inline DataUsage PipelineColorBlendAttachment::isUsed(const std::string& variable, const std::vector<Resource*>& parentPath)
     {
         if (parentPath.size() > 1 && parentPath[parentPath.size() - 2]->getValue<bool>("logicOpEnable"))
-            return variable == "colorWriteMask";
+            return variable == "colorWriteMask" ? USED : NOT_USED;
         if (variable == "blendEnable")
-            return true;
-        return *blendEnable;
+            return USED;
+        return *blendEnable ? USED : NOT_USED;
     }
 
-    inline bool PipelineColorBlendState::isUsed(const std::string& variable, const std::vector<Resource*>& parentPath)
+    inline DataUsage PipelineColorBlendState::isUsed(const std::string& variable, const std::vector<Resource*>& parentPath)
     {
         if (variable == "logicOpEnable" || variable == "colorBlendAttachments")
-            return true;
-        return *logicOpEnable;
+            return USED;
+        return *logicOpEnable ? USED : NOT_USED;
     }
 }

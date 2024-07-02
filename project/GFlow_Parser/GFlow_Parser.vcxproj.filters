@@ -39,6 +39,9 @@
     <ClInclude Include="include\resources\render_pass.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\resources\internal_list.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\resource.cpp">

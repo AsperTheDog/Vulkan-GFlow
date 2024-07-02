@@ -13,13 +13,15 @@
 #define EXPORT_BITMASK(name, context) gflow::parser::Export<gflow::parser::EnumBitmask> ##name{#name, this, context}
 #define EXPORT_RESOURCE(type, name) gflow::parser::Export<type*> ##name{#name, this}
 
-#define DECLARE_RESOURCE(type)                                                        \
-        explicit type(const std::string& path) : Resource(path) {}                    \
+#define DECLARE_RESOURCE_ANCESTOR(type, parent)                                       \
+        explicit type(const std::string& path) : parent(path) {}                      \
         [[nodiscard]] static std::string getTypeStatic() { return #type; }            \
         [[nodiscard]] std::string getType() const override { return #type; }          \
         friend class ResourceManager;                                                 \
         template <typename U> friend class Export;                                    \
         friend class Resource;
+
+#define DECLARE_RESOURCE(type) DECLARE_RESOURCE_ANCESTOR(type, Resource)
 
 
 namespace gflow::parser
@@ -37,13 +39,22 @@ namespace gflow::parser
         VEC2,
         VEC3,
         VEC4,
+        FILE,
         ENUM,
         ENUM_BITMASK,
         RESOURCE
     };
 
+    enum DataUsage
+    {
+        USED,
+        READ_ONLY,
+        NOT_USED
+    };
+
     struct EnumExport { uint32_t id; };
     struct EnumBitmask { uint32_t mask; };
+    struct FilePath { std::string path; };
 
     struct Vec2
     {
@@ -119,8 +130,8 @@ namespace gflow::parser
         bool deserialize(std::string filename = "");
 
         virtual std::pair<std::string, std::string> get(const std::string& variable);
-        virtual bool set(const std::string& variable, const std::string& value, const ResourceEntries& dependencies);
-        virtual bool isUsed(const std::string& variable, const std::vector<Resource*>& parentPath = {}) { return true; }
+        virtual bool set(const std::string& variable, const std::string& value, const ResourceEntries& dependencies = {});
+        virtual DataUsage isUsed(const std::string& variable, const std::vector<Resource*>& parentPath = {}) { return USED; }
 
         template <typename T>
         T getValue(const std::string& variable);
@@ -189,6 +200,7 @@ namespace gflow::parser
         else if constexpr (std::is_same_v<T, Vec2>) data.type = VEC2;
         else if constexpr (std::is_same_v<T, Vec3>) data.type = VEC3;
         else if constexpr (std::is_same_v<T, Vec4>) data.type = VEC4;
+        else if constexpr (std::is_same_v<T, FilePath>) data.type = FILE;
         else if constexpr (std::is_pointer_v<T> && std::is_base_of_v<Resource, std::remove_pointer_t<T>>)
         {
             data.type = RESOURCE;

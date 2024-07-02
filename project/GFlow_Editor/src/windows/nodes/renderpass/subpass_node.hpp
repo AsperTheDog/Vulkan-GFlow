@@ -8,7 +8,7 @@ class SubpassNodeResource final : public gflow::parser::Resource
 
     void initContext(ExportData* metadata) override {}
 
-    bool isUsed(const std::string& variable, const std::vector<Resource*>& parentPath) override;
+    gflow::parser::DataUsage isUsed(const std::string& variable, const std::vector<Resource*>& parentPath) override;
 
 public:
     DECLARE_RESOURCE(SubpassNodeResource)
@@ -24,7 +24,7 @@ public:
 private:
     SubpassNodeResource m_resource{""};
 
-    SubpassInputPin m_mainIn{this, "End"};
-    SubpassOutputPin m_mainOut{this, "Begin"};
+    SubpassInputPin m_mainIn{this, ""};
+    SubpassOutputPin m_mainOut{this, ""};
 };
 

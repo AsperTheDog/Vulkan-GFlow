@@ -6,6 +6,8 @@
 #include "resource.hpp"
 #include "resource_manager.hpp"
 
+#define LEFT_ALIGN_ITEM (-13)
+
 
 ImGuiResourceEditorWindow::ImGuiResourceEditorWindow(const std::string_view& name, const bool defaultOpen) : ImGuiEditorWindow(name, defaultOpen)
 {
@@ -50,7 +52,9 @@ bool ImGuiResourceEditorWindow::drawFloat(const std::string& name, void* data) c
     float tmp = *value;
     ImGui::Text(name.c_str());
     ImGui::SameLine(m_inlinePadding);
+    ImGui::PushItemWidth(LEFT_ALIGN_ITEM);
     ImGui::InputFloat(("##" + name).c_str(), &tmp, 0.1f, 1.0f);
+    ImGui::PopItemWidth();
     ImGui::Spacing();
     const bool changed = tmp != *value;
     *value = tmp;
@@ -63,22 +67,26 @@ bool ImGuiResourceEditorWindow::drawInt(const std::string& name, void* data) con
     int tmp = *value;
     ImGui::Text(name.c_str());
     ImGui::SameLine(m_inlinePadding);
+    ImGui::PushItemWidth(LEFT_ALIGN_ITEM);
     ImGui::InputInt(("##" + name).c_str(), &tmp, 1, 10);
+    ImGui::PopItemWidth();
     ImGui::Spacing();
     const bool changed = tmp != *value;
     *value = tmp;
     return changed;
 }
 
-bool ImGuiResourceEditorWindow::drawString(const std::string& name, void* data) const
+bool ImGuiResourceEditorWindow::drawString(const std::string& name, void* data, const bool isShort) const
 {
     std::string* str = static_cast<std::string*>(data);
     char buff[256] = "";
     if (!str->empty()) strcpy_s(buff, str->c_str());
     ImGui::Text(name.c_str());
     ImGui::SameLine(m_inlinePadding);
+    ImGui::PushItemWidth(isShort ? -80 : LEFT_ALIGN_ITEM);
     ImGui::InputText(("##" + name).c_str(), buff, 256);
-    ImGui::Spacing();
+    if (!isShort) ImGui::Spacing();
+    ImGui::PopItemWidth();
     const bool changed = *str != buff;
     str->assign(buff);
     return changed;
@@ -90,7 +98,9 @@ bool ImGuiResourceEditorWindow::drawBool(const std::string& name, void* data) co
     bool tmp = *value;
     ImGui::Text(name.c_str());
     ImGui::SameLine(m_inlinePadding);
+    ImGui::PushItemWidth(LEFT_ALIGN_ITEM);
     ImGui::Checkbox(("##" + name).c_str(), &tmp);
+    ImGui::PopItemWidth();
     ImGui::Spacing();
     const bool changed = tmp != *value;
     *value = tmp;
@@ -103,7 +113,9 @@ bool ImGuiResourceEditorWindow::drawVec2(const std::string& name, void* data) co
     gflow::parser::Vec2 tmp = *value;
     ImGui::Text(name.c_str());
     ImGui::SameLine(m_inlinePadding);
+    ImGui::PushItemWidth(LEFT_ALIGN_ITEM);
     ImGui::InputFloat2(("##" + name).c_str(), reinterpret_cast<float*>(&tmp));
+    ImGui::PopItemWidth();
     ImGui::Spacing();
     const bool changed = tmp != *value;
     *value = tmp;
@@ -116,7 +128,9 @@ bool ImGuiResourceEditorWindow::drawVec3(const std::string& name, void* data) co
     gflow::parser::Vec3 tmp = *value;
     ImGui::Text(name.c_str());
     ImGui::SameLine(m_inlinePadding);
+    ImGui::PushItemWidth(LEFT_ALIGN_ITEM);
     ImGui::InputFloat3(("##" + name).c_str(), reinterpret_cast<float*>(&tmp));
+    ImGui::PopItemWidth();
     ImGui::Spacing();
     const bool changed = tmp != *value;
     *value = tmp;
@@ -129,11 +143,22 @@ bool ImGuiResourceEditorWindow::drawVec4(const std::string& name, void* data) co
     gflow::parser::Vec4 tmp = *value;
     ImGui::Text(name.c_str());
     ImGui::SameLine(m_inlinePadding);
+    ImGui::PushItemWidth(LEFT_ALIGN_ITEM);
     ImGui::InputFloat4(("##" + name).c_str(), reinterpret_cast<float*>(&tmp));
+    ImGui::PopItemWidth();
     ImGui::Spacing();
     const bool changed = tmp != *value;
     *value = tmp;
     return changed;
+}
+
+bool ImGuiResourceEditorWindow::drawFile(const std::string& name, void* data) const
+{
+    gflow::parser::FilePath* str = static_cast<gflow::parser::FilePath*>(data);
+    bool edited = drawString(name, &str->path, true);
+    ImGui::SameLine(0, 10);
+    edited |= ImGui::Button("refresh");
+    return edited;
 }
 
 void ImGuiResourceEditorWindow::drawResource(const std::string& stackedName, void* data, const std::vector<gflow::parser::Resource*>& parentPath)
@@ -143,7 +168,8 @@ void ImGuiResourceEditorWindow::drawResource(const std::string& stackedName, voi
     if (*resource == nullptr) return;
     for (gflow::parser::Resource::ExportData& exportElem : (*resource)->getExports())
     {
-        if (!(*resource)->isUsed(exportElem.name, parentPath)) continue;
+        const gflow::parser::DataUsage usage = (*resource)->isUsed(exportElem.name, parentPath);
+        if (usage == gflow::parser::NOT_USED) continue;
 
         if (exportElem.data == nullptr)
         {
@@ -154,6 +180,7 @@ void ImGuiResourceEditorWindow::drawResource(const std::string& stackedName, voi
 
         if (!isHeaderOpen) continue;
         bool changed = false;
+        ImGui::BeginDisabled(usage == gflow::parser::READ_ONLY);
         switch (exportElem.type)
         {
         case gflow::parser::DataType::STRING:
@@ -177,6 +204,9 @@ void ImGuiResourceEditorWindow::drawResource(const std::string& stackedName, voi
         case gflow::parser::DataType::VEC4:
             changed = drawVec4(exportElem.name, exportElem.data);
             break;
+        case gflow::parser::DataType::FILE:
+            changed = drawFile(exportElem.name, exportElem.data);
+            break;
         case gflow::parser::DataType::ENUM:
             changed = drawEnum(exportElem.name, exportElem.data, exportElem.enumContext);
             break;
@@ -191,6 +221,7 @@ void ImGuiResourceEditorWindow::drawResource(const std::string& stackedName, voi
                 break;
             }
         }
+        ImGui::EndDisabled();
         if (changed)
             m_variableChangedSignal.emit(exportElem.name, stackedName);
     }

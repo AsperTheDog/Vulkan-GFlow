@@ -26,7 +26,7 @@ public:
 private:
     bool drawFloat(const std::string& name, void* data) const;
     bool drawInt(const std::string& name, void* data) const;
-    bool drawString(const std::string& name, void* data) const;
+    bool drawString(const std::string& name, void* data, bool isShort = false) const;
     bool drawBool(const std::string& name, void* data) const;
     bool drawVec2(const std::string& name, void* data) const;
     bool drawVec3(const std::string& name, void* data) const;
@@ -35,6 +35,7 @@ private:
     void drawSubresource(const std::string& name, std::string stackedName, gflow::parser::Resource::ExportData& data, const std::vector<gflow::parser::Resource*>& parentPath);
     bool drawEnum(const std::string& name, void* data, const gflow::parser::EnumContext* context) const;
     bool drawBitmask(const std::string& name, void* data, const gflow::parser::EnumContext* context) const;
+    bool drawFile(const std::string& name, void* data) const;
 
 
     gflow::parser::Resource* m_selectedResource = nullptr;
