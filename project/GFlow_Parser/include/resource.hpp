@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "enum_contexts.hpp"
+#include "string_helper.hpp"
 #include "utils/logger.hpp"
 
 #define EXPORT(type, name) gflow::parser::Export<type> ##name{#name, this}
@@ -21,7 +22,16 @@
         template <typename U> friend class Export;                                    \
         friend class Resource;
 
+#define DECLARE_RESOURCE_ANCESTOR_CUSTOM_CONST(type, parent)                          \
+        explicit type(const std::string& path);                                       \
+        [[nodiscard]] static std::string getTypeStatic() { return #type; }            \
+        [[nodiscard]] std::string getType() const override { return #type; }          \
+        friend class ResourceManager;                                                 \
+        template <typename U> friend class Export;                                    \
+        friend class Resource;
+
 #define DECLARE_RESOURCE(type) DECLARE_RESOURCE_ANCESTOR(type, Resource)
+#define DECLARE_RESOURCE_CUSTOM_CONST(type) DECLARE_RESOURCE_ANCESTOR_CUSTOM_CONST(type, Resource)
 
 
 namespace gflow::parser
@@ -60,29 +70,36 @@ namespace gflow::parser
     {
         float x, y;
         bool operator==(const Vec2& other) const { return x == other.x && y == other.y; }
+
+        [[nodiscard]] std::string toString() const { return std::to_string(x) + ", " + std::to_string(y); }
     };
     struct Vec3
     {
         float x, y, z;
         bool operator==(const Vec3& other) const { return x == other.x && y == other.y && z == other.z; }
+
+        [[nodiscard]] std::string toString() const { return std::to_string(x) + ", " + std::to_string(y) + ", " + std::to_string(z); }
     };
     struct Vec4
     {
         float x, y, z, w;
         bool operator==(const Vec4& other) const { return x == other.x && y == other.y && z == other.z && w == other.w; }
+
+        [[nodiscard]] std::string toString() const { return std::to_string(x) + ", " + std::to_string(y) + ", " + std::to_string(z) + ", " + std::to_string(w); }
     };
 
     template <typename T>
     class Export
     {
     public:
-        Export(std::string_view name, Resource* parent, bool group = false);
-        Export(std::string_view name, Resource* parent, EnumContext& enumContext);
+        Export(const std::string& name, Resource* parent, bool group = false);
+        Export(const std::string& name, Resource* parent, EnumContext& enumContext);
 
         const T& operator*() const { return m_data; }
         T& operator*() { return m_data; }
 
-        Resource* getParent() const { return m_parent; }
+        [[nodiscard]] Resource* getParent() const { return m_parent; }
+        void setData(T value) { m_data = value; }
 
     private:
         bool m_isGroup = false;
@@ -101,9 +118,9 @@ namespace gflow::parser
             std::string name;
             void* data = nullptr;
             EnumContext* enumContext = nullptr;
-            Resource* (*resourceFactory)(const std::string&, Resource::ExportData*);
+            Resource* (*resourceFactory)(const std::string&, Resource::ExportData*) = nullptr;
             Resource* parent = nullptr;
-            std::string (*getType)();
+            std::string (*getType)() = nullptr;
         };
 
         struct ResourceData
@@ -145,8 +162,12 @@ namespace gflow::parser
         [[nodiscard]] virtual std::string getType() const = 0;
 
         [[nodiscard]] std::string getPath() const { return m_path; }
+        [[nodiscard]] std::string getMetaPath() const { return gflow::string::getPathDirectory(m_path) + "/_" + gflow::string::getPathFilename(m_path) + ".meta"; }
         [[nodiscard]] uint32_t getID() const { return m_id; }
         [[nodiscard]] bool isSubresource() const { return m_isSubresource; }
+
+        template <typename T>
+        static Resource* create(const std::string& path, ExportData* metadata);
 
     protected:
         explicit Resource(const std::string_view path) : m_isSubresource(path.empty()), m_path(path) { setID(0); }
@@ -158,9 +179,6 @@ namespace gflow::parser
         std::vector<ExportData> m_exports;
 
         void registerExport(const ExportData& data) { m_exports.push_back(data); }
-
-        template <typename T>
-        static Resource* create(const std::string& path, ExportData* metadata);
 
     private:
         void setID(uint32_t id = 0);
@@ -179,47 +197,38 @@ namespace gflow::parser
     //***************************************************************
 
     template <typename T>
-    Export<T>::Export(std::string_view name, Resource* parent, const bool group) : m_data{}, m_parent(parent)
+    Export<T>::Export(const std::string& name, Resource* parent, const bool group) : m_data{}, m_parent(parent)
     {
         m_isGroup = group;
-        Resource::ExportData data;
-        this->m_name = name;
-        data.name = name;
 
-        if (m_isGroup)
-        {
-            parent->registerExport(data);
-            return;
-        }
+        Resource::ExportData exportData;
+        exportData.name = name;
+        exportData.data = &m_data;
 
-        data.data = &this->m_data;
-        if constexpr (std::is_same_v<T, std::string>) data.type = STRING;
-        else if constexpr (std::is_same_v<T, int>) data.type = INT;
-        else if constexpr (std::is_same_v<T, float>) data.type = FLOAT;
-        else if constexpr (std::is_same_v<T, bool>) data.type = BOOL;
-        else if constexpr (std::is_same_v<T, Vec2>) data.type = VEC2;
-        else if constexpr (std::is_same_v<T, Vec3>) data.type = VEC3;
-        else if constexpr (std::is_same_v<T, Vec4>) data.type = VEC4;
-        else if constexpr (std::is_same_v<T, FilePath>) data.type = FILE;
+        if constexpr (std::is_same_v<T, std::string>) exportData.type = STRING;
+        else if constexpr (std::is_same_v<T, int>) exportData.type = INT;
+        else if constexpr (std::is_same_v<T, float>) exportData.type = FLOAT;
+        else if constexpr (std::is_same_v<T, bool>) exportData.type = BOOL;
+        else if constexpr (std::is_same_v<T, Vec2>) exportData.type = VEC2;
+        else if constexpr (std::is_same_v<T, Vec3>) exportData.type = VEC3;
+        else if constexpr (std::is_same_v<T, Vec4>) exportData.type = VEC4;
+        else if constexpr (std::is_same_v<T, FilePath>) exportData.type = FILE;
         else if constexpr (std::is_pointer_v<T> && std::is_base_of_v<Resource, std::remove_pointer_t<T>>)
         {
-            data.type = RESOURCE;
-            data.resourceFactory = &Resource::create<std::remove_pointer_t<T>>;
-            data.getType = std::remove_pointer_t<T>::getTypeStatic;
-            data.data = &this->m_data;
+            exportData.type = RESOURCE;
+            exportData.resourceFactory = &Resource::create<std::remove_pointer_t<T>>;
+            exportData.getType = std::remove_pointer_t<T>::getTypeStatic;
         }
         else
         {
-            data.type = NONE;
+            exportData.type = NONE;
             Logger::print("Export type not supported", Logger::ERR);
-            return;
         }
-
-        parent->registerExport(data);
+        parent->registerExport(exportData);
     }
 
     template <typename T>
-    Export<T>::Export(std::string_view name, Resource* parent, EnumContext& enumContext) : m_parent(parent)
+    Export<T>::Export(const std::string& name, Resource* parent, EnumContext& enumContext) : m_parent(parent)
     {
         Resource::ExportData data;
         this->m_name = name;
@@ -240,7 +249,14 @@ namespace gflow::parser
     template <typename T>
     T Resource::getValue(const std::string& variable)
     {
-        for (const auto& exportData : m_exports)
+        for (const ExportData& exportData : m_exports)
+        {
+            if (exportData.name == variable)
+            {
+                return *static_cast<T*>(exportData.data);
+            }
+        }
+        for (const ExportData& exportData : getCustomExports())
         {
             if (exportData.name == variable)
             {

@@ -9,6 +9,7 @@
 #include "string_helper.hpp"
 #include "vulkan_context.hpp"
 #include "backends/imgui_impl_vulkan.h"
+#include "metaresources/Renderpass.hpp"
 #include "utils/logger.hpp"
 #include "windows/imgui_execution.hpp"
 #include "windows/imgui_project_settings.hpp"
@@ -32,6 +33,7 @@ void Editor::init(const std::string& projectPath)
     initImgui();
     connectSignals();
     createWindows();
+    injectResources();
 
     if (!projectPath.empty())
     {
@@ -208,14 +210,21 @@ void Editor::createWindows()
         // Setup resource editor window
         ImGuiResourceEditorWindow* resourceEditorWindow = dynamic_cast<ImGuiResourceEditorWindow*>(getWindow("Resource Editor"));
         s_resourceSelectedSignal.connect(resourceEditorWindow, &ImGuiResourceEditorWindow::resourceSelected);
-        // Add simple print to test signal connection
-        resourceEditorWindow->getVariableChangedSignal().connect([](const std::string& name, const std::string& stackedName) { std::cout << name << " from path " << stackedName << std::endl; });
     }
     {
         // Setup renderpass window
         ImGuiRenderPassWindow* renderPassWindow = dynamic_cast<ImGuiRenderPassWindow*>(getWindow("RenderPass"));
         s_resourceSelectedSignal.connect(renderPassWindow, &ImGuiRenderPassWindow::resourceSelected);
+        dynamic_cast<ImGuiResourceEditorWindow*>(getWindow("Resource Editor"))->getVariableChangedSignal().connect(renderPassWindow, &ImGuiRenderPassWindow::resourceVariableChanged);
     }
+}
+
+void Editor::injectResources()
+{
+    gflow::parser::ResourceManager::injectResourceFactory(RenderpassResource::getTypeStatic(), gflow::parser::Resource::create<RenderpassResource>);
+    gflow::parser::ResourceManager::injectResourceFactory(ImageNodeResource::getTypeStatic(), gflow::parser::Resource::create<ImageNodeResource>);
+    gflow::parser::ResourceManager::injectResourceFactory(SubpassNodeResource::getTypeStatic(), gflow::parser::Resource::create<SubpassNodeResource>);
+    gflow::parser::ResourceManager::injectResourceFactory(PipelineNodeResource::getTypeStatic(), gflow::parser::Resource::create<PipelineNodeResource>);
 }
 
 bool Editor::renderImgui()
@@ -359,9 +368,24 @@ void Editor::resourceSelected(const std::string& path)
     s_selectedResource = path;
 }
 
-gflow::parser::Resource& Editor::getSelectedResource() const
+gflow::parser::Resource* Editor::getSelectedResource() const
 {
     return gflow::parser::ResourceManager::getResource(s_selectedResource);
+}
+
+VulkanShader::ReflectionData Editor::getShaderResourceReflectionData(const std::string& string, const ShaderStage stage)
+{
+    const std::string path = gflow::parser::ResourceManager::makePathAbsolute(string);
+    switch (stage)
+    {
+    case VERTEX:
+        return gflow::Context::getEnvironment(s_environment).man_getReflectionData(path, VK_SHADER_STAGE_VERTEX_BIT);
+    case GEOMETRY:
+        return gflow::Context::getEnvironment(s_environment).man_getReflectionData(path, VK_SHADER_STAGE_GEOMETRY_BIT);
+    case FRAGMENT:
+        return gflow::Context::getEnvironment(s_environment).man_getReflectionData(path, VK_SHADER_STAGE_FRAGMENT_BIT);
+    }
+    return {};
 }
 
 void Editor::showCreateFolderModal(const std::string& path)
@@ -453,7 +477,7 @@ void Editor::createFolderModal()
         ImGui::BeginDisabled(strcmp(folderName, "") == 0);
         if (ImGui::Button("Create"))
         {
-            const std::string folderPath = gflow::parser::ResourceManager::getWorkingDir() + folderName;
+            const std::string folderPath = gflow::parser::ResourceManager::makePathAbsolute(folderName);
             if (std::filesystem::create_directory(folderPath))
             {
                 Logger::print("Folder created at: " + folderPath, Logger::INFO);
@@ -489,10 +513,9 @@ void Editor::deleteFolderModal()
         ImGui::Text("Are you sure you want to delete this folder?");
         if (ImGui::Button("Confirm"))
         {
-            const std::string baseDir = gflow::parser::ResourceManager::getWorkingDir() + s_modalBasePath;
-            std::filesystem::remove_all(baseDir);
+            const std::string baseDir = gflow::parser::ResourceManager::makePathAbsolute(s_modalBasePath);
             Logger::print("Folder deleted at: " + baseDir, Logger::INFO);
-            gflow::parser::ResourceManager::getTree().removePath(s_modalBasePath);
+            gflow::parser::ResourceManager::deleteDirectory(s_modalBasePath);
             ImGui::CloseCurrentPopup();
         }
         ImGui::SameLine();
@@ -524,7 +547,7 @@ void Editor::renameFolderModal()
         ImGui::BeginDisabled(strcmp(folderName, "") == 0 || strcmp(folderName, renameFolderName.c_str()) == 0);
         if (ImGui::Button("Rename"))
         {
-            const std::string baseDir = gflow::parser::ResourceManager::getWorkingDir() + s_modalBasePath;
+            const std::string baseDir = gflow::parser::ResourceManager::makePathAbsolute(s_modalBasePath);
             const std::string folderPath = gflow::string::replacePathFilename(baseDir, folderName);
             std::filesystem::rename(baseDir, folderPath);
             Logger::print("Folder renamed from: " + baseDir + " to: " + folderPath, Logger::INFO);
@@ -568,7 +591,7 @@ void Editor::createResourceModal()
             }
             ImGui::EndCombo();
         }
-        ImGui::BeginDisabled(strcmp(resourceName, "") == 0);
+        ImGui::BeginDisabled(strcmp(resourceName, "") == 0 || resourceName[0] == '_');
         if (ImGui::Button("Create"))
         {
             gflow::parser::ResourceManager::createResource(types[currentSelection], s_modalBasePath + resourceName);
@@ -586,6 +609,31 @@ void Editor::createResourceModal()
 
 void Editor::deleteResourceModal()
 {
+    if (s_showDeleteResourceModal)
+    {
+        ImGui::OpenPopup("Delete Resource");
+        s_showDeleteResourceModal = false;
+    }
+
+    if (ImGui::BeginPopupModal("Delete Resource", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+    {
+        ImGui::Text("Resource Name: %s", gflow::string::getPathFilename(s_modalBasePath).c_str());
+        ImGui::Text("Are you sure you want to delete this resource?");
+        if (ImGui::Button("Confirm"))
+        {
+            const std::string absPath = gflow::parser::ResourceManager::makePathAbsolute(s_modalBasePath);
+            std::filesystem::remove_all(absPath);
+            Logger::print("Resource deleted at: " + absPath, Logger::INFO);
+            gflow::parser::ResourceManager::deleteResource(s_modalBasePath);
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Cancel"))
+        {
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndPopup();
+    }
 }
 
 void Editor::renameResourceModal()

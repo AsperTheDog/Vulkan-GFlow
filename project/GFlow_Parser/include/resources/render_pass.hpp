@@ -1,18 +1,17 @@
 #pragma once
 #include "internal_list.hpp"
-#include "resource.hpp"
+#include "../resource.hpp"
 #include "pipeline.hpp"
 
 namespace gflow::parser
 {
     class RenderPassImage final : public Resource
     {
-        EXPORT(std::string, ID);
+        EXPORT(std::string, imageID);
         EXPORT(int, referenceCount);
         EXPORT(bool, matchWindow);
         EXPORT(Vec2, size);
         EXPORT(bool, clear);
-
 
         void initContext(ExportData* metadata) override {}
         DataUsage isUsed(const std::string& variable, const std::vector<Resource*>& parentPath) override;
@@ -23,13 +22,15 @@ namespace gflow::parser
         friend class List;
     };
 
-    class SubpassPipelineRef final : public Resource
+    class SubpassAttachment final : public Resource
     {
-        EXPORT_RESOURCE(Pipeline, pipeline);
+        EXPORT(std::string, imageID);
+        EXPORT_ENUM(attachmentType, EnumContexts::attachmentType);
 
         void initContext(ExportData* metadata) override {}
+
     public:
-        DECLARE_RESOURCE(SubpassPipelineRef)
+        DECLARE_RESOURCE(SubpassAttachment)
 
         template <typename T>
         friend class List;
@@ -37,9 +38,12 @@ namespace gflow::parser
 
     class RenderPassSubpass final : public Resource
     {
-        EXPORT_RESOURCE_LIST(SubpassPipelineRef, pipelines);
+        EXPORT_RESOURCE_LIST(Pipeline, pipelines);
+        EXPORT_RESOURCE_LIST(SubpassAttachment, attachments);
 
         void initContext(ExportData* metadata) override {}
+
+        bool hasDepthAttachment();
     public:
         DECLARE_RESOURCE(RenderPassSubpass)
 
@@ -62,9 +66,10 @@ namespace gflow::parser
 
     class RenderPass final : public Resource
     {
-        EXPORT_RESOURCE_LIST(RenderPassSubpass, subpasses);
-        EXPORT_INTERNAL_RESOURCE_LIST(RenderPassImage, attachments);
+        EXPORT_RESOURCE_LIST(RenderPassImage, attachments);
         EXPORT_RESOURCE_LIST(RenderPassCustomDependency, customDependencies);
+
+        EXPORT_RESOURCE_LIST(RenderPassSubpass, subpasses);
 
         DataUsage isUsed(const std::string& variable, const std::vector<Resource*>& parentPath) override;
     public:
@@ -75,9 +80,20 @@ namespace gflow::parser
     {
         if (*matchWindow && variable == "size")
             return NOT_USED;
-        if (variable == "referenceCount" || variable == "ID")
+        if (variable == "referenceCount")
             return READ_ONLY;
         return USED;
+    }
+
+    inline bool RenderPassSubpass::hasDepthAttachment()
+    {
+        for (Pipeline* pipeline : (*pipelines).data())
+        {
+            PipelineDepthStencilState* depthState = pipeline->getValue<PipelineDepthStencilState*>("depthStencilState");
+            if (depthState != nullptr && depthState->getValue<bool>("depthTestEnable"))
+                return true;
+        }
+        return false;
     }
 
     inline DataUsage RenderPass::isUsed(const std::string& variable, const std::vector<Resource*>& parentPath)

@@ -11,8 +11,6 @@ namespace gflow
 	{
 	public:
 
-
-
 		struct Requirements {
 			VkPhysicalDeviceFeatures features{};
 			VkQueueFlags queueFlags{};

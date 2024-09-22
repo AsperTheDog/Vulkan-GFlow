@@ -28,6 +28,7 @@
     <ClInclude Include="include\resource_manager.hpp" />
     <ClInclude Include="include\resources\list.hpp" />
     <ClInclude Include="include\resources\internal_list.hpp" />
+    <ClInclude Include="include\resources\pair.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\enum_contexts.cpp" />
@@ -148,7 +149,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(ProjectDir)include;$(SolutionDir)vendor\VkPlayground\repo\include;$(VULKAN_SDK)/Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)vendor\VkPlayground\repo\include;$(VULKAN_SDK)/Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>

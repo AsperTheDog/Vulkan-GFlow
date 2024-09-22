@@ -1,5 +1,5 @@
 #pragma once
-#include "resource.hpp"
+#include "../resource_manager.hpp"
 
 #define EXPORT_LIST(type, name) gflow::parser::Export<gflow::parser::List<type>*> ##name{#name, this}
 #define EXPORT_ENUM_LIST(name, context) gflow::parser::Export<gflow::parser::List<gflow::parser::EnumExport>*> ##name{#name, this, context}
@@ -31,6 +31,17 @@ namespace gflow::parser
 
         DataUsage isUsed(const std::string& variable, const std::vector<Resource*>& parentPath = {}) override;
 
+        [[nodiscard]] const std::vector<T>& data() const { return m_data; }
+
+        void remove(int index) { m_data.erase(m_data.begin() + index); m_size--; }
+        void erase(T value) { m_data.erase(std::remove(m_data.begin(), m_data.end(), value), m_data.end()); m_size--; }
+        void push_back(T value) { m_data.push_back(value); m_size++; }
+
+        T* emplace_back();
+
+        template<typename U>
+        U* emplace_subclass_back();
+
     private:
         int m_size = 0;
         std::vector<T> m_data;
@@ -49,6 +60,7 @@ namespace gflow::parser
     template <typename T>
     void List<T>::initContext(ExportData* metadata)
     {
+        if (!metadata) return;
         setEnumContext(metadata->enumContext);
     }
 
@@ -128,6 +140,35 @@ namespace gflow::parser
     }
 
     template <typename T>
+    T* List<T>::emplace_back()
+    {
+        if constexpr (std::is_pointer_v<T> && std::is_base_of_v<Resource, std::remove_pointer_t<T>>)
+        {
+            T* data = ResourceManager::createResource<T>("");
+            m_data.push_back(data);
+        }
+        else
+        {
+            m_data.push_back(T{});
+        }
+        m_size++;
+        return &m_data.back();
+    }
+
+    template <typename T>
+    template <typename U>
+    U* List<T>::emplace_subclass_back()
+    {
+        static_assert(std::is_base_of_v<std::remove_pointer_t<T>, U>, "U must be a child class of T");
+        static_assert(std::is_base_of_v<Resource, std::remove_pointer_t<T>>, "T must be a Resource");
+
+        U* data = ResourceManager::createResource<U>("");
+        m_data.push_back(dynamic_cast<T>(data));
+        m_size++;
+        return dynamic_cast<U*>(m_data.back());
+    }
+
+    template <typename T>
     class Export<List<T>*>
     {
     public:
@@ -136,6 +177,9 @@ namespace gflow::parser
 
         const List<T>& operator*() const { return *m_data; }
         List<T>& operator*() { return *m_data; }
+
+        [[nodiscard]] Resource* getParent() const { return m_parent; }
+        void setData(Resource* value) { m_data = dynamic_cast<List<T>*>(value); }
 
     private:
         std::string m_name;

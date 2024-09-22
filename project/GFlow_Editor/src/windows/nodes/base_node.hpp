@@ -15,7 +15,7 @@ public:
 
     void destroy() override;
 
-    virtual void onResourceUpdated(const std::string& name, const std::string& path) {}
+    virtual void onResourceUpdated(const std::string& resource, const std::string& name, const std::string& path) {}
     [[nodiscard]] Signal<GFlowNode*>& getDestroyedSignal() { return m_destroyed; }
 
 protected:

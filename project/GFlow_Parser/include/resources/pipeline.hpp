@@ -1,5 +1,5 @@
 #pragma once
-#include "resource.hpp"
+#include "../resource.hpp"
 #include "list.hpp"
 
 
@@ -77,7 +77,9 @@ namespace gflow::parser
         EXPORT_RESOURCE(PipelineDepthStencilState, depthStencilState);
         EXPORT_RESOURCE(PipelineColorBlendState, colorBlendState);
         EXPORT_GROUP(shaders, "Shaders");
-
+        EXPORT(FilePath, vertex);
+        EXPORT(FilePath, geometry);
+        EXPORT(FilePath, fragment);
         
     public:
         DECLARE_RESOURCE(Pipeline)

@@ -1,29 +1,15 @@
 #pragma once
+#include "metaresources/Renderpass.hpp"
 #include "windows/nodes/base_node.hpp"
 
-class RenderpassImageNodeResource final : public gflow::parser::Resource
-{
-    EXPORT(std::string, ID);
-    EXPORT_ENUM(usage, s_ImageUsageContext);
-
-    void initContext(ExportData* metadata) override {}
-
-public:
-    DECLARE_RESOURCE(RenderpassImageNodeResource)
-
-    static gflow::parser::EnumContext s_ImageUsageContext;
-};
-
-class RenderpassImageNode final : public GFlowNode
+class ImageNode final : public GFlowNode
 {
 public:
+    ImageNode(ImGuiGraphWindow* parent, gflow::parser::Resource* resource);
 
-    explicit RenderpassImageNode(ImGuiGraphWindow* parent);
-
-    gflow::parser::Resource* getLinkedResource() override { return &m_resource; }
-    void onResourceUpdated(const std::string& name, const std::string& path) override;
+    gflow::parser::Resource* getLinkedResource() override { return m_resource; }
+    void onResourceUpdated(const std::string& resource, const std::string& name, const std::string& path) override;
 
 private:
-    RenderpassImageNodeResource m_resource{""};
+    ImageNodeResource* m_resource = nullptr;
 };
-

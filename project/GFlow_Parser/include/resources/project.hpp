@@ -1,10 +1,8 @@
 #pragma once
 #include <functional>
-#include <map>
 #include <unordered_map>
-#include <unordered_set>
 
-#include "resource.hpp"
+#include "../resource.hpp"
 
 namespace gflow::parser
 {

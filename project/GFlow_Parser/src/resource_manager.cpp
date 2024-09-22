@@ -29,6 +29,18 @@ namespace gflow::parser
         return paths;
     }
 
+    void FileTree::FileDirectory::deleteFromOS(const std::string& parentPath)
+    {
+        for (FileDirectory& directory : directories)
+            directory.deleteFromOS(parentPath + name + "/");
+        for (const std::string& file : files)
+        {
+            const std::string path = parentPath + file;
+            if (std::filesystem::exists(path))
+                std::filesystem::remove(path);
+        }
+    }
+
     void FileTree::FileDirectory::addPath(const std::string& path)
     {
         const std::vector<std::string> splitPath = gflow::string::split(path, "/");
@@ -71,6 +83,14 @@ namespace gflow::parser
     void FileTree::removePath(const std::string& path)
     {
         root.removePath(path);
+    }
+
+    void FileTree::deletePath(const std::string& path, const std::string& workingDir)
+    {
+        root.removePath(path);
+
+        if (!std::filesystem::exists(workingDir + path))
+            std::filesystem::remove_all(workingDir + path);
     }
 
     void FileTree::renamePath(const std::string& path, const std::string& newName)
@@ -204,6 +224,22 @@ namespace gflow::parser
         return resources;
     }
 
+    std::string ResourceManager::makePathAbsolute(const std::string& path)
+    {
+        return m_workingDir + path;
+    }
+
+    void ResourceManager::deleteDirectory(const std::string& string)
+    {
+        //Find all resources contained in this folder
+        for (const std::string& path : m_fileTree.getOrderedPaths())
+        {
+            if (path.find(string) == 0 && hasResource(path))
+                deleteResource(path);
+        }
+        m_fileTree.deletePath(string, m_workingDir);
+    }
+
     void ResourceManager::saveAll()
     {
         for (Resource* resource : m_resources | std::views::values)
@@ -212,19 +248,49 @@ namespace gflow::parser
         }
     }
 
+    bool ResourceManager::injectResourceFactory(const std::string& type, const std::function<Resource*(const std::string&, Resource::ExportData*)>& factory)
+    {
+        if (s_resourceFactories.contains(type))
+            return false;
+        s_resourceFactories[type] = factory;
+        return true;
+    }
+
+    gflow::parser::Resource* ResourceManager::getSubresource(const std::string& path, const std::string& subpath)
+    {
+        if (!hasResource(path))
+            return nullptr;
+
+        Resource* res = getResource(path);
+        std::vector<std::string> pathSteps = gflow::string::split(subpath, ".");
+        pathSteps.erase(pathSteps.begin());
+        for (const std::string& pathStep : pathSteps)
+        {
+            res = res->getValue<Resource *>(pathStep);
+        }
+        return res;
+    }
+
     void ResourceManager::resetWorkingDir(const std::string& path)
     {
         const std::string absPath = std::filesystem::absolute(path).generic_string();
         m_workingDir = absPath + "/";
+
+        for (auto& [_, resource] : m_resources)
+            delete resource;
+        for (const Resource* resource : m_embeddedResources)
+            delete resource;
+
         m_resources.clear();
+        m_embeddedResources.clear();
         m_fileTree.reset();
         obtainResources(m_workingDir);
     }
 
-    Resource& ResourceManager::loadResource(const std::string& path)
+    Resource* ResourceManager::loadResource(const std::string& path)
     {
         if (m_resources.contains(path))
-            return *m_resources[path];
+            return m_resources[path];
 
         std::string resolvedPath = m_workingDir + path;
 
@@ -265,34 +331,72 @@ namespace gflow::parser
         return createResource(resourceType, path);
     }
 
-    Resource& ResourceManager::createResource(const std::string& type, const std::string& path)
+    Resource* ResourceManager::createResource(const std::string& type, const std::string& path, Resource::ExportData* data)
     {
         if (!s_resourceFactories.contains(type))
             throw std::runtime_error("Unknown resource type " + (type.empty() ? "<empty type>" : type));
 
-        if (m_resources.contains(path))
-            throw std::runtime_error("Resource already exists");
-
         if (s_resourceFactories[type] == nullptr)
             throw std::runtime_error("Resource type " + type + " is not implemented yet");
 
-        m_resources[path] = s_resourceFactories[type](path, nullptr);
-        m_fileTree.addPath(path);
-        return *m_resources[path];
+        return createResource(path, s_resourceFactories[type], data);
     }
 
-    Project& ResourceManager::loadProject(const std::string& path)
+    Resource* ResourceManager::createResource(const std::string& path, const ResourceFactory& factory, Resource::ExportData* data)
+    {
+        if (path.empty())
+        {
+            m_embeddedResources.push_back(factory("", data));
+            return m_embeddedResources.back();
+        }
+
+        if (m_resources.contains(path))
+            throw std::runtime_error("Resource already exists");
+
+        m_resources[path] = factory(path, data);
+        m_fileTree.addPath(path);
+        return m_resources[path];
+    }
+
+    bool ResourceManager::deleteResource(const std::string& path)
+    {
+        if (!hasResource(path))
+            return false;
+
+        const Resource* resource = m_resources[path];
+        m_resources.erase(path);
+        m_fileTree.deletePath(path, m_workingDir);
+        delete resource;
+        return true;
+    }
+
+    bool ResourceManager::deleteResource(const Resource* resource)
+    {
+        if (deleteResource(resource->getPath())) return true;
+        for (auto it = m_embeddedResources.begin(); it != m_embeddedResources.end(); ++it)
+        {
+            if (*it == resource)
+            {
+                m_embeddedResources.erase(it);
+                delete resource;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    Project* ResourceManager::loadProject(const std::string& path)
     {
         if (m_resources.contains(path))
-            return *dynamic_cast<Project*>(m_resources[path]);
+            return dynamic_cast<Project*>(m_resources[path]);
 
         resetWorkingDir(string::getPathDirectory(path));
         m_resources[path] = Resource::create<Project>(string::getPathFilename(path), nullptr);
         m_project = path;
-        return *dynamic_cast<Project*>(m_resources[path]);
+        return dynamic_cast<Project*>(m_resources[path]);
     }
 
-    Project& ResourceManager::createProject(const std::string& name)
+    Project* ResourceManager::createProject(const std::string& name)
     {
         const std::string path = name + ".proj";
         if (m_resources.contains(path))
@@ -301,7 +405,7 @@ namespace gflow::parser
         m_resources[path] = Resource::create<Project>(path, nullptr);
         *dynamic_cast<Project*>(m_resources[path])->name = name;
         m_project = path;
-        return *dynamic_cast<Project*>(m_resources[path]);
+        return dynamic_cast<Project*>(m_resources[path]);
     }
 
     std::vector<std::string> ResourceManager::getResourceTypes()
@@ -313,21 +417,32 @@ namespace gflow::parser
         return types;
     }
 
-    Resource& ResourceManager::getResource(const std::string& path)
+    Resource* ResourceManager::getResource(const std::string& path)
     {
         if (!hasResource(path))
             throw std::runtime_error("Resource not found");
-        return *m_resources.at(path);
+        return m_resources.at(path);
     }
 
-    Resource& ResourceManager::getResource(const uint32_t id)
+    Resource* ResourceManager::getResource(const uint32_t id)
     {
         for (Resource* resource : m_resources | std::views::values)
         {
             if (resource->getID() == id)
-                return *resource;
+                return resource;
         }
         throw std::runtime_error("Resource not found");
+    }
+
+    Resource* ResourceManager::getMetaresource(const std::string& path)
+    {
+        return getResource(gflow::string::getPathDirectory(path) + "_" + gflow::string::getPathFilename(path) + ".meta");
+    }
+
+    Resource* ResourceManager::getMetaresource(const uint32_t id)
+    {
+        const std::string path = getResource(id)->getPath();
+        return getMetaresource(path);
     }
 
     void ResourceManager::obtainResources(const std::string& current)

@@ -134,11 +134,11 @@ namespace gflow::parser
             case BOOL:
                 return { std::to_string(*static_cast<bool*>(exportData.data)), "" };
             case VEC2:
-                return { std::to_string(static_cast<Vec2*>(exportData.data)->x) + ", " + std::to_string(static_cast<Vec2*>(exportData.data)->y), "" };
+                return { static_cast<Vec2*>(exportData.data)->toString(), "" };
             case VEC3:
-                return { std::to_string(static_cast<Vec3*>(exportData.data)->x) + ", " + std::to_string(static_cast<Vec3*>(exportData.data)->y) + ", " + std::to_string(static_cast<Vec3*>(exportData.data)->z), "" };
+                return { static_cast<Vec3*>(exportData.data)->toString(), "" };
             case VEC4:
-                return { std::to_string(static_cast<Vec4*>(exportData.data)->x) + ", " + std::to_string(static_cast<Vec4*>(exportData.data)->y) + ", " + std::to_string(static_cast<Vec4*>(exportData.data)->z) + ", " + std::to_string(static_cast<Vec4*>(exportData.data)->w), "" };
+                return { static_cast<Vec4*>(exportData.data)->toString(), "" };
             case ENUM_BITMASK:
             case ENUM:
                 return { std::to_string(static_cast<EnumExport*>(exportData.data)->id), "" };
@@ -248,8 +248,7 @@ namespace gflow::parser
                 }
                 catch (const std::invalid_argument&)
                 {
-                    Resource& res = ResourceManager::loadResource(value);
-                    *static_cast<Resource**>(exportData.data) = &res;
+                    *static_cast<Resource**>(exportData.data) = ResourceManager::loadResource(value);
                     return true;
                 }
             }

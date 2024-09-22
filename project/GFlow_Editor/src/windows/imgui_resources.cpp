@@ -101,19 +101,39 @@ void ImGuiResourcesWindow::drawContent()
     for (const std::string& path : orderedPaths)
     {
         std::string name = gflow::string::getPathFilename(path);
-        std::string parentDir = gflow::string::getPathDirectory(path);
+        
+        // Check if it is hidden
+        {
+            if (name[0] == '_') continue;
+            std::vector<std::string> pathParts = gflow::string::split(path, "/");
+            bool isHidden = false;
+            for (const std::string& part : pathParts)
+            {
+                if (part[0] == '_')
+                {
+                    isHidden = true;
+                    break;
+                }
+            }
+            if (isHidden) continue;
+        }
+
         if (!folderStack.empty() && path == folderStack.back().first)
         {
             popFolder(folderStack);
             continue;
         }
-        if (!parentDir.empty() && !folderStack.back().second) continue;
+
+        std::string parentDir = gflow::string::getPathDirectory(path);
+        if (!parentDir.empty() && !folderStack.back().second) 
+            continue;
 
         if (path.back() == '/')
         {
             pushFolder(folderStack, path, name);
             continue;
         }
+
         if (gflow::parser::ResourceManager::hasResource(path) && (m_typeFilter.empty() || gflow::parser::ResourceManager::getResourceType(path) == m_typeFilter))
         {
             if (addSelectable(name, path == m_selectedResource) && path != m_selectedResource)

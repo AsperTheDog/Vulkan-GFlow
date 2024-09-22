@@ -886,4 +886,32 @@ namespace gflow::parser
             VK_COLOR_COMPONENT_A_BIT
         }
     };
+
+    EnumContext EnumContexts::ImageUsageContext = 
+    {
+        {
+            "Read",
+            "Write",
+            "Read and Write"
+        },
+        {
+            0,
+            1,
+            2
+        }
+    };
+
+    EnumContext EnumContexts::attachmentType =
+    {
+        {
+            "Color",
+            "Depth",
+            "Input"
+        },
+        {
+            0,
+            1,
+            2
+        }
+    };
 }

@@ -21,6 +21,8 @@ namespace gflow::parser
         static EnumContext blendFactor;
         static EnumContext blendOp;
         static EnumContext colorWriteMaskBits;
+        static EnumContext RenderpassNodeType;
+        static EnumContext ImageUsageContext;
+        static EnumContext attachmentType;
     };
-    
 }

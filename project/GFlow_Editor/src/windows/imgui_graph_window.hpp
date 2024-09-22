@@ -11,7 +11,7 @@ public:
     explicit ImGuiGraphWindow(const std::string_view& name, bool defaultOpen = true);
     void draw() override;
 
-    [[nodiscard]] Signal<const std::string&, const std::string&>& getSidePanelUpdateSignal() { return m_sidePanel.getVariableChangedSignal(); }
+    [[nodiscard]] Signal<const std::string&, const std::string&, const std::string&>& getSidePanelUpdateSignal() { return m_sidePanel.getVariableChangedSignal(); }
 
 protected:
     virtual void rightClick(ImFlow::BaseNode* node);

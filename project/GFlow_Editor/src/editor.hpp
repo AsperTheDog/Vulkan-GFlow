@@ -3,6 +3,7 @@
 #include "ImNodeFlow.h"
 #include "resources/project.hpp"
 #include "sdl_window.hpp"
+#include "vulkan_shader.hpp"
 #include "windows/imgui_resources.hpp"
 
 class Editor
@@ -18,6 +19,7 @@ private:
 	static void initImgui();
 	static void connectSignals();
     static void createWindows();
+    static void injectResources();
 
 	static void renderFrame();
 	static bool renderImgui();
@@ -41,8 +43,11 @@ private:
     
 public: // Editor Management
     static void resourceSelected(const std::string& path);
-    [[nodiscard]] gflow::parser::Resource& getSelectedResource() const;
-    
+    [[nodiscard]] gflow::parser::Resource* getSelectedResource() const;
+
+    enum ShaderStage { VERTEX, GEOMETRY, FRAGMENT };
+    static VulkanShader::ReflectionData getShaderResourceReflectionData(const std::string& string, ShaderStage stage);
+
     static void showCreateFolderModal(const std::string& path);
     static void showRenameFolderModal(const std::string& path);
     static void showDeleteFolderModal(const std::string& path);

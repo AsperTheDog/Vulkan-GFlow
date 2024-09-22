@@ -21,7 +21,7 @@ void ImGuiResourceEditorWindow::resourceSelected(const std::string& resource)
         return;
     }
 
-    m_selectedResource = &gflow::parser::ResourceManager::getResource(resource);
+    m_selectedResource = gflow::parser::ResourceManager::getResource(resource);
     m_nestedResourcesOpened.clear();
 }
 
@@ -155,10 +155,9 @@ bool ImGuiResourceEditorWindow::drawVec4(const std::string& name, void* data) co
 bool ImGuiResourceEditorWindow::drawFile(const std::string& name, void* data) const
 {
     gflow::parser::FilePath* str = static_cast<gflow::parser::FilePath*>(data);
-    bool edited = drawString(name, &str->path, true);
+    drawString(name, &str->path, true);
     ImGui::SameLine(0, 10);
-    edited |= ImGui::Button("refresh");
-    return edited;
+    return ImGui::Button("refresh");
 }
 
 void ImGuiResourceEditorWindow::drawResource(const std::string& stackedName, void* data, const std::vector<gflow::parser::Resource*>& parentPath)
@@ -223,7 +222,7 @@ void ImGuiResourceEditorWindow::drawResource(const std::string& stackedName, voi
         }
         ImGui::EndDisabled();
         if (changed)
-            m_variableChangedSignal.emit(exportElem.name, stackedName);
+            m_variableChangedSignal.emit(m_selectedResource->getPath(), exportElem.name, stackedName);
     }
     (*resource)->exportsChanged();
 }
@@ -263,10 +262,10 @@ void ImGuiResourceEditorWindow::drawSubresource(const std::string& name, std::st
         bool shouldReturn = false;
         if (ImGui::MenuItem("Create embedded"))
         {
-            *resource = data.resourceFactory("", &data);
+            *resource = gflow::parser::ResourceManager::createResource("", data.resourceFactory, &data);
             m_nestedResourcesOpened[stackedName] = true;
             shouldReturn = true;
-            m_variableChangedSignal.emit(name, stackedName);
+            m_variableChangedSignal.emit(m_selectedResource->getPath(), name, stackedName);
             
         }
         ImGui::BeginDisabled(gflow::parser::ResourceManager::isTypeSubresource(data.getType()));
