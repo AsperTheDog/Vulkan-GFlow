@@ -2,7 +2,7 @@
 
 #include "windows/imgui_graph_window.hpp"
 
-ImageNode::ImageNode(ImGuiGraphWindow* parent, gflow::parser::Resource* resource)
+ImageNode::ImageNode(ImGuiGraphWindow* parent, NodeResource* resource)
     : GFlowNode("Image", parent), m_resource(dynamic_cast<ImageNodeResource*>(resource))
 {
     m_resource->set("usage", "0");

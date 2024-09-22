@@ -44,6 +44,7 @@ namespace gflow::parser
         NONE,
         STRING,
         INT,
+        BIGINT,
         FLOAT,
         BOOL,
         VEC2,
@@ -207,6 +208,7 @@ namespace gflow::parser
 
         if constexpr (std::is_same_v<T, std::string>) exportData.type = STRING;
         else if constexpr (std::is_same_v<T, int>) exportData.type = INT;
+        else if constexpr (std::is_same_v<T, size_t>) exportData.type = BIGINT;
         else if constexpr (std::is_same_v<T, float>) exportData.type = FLOAT;
         else if constexpr (std::is_same_v<T, bool>) exportData.type = BOOL;
         else if constexpr (std::is_same_v<T, Vec2>) exportData.type = VEC2;

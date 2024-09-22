@@ -26,6 +26,7 @@ public:
 private:
     bool drawFloat(const std::string& name, void* data) const;
     bool drawInt(const std::string& name, void* data) const;
+    bool drawBigInt(const std::string& name, void* data) const;
     bool drawString(const std::string& name, void* data, bool isShort = false) const;
     bool drawBool(const std::string& name, void* data) const;
     bool drawVec2(const std::string& name, void* data) const;

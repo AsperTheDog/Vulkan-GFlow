@@ -1,5 +1,14 @@
 #pragma once
 #include "graph.hpp"
+#include "windows/nodes/base_node.hpp"
+
+class InitNodeResource final : public NodeResource
+{
+    void initContext(ExportData* metadata) override {}
+
+public:
+    DECLARE_RESOURCE_ANCESTOR(InitNodeResource, NodeResource)
+};
 
 class ImageNodeResource final : public NodeResource
 {
@@ -36,17 +45,14 @@ class RenderpassResource final : public GraphResource
 {
 
 public:
-    enum NodeType
-    {
-        IMAGE,
-        SUBPASS,
-        PIPELINE
-    };
 
-    NodeResource* addNode(NodeType type, gflow::parser::Vec2 position = {});
-    void removeNode(int nodeID);
+    template <typename U>
+    U* addNode(gflow::parser::Vec2 position = {});
+    void removeNode(GFlowNode* node);
 
-    DECLARE_RESOURCE_ANCESTOR_CUSTOM_CONST(RenderpassResource, GraphResource)
+    void addConnection(const size_t left_uid, const size_t left_pin, const size_t right_uid, const size_t right_pin);
+
+    DECLARE_RESOURCE_ANCESTOR(RenderpassResource, GraphResource)
 };
 
 // **************
@@ -71,3 +77,12 @@ inline gflow::parser::DataUsage SubpassNodeResource::isUsed(const std::string& v
     return NodeResource::isUsed(variable, parentPath);
 }
 
+template <typename U>
+U* RenderpassResource::addNode(const gflow::parser::Vec2 position)
+{
+    static_assert(std::is_base_of_v<NodeResource, U>, "T must be a subclass of NodeResource");
+
+    U* node = (*nodes).emplace_subclass_back<U>(true);
+    node->set("position", position.toString());
+    return node;
+}

@@ -54,9 +54,9 @@ namespace gflow::parser
 
         static Resource* loadResource(const std::string& path);
 
-        static Resource* createResource(const std::string& type, const std::string& path, Resource::ExportData* data = nullptr);
-        template <typename T> static T* createResource(const std::string& path, Resource::ExportData* data = nullptr);
-        static Resource* createResource(const std::string& path, const ResourceFactory& factory, Resource::ExportData* data = nullptr);
+        static Resource* createResource(const std::string& type, const std::string& path, Resource::ExportData* data = nullptr, bool recursive = false);
+        template <typename T> static T* createResource(const std::string& path, Resource::ExportData* data = nullptr, bool recursive = false);
+        static Resource* createResource(const std::string& path, const ResourceFactory& factory, Resource::ExportData* data = nullptr, bool recursive = false);
 
         static bool deleteResource(const std::string& path);
         static bool deleteResource(const Resource* resource);
@@ -91,6 +91,7 @@ namespace gflow::parser
         static void saveAll();
 
         static bool injectResourceFactory(const std::string& type, const ResourceFactory& factory);
+        [[nodiscard]] static bool hasResourceFactory(const std::string& type);
 
     private:
         static void obtainResources(const std::string& current);
@@ -106,10 +107,10 @@ namespace gflow::parser
     };
 
     template <typename T>
-    T* ResourceManager::createResource(const std::string& path, Resource::ExportData* data)
+    T* ResourceManager::createResource(const std::string& path, Resource::ExportData* data, bool recursive)
     {
         static_assert(std::is_base_of_v<Resource, T>, "T must be a subclass of Resource");
-        return dynamic_cast<T*>(createResource(path, Resource::create<T>));
+        return dynamic_cast<T*>(createResource(path, Resource::create<T>, data, recursive));
     }
 }
 

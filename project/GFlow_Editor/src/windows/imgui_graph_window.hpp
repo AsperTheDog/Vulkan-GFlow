@@ -17,7 +17,9 @@ protected:
     virtual void rightClick(ImFlow::BaseNode* node);
     void drawBody();
 
-    ImFlow::ImNodeFlow m_grid{"RenderPass"};
+    virtual void clearGrid();
+
+    ImFlow::ImNodeFlow m_grid{"Grid"};
 
     GFlowNode* m_sidePanelTarget = nullptr;
     ImGuiResourceEditorWindow m_sidePanel{"Side Panel", false};

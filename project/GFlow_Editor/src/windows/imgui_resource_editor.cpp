@@ -76,6 +76,24 @@ bool ImGuiResourceEditorWindow::drawInt(const std::string& name, void* data) con
     return changed;
 }
 
+bool ImGuiResourceEditorWindow::drawBigInt(const std::string& name, void* data) const
+{
+    int64_t* value = static_cast<int64_t*>(data);
+    int64_t tmp = *value;
+    ImGui::Text(name.c_str());
+    ImGui::SameLine(m_inlinePadding);
+    ImGui::PushItemWidth(LEFT_ALIGN_ITEM);
+    constexpr size_t step = 1;
+    constexpr size_t step_fast = 10;
+    ImGui::InputScalar(("##" + name).c_str(), ImGuiDataType_::ImGuiDataType_U64, &tmp, &step, &step_fast);
+    ImGui::PopItemWidth();
+    ImGui::Spacing();
+    const bool changed = tmp != *value;
+    *value = tmp;
+    return changed;
+
+}
+
 bool ImGuiResourceEditorWindow::drawString(const std::string& name, void* data, const bool isShort) const
 {
     std::string* str = static_cast<std::string*>(data);
@@ -187,6 +205,9 @@ void ImGuiResourceEditorWindow::drawResource(const std::string& stackedName, voi
             break;
         case gflow::parser::DataType::INT:
             changed = drawInt(exportElem.name, exportElem.data);
+            break;
+        case gflow::parser::DataType::BIGINT:
+            changed = drawBigInt(exportElem.name, exportElem.data);
             break;
         case gflow::parser::DataType::FLOAT:
             changed = drawFloat(exportElem.name, exportElem.data);

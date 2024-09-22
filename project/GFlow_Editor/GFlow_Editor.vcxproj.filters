@@ -18,6 +18,7 @@
     <ClCompile Include="src\windows\nodes\renderpass\renderpass_node_pins.cpp" />
     <ClCompile Include="src\windows\nodes\renderpass\subpass_pipeline_node.cpp" />
     <ClCompile Include="src\metaresources\Renderpass.cpp" />
+    <ClCompile Include="src\windows\nodes\renderpass\init_node.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\sdl_window.hpp" />

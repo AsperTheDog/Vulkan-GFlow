@@ -129,6 +129,8 @@ namespace gflow::parser
                 return { *static_cast<std::string*>(exportData.data), "" };
             case INT:
                 return { std::to_string(*static_cast<int*>(exportData.data)), "" };
+            case BIGINT:
+                return { std::to_string(*static_cast<size_t*>(exportData.data)), "" };
             case FLOAT:
                 return { std::to_string(*static_cast<float*>(exportData.data)), "" };
             case BOOL:
@@ -170,6 +172,9 @@ namespace gflow::parser
                 return true;
             case INT:
                 *static_cast<int*>(exportData.data) = std::stoi(value);
+                return true;
+            case BIGINT:
+                *static_cast<size_t*>(exportData.data) = std::stoull(value);
                 return true;
             case FLOAT:
                 *static_cast<float*>(exportData.data) = std::stof(value);
@@ -240,7 +245,10 @@ namespace gflow::parser
                     }
                     if (dependencies.contains(id))
                     {
-                        *static_cast<Resource**>(exportData.data) = exportData.resourceFactory("", &exportData);
+                        if (ResourceManager::hasResourceFactory(dependencies.at(id).type))
+                            *static_cast<Resource**>(exportData.data) = ResourceManager::createResource(dependencies.at(id).type, "", &exportData);
+                        else
+                            *static_cast<Resource**>(exportData.data) = ResourceManager::createResource("", exportData.resourceFactory, &exportData);
                         (*static_cast<Resource**>(exportData.data))->deserialize(dependencies.at(id), dependencies);
                         return true;
                     }

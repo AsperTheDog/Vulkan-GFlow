@@ -5,9 +5,9 @@
 class ImageNode final : public GFlowNode
 {
 public:
-    ImageNode(ImGuiGraphWindow* parent, gflow::parser::Resource* resource);
+    ImageNode(ImGuiGraphWindow* parent, NodeResource* resource);
 
-    gflow::parser::Resource* getLinkedResource() override { return m_resource; }
+    NodeResource* getLinkedResource() override { return m_resource; }
     void onResourceUpdated(const std::string& resource, const std::string& name, const std::string& path) override;
 
 private:

@@ -26,8 +26,10 @@ private:
     void onNodeDestroyed(GFlowNode* node);
     void rightClick(ImFlow::BaseNode* node) override;
 
+    void clearGrid() override;
+
     void saveRenderPass();
-    void loadRenderPass();
+    void loadRenderPass(bool loadInit = true);
 
     gflow::parser::RenderPass* m_selectedPass = nullptr;
     RenderpassResource* m_selectedPassMeta = nullptr;

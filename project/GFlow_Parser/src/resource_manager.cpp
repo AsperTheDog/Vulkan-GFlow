@@ -256,6 +256,11 @@ namespace gflow::parser
         return true;
     }
 
+    bool ResourceManager::hasResourceFactory(const std::string& type)
+    {
+        return s_resourceFactories.contains(type);
+    }
+
     gflow::parser::Resource* ResourceManager::getSubresource(const std::string& path, const std::string& subpath)
     {
         if (!hasResource(path))
@@ -331,7 +336,7 @@ namespace gflow::parser
         return createResource(resourceType, path);
     }
 
-    Resource* ResourceManager::createResource(const std::string& type, const std::string& path, Resource::ExportData* data)
+    Resource* ResourceManager::createResource(const std::string& type, const std::string& path, Resource::ExportData* data, const bool recursive)
     {
         if (!s_resourceFactories.contains(type))
             throw std::runtime_error("Unknown resource type " + (type.empty() ? "<empty type>" : type));
@@ -339,21 +344,30 @@ namespace gflow::parser
         if (s_resourceFactories[type] == nullptr)
             throw std::runtime_error("Resource type " + type + " is not implemented yet");
 
-        return createResource(path, s_resourceFactories[type], data);
+        return createResource(path, s_resourceFactories[type], data, recursive);
     }
 
-    Resource* ResourceManager::createResource(const std::string& path, const ResourceFactory& factory, Resource::ExportData* data)
+    Resource* ResourceManager::createResource(const std::string& path, const ResourceFactory& factory, Resource::ExportData* data, const bool recursive)
     {
         if (path.empty())
         {
             m_embeddedResources.push_back(factory("", data));
-            return m_embeddedResources.back();
+            Resource* res = m_embeddedResources.back();
+            if (recursive)
+                for (Resource::ExportData& exportData : res->getExports())
+                    if (exportData.type == RESOURCE)
+                        *static_cast<Resource**>(exportData.data) = createResource("", exportData.resourceFactory, &exportData, true);
+            return res;
         }
 
         if (m_resources.contains(path))
             throw std::runtime_error("Resource already exists");
 
         m_resources[path] = factory(path, data);
+        if (recursive)
+            for (Resource::ExportData& exportData : m_resources[path]->getExports())
+                if (exportData.type == RESOURCE)
+                    *static_cast<Resource**>(exportData.data) = createResource("", exportData.resourceFactory, &exportData, true);
         m_fileTree.addPath(path);
         return m_resources[path];
     }

@@ -222,6 +222,7 @@ void Editor::createWindows()
 void Editor::injectResources()
 {
     gflow::parser::ResourceManager::injectResourceFactory(RenderpassResource::getTypeStatic(), gflow::parser::Resource::create<RenderpassResource>);
+    gflow::parser::ResourceManager::injectResourceFactory(InitNodeResource::getTypeStatic(), gflow::parser::Resource::create<InitNodeResource>);
     gflow::parser::ResourceManager::injectResourceFactory(ImageNodeResource::getTypeStatic(), gflow::parser::Resource::create<ImageNodeResource>);
     gflow::parser::ResourceManager::injectResourceFactory(SubpassNodeResource::getTypeStatic(), gflow::parser::Resource::create<SubpassNodeResource>);
     gflow::parser::ResourceManager::injectResourceFactory(PipelineNodeResource::getTypeStatic(), gflow::parser::Resource::create<PipelineNodeResource>);

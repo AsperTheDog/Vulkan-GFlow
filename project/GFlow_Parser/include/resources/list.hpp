@@ -37,10 +37,10 @@ namespace gflow::parser
         void erase(T value) { m_data.erase(std::remove(m_data.begin(), m_data.end(), value), m_data.end()); m_size--; }
         void push_back(T value) { m_data.push_back(value); m_size++; }
 
-        T* emplace_back();
+        T* emplace_back(bool createRecursive = true);
 
         template<typename U>
-        U* emplace_subclass_back();
+        U* emplace_subclass_back(bool createRecursive = true);
 
     private:
         int m_size = 0;
@@ -49,6 +49,8 @@ namespace gflow::parser
         bool m_readonlySize = false;
 
         Resource* m_parent = nullptr;
+
+        ExportData createElemExportData();
         
     public:
         DECLARE_RESOURCE(List)
@@ -88,23 +90,8 @@ namespace gflow::parser
 
         for (int i = 0; i < m_size; i++)
         {
-            ExportData data;
+            ExportData data = createElemExportData();
             data.data = &m_data[i];
-            if constexpr (std::is_same_v<T, std::string>) data.type = STRING;
-            else if constexpr (std::is_same_v<T, int>) data.type = INT;
-            else if constexpr (std::is_same_v<T, float>) data.type = FLOAT;
-            else if constexpr (std::is_same_v<T, bool>) data.type = BOOL;
-            else if constexpr (std::is_same_v<T, EnumExport>)
-            {
-                data.type = ENUM;
-                data.enumContext = getEnumContext();
-            }
-            else if constexpr (std::is_pointer_v<T> && std::is_base_of_v<Resource, std::remove_pointer_t<T>>)
-            {
-                data.type = RESOURCE;
-                data.resourceFactory = &Resource::create<std::remove_pointer_t<T>>;
-                data.getType = std::remove_pointer_t<T>::getTypeStatic;
-            }
             data.name = std::to_string(i);
             exports.push_back(data);
         }
@@ -140,11 +127,14 @@ namespace gflow::parser
     }
 
     template <typename T>
-    T* List<T>::emplace_back()
+    T* List<T>::emplace_back(const bool createRecursive)
     {
         if constexpr (std::is_pointer_v<T> && std::is_base_of_v<Resource, std::remove_pointer_t<T>>)
         {
-            T* data = ResourceManager::createResource<T>("");
+            ExportData elem = createElemExportData();
+            elem.name = std::to_string(m_size);
+
+            T data = ResourceManager::createResource<std::remove_pointer_t<T>>("", &elem, createRecursive);
             m_data.push_back(data);
         }
         else
@@ -157,15 +147,44 @@ namespace gflow::parser
 
     template <typename T>
     template <typename U>
-    U* List<T>::emplace_subclass_back()
+    U* List<T>::emplace_subclass_back(const bool createRecursive)
     {
         static_assert(std::is_base_of_v<std::remove_pointer_t<T>, U>, "U must be a child class of T");
         static_assert(std::is_base_of_v<Resource, std::remove_pointer_t<T>>, "T must be a Resource");
+        
+        ExportData elem = createElemExportData();
+        elem.name = std::to_string(m_size);
 
-        U* data = ResourceManager::createResource<U>("");
+        U* data = ResourceManager::createResource<U>("", &elem, createRecursive);
         m_data.push_back(dynamic_cast<T>(data));
         m_size++;
         return dynamic_cast<U*>(m_data.back());
+    }
+
+    template <typename T>
+    Resource::ExportData List<T>::createElemExportData()
+    {
+        ExportData data;
+        data.data = nullptr;
+        data.name = "";
+        data.type = NONE;
+        data.enumContext = getEnumContext();
+        if constexpr (std::is_same_v<T, std::string>) data.type = STRING;
+        else if constexpr (std::is_same_v<T, int>) data.type = INT;
+        else if constexpr (std::is_same_v<T, size_t>) data.type = BIGINT;
+        else if constexpr (std::is_same_v<T, float>) data.type = FLOAT;
+        else if constexpr (std::is_same_v<T, bool>) data.type = BOOL;
+        else if constexpr (std::is_same_v<T, EnumExport>)
+        {
+            data.type = ENUM;
+        }
+        else if constexpr (std::is_pointer_v<T> && std::is_base_of_v<Resource, std::remove_pointer_t<T>>)
+        {
+            data.type = RESOURCE;
+            data.resourceFactory = &Resource::create<std::remove_pointer_t<T>>;
+            data.getType = std::remove_pointer_t<T>::getTypeStatic;
+        }
+        return data;
     }
 
     template <typename T>

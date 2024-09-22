@@ -8,7 +8,7 @@ class SubpassNode final : public GFlowNode
 public:
     explicit SubpassNode(ImGuiGraphWindow* parent, gflow::parser::Resource* resource);
 
-    gflow::parser::Resource* getLinkedResource() override { return m_resource; }
+    NodeResource* getLinkedResource() override { return m_resource; }
 
 private:
     SubpassNodeResource* m_resource = nullptr;

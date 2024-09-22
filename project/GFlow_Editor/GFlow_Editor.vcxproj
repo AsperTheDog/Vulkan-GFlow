@@ -172,6 +172,7 @@
     <ClCompile Include="src\editor.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\sdl_window.cpp" />
+    <ClCompile Include="src\windows\nodes\renderpass\init_node.cpp" />
     <ClCompile Include="src\windows\nodes\renderpass\renderpass_node_pins.cpp" />
     <ClCompile Include="src\windows\nodes\renderpass\subpass_node.cpp" />
     <ClCompile Include="src\windows\nodes\renderpass\subpass_pipeline_node.cpp" />

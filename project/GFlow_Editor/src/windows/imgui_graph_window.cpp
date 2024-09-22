@@ -1,5 +1,6 @@
 #include "imgui_graph_window.hpp"
 #include "nodes/base_node.hpp"
+#include "../metaresources/graph.hpp"
 
 ImGuiGraphWindow::ImGuiGraphWindow(const std::string_view& name, const bool defaultOpen) : ImGuiEditorWindow(name, defaultOpen)
 {
@@ -19,6 +20,12 @@ void ImGuiGraphWindow::drawBody()
     ImGui::End();
     if (m_sidePanelTarget != nullptr)
         m_sidePanel.draw();
+}
+
+void ImGuiGraphWindow::clearGrid()
+{
+    m_grid = ImFlow::ImNodeFlow("Grid");
+    m_grid.rightClickPopUpContent([this](ImFlow::BaseNode* node){this->rightClick(node);});
 }
 
 void ImGuiGraphWindow::rightClick(ImFlow::BaseNode* node)

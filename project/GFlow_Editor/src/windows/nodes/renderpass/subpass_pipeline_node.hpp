@@ -8,7 +8,7 @@ class SubpassPipelineNode final : public GFlowNode
 public:
     explicit SubpassPipelineNode(ImGuiGraphWindow* parent, gflow::parser::Resource* resource);
 
-	gflow::parser::Resource* getLinkedResource() override { return m_resource; }
+	NodeResource* getLinkedResource() override { return m_resource; }
 
 private:
 	PipelineNodeResource* m_resource = nullptr;

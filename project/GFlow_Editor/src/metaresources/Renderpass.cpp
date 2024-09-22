@@ -1,42 +1,33 @@
 #include "Renderpass.hpp"
 
-RenderpassResource::RenderpassResource(const std::string& path) : GraphResource(path)
-{
-    nodes.setData(gflow::parser::ResourceManager::createResource("", Resource::create<gflow::parser::List<NodeResource*>>));
-    connections.setData(gflow::parser::ResourceManager::createResource("", Resource::create<gflow::parser::List<gflow::parser::IntPair*>>));
-}
+#include "windows/nodes/base_node.hpp"
 
-NodeResource* RenderpassResource::addNode(const NodeType type, const gflow::parser::Vec2 position)
+void RenderpassResource::removeNode(GFlowNode* node)
 {
-    NodeResource* node;
-    switch (type)
+    (*nodes).erase(node->getLinkedResource());
+    for (int i = 0; i < (*connections).size(); i++)
     {
-    case IMAGE:
-        node = (*nodes).emplace_subclass_back<ImageNodeResource>();
-        break;
-    case SUBPASS:
-        node = (*nodes).emplace_subclass_back<SubpassNodeResource>();
-        break;
-    case PIPELINE:
-        node = (*nodes).emplace_subclass_back<PipelineNodeResource>();
-        break;
-    default:
-        throw std::runtime_error("Newly implemented NodeType enum entry was not added to addNode...");
-    }
-
-    node->set("position", position.toString());
-    return node;
-}
-
-void RenderpassResource::removeNode(const int nodeID)
-{
-    for (int i = 0; i < (*nodes).size(); i++)
-    {
-        if ((*nodes)[i]->getValue<int>("nodeID") == nodeID)
+        if ((*connections)[i]->getFirst()->getFirst() == node->getUID() || (*connections)[i]->getSecond()->getFirst() == node->getUID())
         {
-            (*nodes).remove(i);
-            break;
+            (*connections).remove(i);
+            i--;
         }
     }
+}
+
+void RenderpassResource::addConnection(const size_t left_uid, const size_t left_pin, const size_t right_uid, const size_t right_pin)
+{
+    //Check if it exists
+    for (int i = 0; i < (*connections).size(); i++)
+    {
+        if ((*connections)[i]->getFirst()->getFirst() == left_uid && (*connections)[i]->getFirst()->getSecond() == left_pin &&
+            (*connections)[i]->getSecond()->getFirst() == right_uid && (*connections)[i]->getSecond()->getSecond() == right_pin)
+        {
+            return;
+        }
+    }
+    Connection** connection = (*connections).emplace_back(true);
+    (*connection)->getFirst()->setValues(left_uid, left_pin);
+    (*connection)->getSecond()->setValues(right_uid, right_pin);
 }
 
