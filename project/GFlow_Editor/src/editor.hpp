@@ -19,7 +19,7 @@ private:
 	static void initImgui();
 	static void connectSignals();
     static void createWindows();
-    static void injectResources();
+    static void injectResourceFactories();
 
 	static void renderFrame();
 	static bool renderImgui();

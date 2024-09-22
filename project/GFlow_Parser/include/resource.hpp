@@ -207,6 +207,7 @@ namespace gflow::parser
         exportData.data = &m_data;
 
         if constexpr (std::is_same_v<T, std::string>) exportData.type = STRING;
+        else if constexpr (std::is_same_v<T, FilePath>) exportData.type = FILE;
         else if constexpr (std::is_same_v<T, int>) exportData.type = INT;
         else if constexpr (std::is_same_v<T, size_t>) exportData.type = BIGINT;
         else if constexpr (std::is_same_v<T, float>) exportData.type = FLOAT;
@@ -214,7 +215,6 @@ namespace gflow::parser
         else if constexpr (std::is_same_v<T, Vec2>) exportData.type = VEC2;
         else if constexpr (std::is_same_v<T, Vec3>) exportData.type = VEC3;
         else if constexpr (std::is_same_v<T, Vec4>) exportData.type = VEC4;
-        else if constexpr (std::is_same_v<T, FilePath>) exportData.type = FILE;
         else if constexpr (std::is_pointer_v<T> && std::is_base_of_v<Resource, std::remove_pointer_t<T>>)
         {
             exportData.type = RESOURCE;

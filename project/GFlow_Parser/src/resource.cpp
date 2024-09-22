@@ -127,6 +127,8 @@ namespace gflow::parser
             {
             case STRING:
                 return { *static_cast<std::string*>(exportData.data), "" };
+            case FILE:
+                return { static_cast<FilePath*>(exportData.data)->path, "" };
             case INT:
                 return { std::to_string(*static_cast<int*>(exportData.data)), "" };
             case BIGINT:
@@ -169,6 +171,9 @@ namespace gflow::parser
             {
             case STRING:
                 *static_cast<std::string*>(exportData.data) = value;
+                return true;
+            case FILE:
+                static_cast<FilePath*>(exportData.data)->path = value;
                 return true;
             case INT:
                 *static_cast<int*>(exportData.data) = std::stoi(value);
@@ -238,11 +243,6 @@ namespace gflow::parser
                 try
                 {
                     const uint32_t id = std::stoi(value);
-                    if (id == m_id)
-                    {
-                        Logger::print("Resource with id " + std::to_string(id) + " cannot be a dependency of itself", Logger::ERR);
-                        return false;
-                    }
                     if (dependencies.contains(id))
                     {
                         if (ResourceManager::hasResourceFactory(dependencies.at(id).type))

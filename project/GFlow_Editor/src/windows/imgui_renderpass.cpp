@@ -19,6 +19,11 @@ void ImGuiRenderPassWindow::resourceSelected(const std::string& resource)
     if (gflow::parser::ResourceManager::hasResource(resource) && gflow::parser::ResourceManager::getResourceType(resource) == gflow::parser::RenderPass::getTypeStatic())
     {
         saveRenderPass();
+        if (m_sidePanelTarget != nullptr)
+        {
+            m_sidePanelTarget->setInspectionStatus(false);
+            m_sidePanelTarget = nullptr;
+        }
         clearGrid();
         m_selectedPass = dynamic_cast<gflow::parser::RenderPass*>(gflow::parser::ResourceManager::getResource(resource));
         const std::string metaPath = m_selectedPass->getMetaPath();
@@ -185,9 +190,9 @@ void ImGuiRenderPassWindow::loadRenderPass(const bool loadInit)
     {
         GraphResource::Connection* connection = m_selectedPassMeta->getConnections()[i];
         const size_t leftUID = connection->getFirst()->getFirst();
-        const size_t leftPin = connection->getFirst()->getSecond();
+        const int leftPin = connection->getFirst()->getSecond();
         const size_t rightUID = connection->getSecond()->getFirst();
-        const size_t rightPin = connection->getSecond()->getSecond();
+        const int rightPin = connection->getSecond()->getSecond();
         ImFlow::Pin* left = m_grid.getNodes().at(leftUID)->outPinByFilderID(leftPin);
         ImFlow::Pin* right = m_grid.getNodes().at(rightUID)->inPinByFilderID(rightPin);
         left->createLink(right);

@@ -33,7 +33,7 @@ void Editor::init(const std::string& projectPath)
     initImgui();
     connectSignals();
     createWindows();
-    injectResources();
+    injectResourceFactories();
 
     if (!projectPath.empty())
     {
@@ -219,7 +219,7 @@ void Editor::createWindows()
     }
 }
 
-void Editor::injectResources()
+void Editor::injectResourceFactories()
 {
     gflow::parser::ResourceManager::injectResourceFactory(RenderpassResource::getTypeStatic(), gflow::parser::Resource::create<RenderpassResource>);
     gflow::parser::ResourceManager::injectResourceFactory(InitNodeResource::getTypeStatic(), gflow::parser::Resource::create<InitNodeResource>);

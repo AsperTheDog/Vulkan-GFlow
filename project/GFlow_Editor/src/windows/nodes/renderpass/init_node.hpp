@@ -1,8 +1,7 @@
 #pragma once
 #include "renderpass_node_pins.hpp"
+#include "metaresources/Renderpass.hpp"
 #include "windows/nodes/base_node.hpp"
-
-class InitNodeResource;
 
 class InitRenderpassNode final : public GFlowNode
 {
@@ -11,7 +10,7 @@ public:
 
     void destroy() override {}
 
-    NodeResource* getLinkedResource() override { return nullptr; }
+    NodeResource* getLinkedResource() override { return m_resource; }
 
 private:
     InitNodeResource* m_resource = nullptr;
