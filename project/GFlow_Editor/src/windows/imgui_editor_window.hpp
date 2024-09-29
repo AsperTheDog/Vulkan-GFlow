@@ -12,6 +12,8 @@ public:
     virtual void draw() = 0;
     [[nodiscard]] std::string getName() const { return m_name; }
 
+    virtual void save() {}
+
     bool open;
 
 protected:

@@ -348,6 +348,9 @@ void Editor::recreateSwapchain(const uint32_t width, const uint32_t height)
 
 void Editor::saveProject()
 {
+    for (ImGuiEditorWindow* window : s_imguiWindows)
+        window->save();
+    
     gflow::parser::ResourceManager::saveAll();
 }
 
@@ -374,7 +377,7 @@ gflow::parser::Resource* Editor::getSelectedResource() const
     return gflow::parser::ResourceManager::getResource(s_selectedResource);
 }
 
-VulkanShader::ReflectionData Editor::getShaderResourceReflectionData(const std::string& string, const ShaderStage stage)
+VulkanShader::ReflectionData Editor::getShaderReflectionData(const std::string& string, const ShaderStage stage)
 {
     const std::string path = gflow::parser::ResourceManager::makePathAbsolute(string);
     switch (stage)
@@ -425,8 +428,9 @@ void Editor::showDeleteResourceModal(const std::string& path)
     s_modalBasePath = path;
 }
 
-void Editor::showResourcePickerModal(gflow::parser::Resource* parent, const std::string& variable, const std::string& filter)
+void Editor::showResourcePickerModal(ImGuiResourceEditorWindow* caller, gflow::parser::Resource* parent, const std::string& variable, const std::string& filter)
 {
+    s_resourcePickerCaller = caller;
     s_resourcePickerParent = parent;
     s_resourcePickerElement = variable;
     s_getResourceRefWindow.setFilter(filter);
@@ -451,12 +455,14 @@ void Editor::resourcePickerModal()
         if (ImGui::Button("Select##Picker"))
         {
             s_resourcePickerParent->set(s_resourcePickerElement, s_getResourceRefWindow.getSelectedResource(), {});
+            s_resourcePickerCaller->updateChangedVar(s_resourcePickerParent, s_resourcePickerElement, true);
             ImGui::CloseCurrentPopup();
         }
         ImGui::EndDisabled();
         ImGui::SameLine();
         if (ImGui::Button("Cancel##Picker"))
         {
+            s_resourcePickerCaller->updateChangedVar(s_resourcePickerParent, s_resourcePickerElement, false);
             ImGui::CloseCurrentPopup();
         }
         ImGui::EndPopup();

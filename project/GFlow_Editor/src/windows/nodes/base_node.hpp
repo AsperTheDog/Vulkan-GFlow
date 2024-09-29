@@ -2,8 +2,10 @@
 #include "ImNodeFlow.h"
 #include "utils/signal.hpp"
 
-class NodeResource;
+namespace gflow::parser { struct ResourceElemPath; }
+
 class ImGuiGraphWindow;
+class NodeResource;
 
 class GFlowNode : public ImFlow::BaseNode
 {
@@ -15,7 +17,7 @@ public:
 
     void destroy() override;
 
-    virtual void onResourceUpdated(const std::string& resource, const std::string& name, const std::string& path) {}
+    virtual void onResourceUpdated(const gflow::parser::ResourceElemPath&) {}
     [[nodiscard]] Signal<GFlowNode*>& getDestroyedSignal() { return m_destroyed; }
 
 protected:

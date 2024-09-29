@@ -1,5 +1,6 @@
 #pragma once
 #include "graph.hpp"
+#include "resources/pipeline.hpp"
 #include "windows/nodes/base_node.hpp"
 
 class InitNodeResource final : public NodeResource
@@ -35,7 +36,10 @@ public:
 
 class PipelineNodeResource final : public NodeResource
 {
+    EXPORT_RESOURCE(gflow::parser::Pipeline, pipeline);
+
     void initContext(ExportData* metadata) override {}
+    gflow::parser::DataUsage isUsed(const std::string& variable, const std::vector<Resource*>& parentPath) override;
 
 public:
     DECLARE_RESOURCE_ANCESTOR(PipelineNodeResource, NodeResource)
@@ -50,7 +54,7 @@ public:
     U* addNode(gflow::parser::Vec2 position = {});
     void removeNode(GFlowNode* node);
 
-    void addConnection(const size_t left_uid, const size_t left_pin, const size_t right_uid, const size_t right_pin);
+    void addConnection(size_t left_uid, size_t left_pin, size_t right_uid, size_t right_pin);
 
     DECLARE_RESOURCE_ANCESTOR(RenderpassResource, GraphResource)
 };
@@ -71,6 +75,15 @@ inline gflow::parser::DataUsage ImageNodeResource::isUsed(const std::string& var
 inline gflow::parser::DataUsage SubpassNodeResource::isUsed(const std::string& variable, const std::vector<Resource*>& parentPath)
 {
     if (variable == "subpassID")
+    {
+        return gflow::parser::USED;
+    }
+    return NodeResource::isUsed(variable, parentPath);
+}
+
+inline gflow::parser::DataUsage PipelineNodeResource::isUsed(const std::string& variable, const std::vector<Resource*>& parentPath)
+{
+    if (variable == "pipeline")
     {
         return gflow::parser::USED;
     }

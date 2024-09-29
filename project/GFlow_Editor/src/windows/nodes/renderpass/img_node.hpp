@@ -8,7 +8,7 @@ public:
     ImageNode(ImGuiGraphWindow* parent, NodeResource* resource);
 
     NodeResource* getLinkedResource() override { return m_resource; }
-    void onResourceUpdated(const std::string& resource, const std::string& name, const std::string& path) override;
+    void onResourceUpdated(const gflow::parser::ResourceElemPath& element) override;
 
 private:
     ImageNodeResource* m_resource = nullptr;

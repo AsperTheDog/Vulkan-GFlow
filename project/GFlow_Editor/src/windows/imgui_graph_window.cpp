@@ -5,7 +5,7 @@
 ImGuiGraphWindow::ImGuiGraphWindow(const std::string_view& name, const bool defaultOpen) : ImGuiEditorWindow(name, defaultOpen)
 {
     m_sidePanel.setInlinePadding(100.0f);
-    m_grid.rightClickPopUpContent([this](ImFlow::BaseNode* node){this->rightClick(node);});
+    clearGrid();
 }
 
 void ImGuiGraphWindow::draw()
@@ -25,6 +25,9 @@ void ImGuiGraphWindow::drawBody()
 void ImGuiGraphWindow::clearGrid()
 {
     m_grid = ImFlow::ImNodeFlow("Grid");
+    m_grid.getNodeCreatedSignal().connect(this, &ImGuiGraphWindow::onNodeCreated);
+    m_grid.getNodeDeletedSignal().connect(this, &ImGuiGraphWindow::onNodeDeleted);
+    m_grid.getConnectionSignal().connect(this, &ImGuiGraphWindow::onConnection);
     m_grid.rightClickPopUpContent([this](ImFlow::BaseNode* node){this->rightClick(node);});
 }
 

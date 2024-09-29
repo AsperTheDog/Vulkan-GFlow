@@ -6,6 +6,8 @@
 #include "vulkan_shader.hpp"
 #include "windows/imgui_resources.hpp"
 
+class ImGuiResourceEditorWindow;
+
 class Editor
 {
 public: // Internal Management
@@ -46,7 +48,7 @@ public: // Editor Management
     [[nodiscard]] gflow::parser::Resource* getSelectedResource() const;
 
     enum ShaderStage { VERTEX, GEOMETRY, FRAGMENT };
-    static VulkanShader::ReflectionData getShaderResourceReflectionData(const std::string& string, ShaderStage stage);
+    static VulkanShader::ReflectionData getShaderReflectionData(const std::string& string, ShaderStage stage);
 
     static void showCreateFolderModal(const std::string& path);
     static void showRenameFolderModal(const std::string& path);
@@ -55,7 +57,8 @@ public: // Editor Management
     static void showRenameResourceModal(const std::string& path);
     static void showDeleteResourceModal(const std::string& path);
 
-    static void showResourcePickerModal(gflow::parser::Resource* parent, const std::string& variable, const std::string& filter);
+    static void showResourcePickerModal(ImGuiResourceEditorWindow* caller, gflow::parser::Resource* parent, const std::string& variable, const std::string&
+                                        filter);
 
 private:
     static void createFolderModal();
@@ -84,6 +87,7 @@ private:
     inline static bool s_showResourcePickerModal;
     inline static gflow::parser::Resource* s_resourcePickerParent;
     inline static std::string s_resourcePickerElement;
+    inline static ImGuiResourceEditorWindow* s_resourcePickerCaller;
 
     inline static ImGuiResourcesWindow s_getResourceRefWindow{"Resource Picker"};
 

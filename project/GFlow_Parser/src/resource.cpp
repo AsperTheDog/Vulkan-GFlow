@@ -122,6 +122,7 @@ namespace gflow::parser
     {
         for (const ExportData& exportData : getExports())
         {
+            if (exportData.data == nullptr) continue;
             if (variable != exportData.name) continue;
             switch (exportData.type)
             {
@@ -166,6 +167,7 @@ namespace gflow::parser
     {
         for (ExportData& exportData : getExports())
         {
+            if (exportData.data == nullptr) continue;
             if (variable != exportData.name) continue;
             switch (exportData.type)
             {

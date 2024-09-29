@@ -89,6 +89,24 @@ namespace gflow::parser
         [[nodiscard]] std::string toString() const { return std::to_string(x) + ", " + std::to_string(y) + ", " + std::to_string(z) + ", " + std::to_string(w); }
     };
 
+    struct ResourceElemPath
+    {
+        std::string path;
+        gflow::parser::Resource* parentResource;
+        std::string element;
+        std::string stackedPath;
+
+        bool pointsToResource(const gflow::parser::Resource* parentResource, const std::string& element) const
+        {
+            return this->parentResource == parentResource && this->element == element;
+        }
+
+        bool operator==(const ResourceElemPath& other) const
+        {
+            return path == other.path && parentResource == other.parentResource && element == other.element && stackedPath == other.stackedPath;
+        }
+    };
+
     template <typename T>
     class Export
     {
@@ -204,6 +222,15 @@ namespace gflow::parser
 
         Resource::ExportData exportData;
         exportData.name = name;
+
+        if (m_isGroup)
+        {
+            exportData.type = BOOL;
+            exportData.data = nullptr;
+            parent->registerExport(exportData);
+            return;
+        }
+
         exportData.data = &m_data;
 
         if constexpr (std::is_same_v<T, std::string>) exportData.type = STRING;
@@ -225,6 +252,7 @@ namespace gflow::parser
         {
             exportData.type = NONE;
             Logger::print("Export type not supported", Logger::ERR);
+            return;
         }
         parent->registerExport(exportData);
     }

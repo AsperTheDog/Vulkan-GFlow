@@ -3,10 +3,7 @@
 #include "utils/signal.hpp"
 #include "windows/imgui_editor_window.hpp"
 
-namespace gflow::parser
-{
-    class Resource;
-}
+namespace gflow::parser { class Resource; }
 
 class ImGuiResourceEditorWindow final : public ImGuiEditorWindow
 {
@@ -21,7 +18,11 @@ public:
 
     void setInlinePadding(const float padding) { m_inlinePadding = padding; }
 
-    [[nodiscard]] Signal<const std::string&, const std::string&, const std::string&>& getVariableChangedSignal() { return m_variableChangedSignal; }
+    void setAllowEmbedded(const bool allow) { m_allowEmbedded = allow; }
+    
+    void updateChangedVar(const gflow::parser::Resource* resource, const std::string& name, bool commit);
+
+    [[nodiscard]] Signal<const gflow::parser::ResourceElemPath&>& getVariableChangedSignal() { return m_variableChangedSignal; }
 
 private:
     bool drawFloat(const std::string& name, void* data) const;
@@ -43,9 +44,12 @@ private:
 
     mutable std::unordered_map<std::string, bool> m_nestedResourcesOpened;
 
-    Signal<const std::string&, const std::string&, const std::string&> m_variableChangedSignal;
+    std::vector<gflow::parser::ResourceElemPath> m_variablesFlaggedToChange;
+
+    Signal<const gflow::parser::ResourceElemPath&> m_variableChangedSignal;
 
 private:
     float m_inlinePadding = 200.0f;
+    bool m_allowEmbedded = true;
 };
 

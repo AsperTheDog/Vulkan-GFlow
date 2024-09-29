@@ -2,7 +2,6 @@
 
 #include "editor.hpp"
 #include "imgui.h"
-#include "resources/project.hpp"
 #include "resource.hpp"
 #include "resource_manager.hpp"
 
@@ -44,6 +43,20 @@ void ImGuiResourceEditorWindow::draw()
 gflow::parser::Resource* ImGuiResourceEditorWindow::getSelectedResource() const
 {
     return m_selectedResource;
+}
+
+void ImGuiResourceEditorWindow::updateChangedVar(const gflow::parser::Resource* resource, const std::string& name, const bool commit)
+{
+    for (gflow::parser::ResourceElemPath& elem : m_variablesFlaggedToChange)
+    {
+        if (elem.pointsToResource(resource, name))
+        {
+            if (commit) 
+                m_variableChangedSignal.emit(elem);
+            std::erase(m_variablesFlaggedToChange, elem);
+            return;
+        }
+    }
 }
 
 bool ImGuiResourceEditorWindow::drawFloat(const std::string& name, void* data) const
@@ -243,7 +256,7 @@ void ImGuiResourceEditorWindow::drawResource(const std::string& stackedName, voi
         }
         ImGui::EndDisabled();
         if (changed)
-            m_variableChangedSignal.emit(m_selectedResource->getPath(), exportElem.name, stackedName);
+            m_variableChangedSignal.emit({m_selectedResource->getPath(), parentPath.back(), exportElem.name, stackedName});
     }
     (*resource)->exportsChanged();
 }
@@ -281,27 +294,32 @@ void ImGuiResourceEditorWindow::drawSubresource(const std::string& name, std::st
     if (ImGui::BeginPopupContextItem())
     {
         bool shouldReturn = false;
-        if (ImGui::MenuItem("Create embedded"))
+        if (m_allowEmbedded)
         {
-            *resource = gflow::parser::ResourceManager::createResource("", data.resourceFactory, &data);
-            m_nestedResourcesOpened[stackedName] = true;
-            shouldReturn = true;
-            m_variableChangedSignal.emit(m_selectedResource->getPath(), name, stackedName);
-            
+            if (ImGui::MenuItem("Create embedded"))
+            {
+                *resource = gflow::parser::ResourceManager::createResource("", data.resourceFactory, &data);
+                m_nestedResourcesOpened[stackedName] = true;
+                shouldReturn = true;
+                m_variableChangedSignal.emit({m_selectedResource->getPath(), parentPath.back(), name, stackedName});
+            }
         }
+        
         ImGui::BeginDisabled(gflow::parser::ResourceManager::isTypeSubresource(data.getType()));
         if (ImGui::MenuItem("Load"))
         {
-            Editor::showResourcePickerModal(parentPath.back(), name, data.getType());
+            m_variablesFlaggedToChange.emplace_back(m_selectedResource->getPath(), parentPath.back(), name, stackedName);
+            Editor::showResourcePickerModal(this, parentPath.back(), name, data.getType());
         }
         ImGui::EndDisabled();
         if (ImGui::MenuItem("Clear"))
         {
             if (*resource != nullptr && (*resource)->isSubresource())
             {
-                delete* resource;
+                gflow::parser::ResourceManager::deleteResource(*resource);
             }
             *resource = nullptr;
+            m_variableChangedSignal.emit({ m_selectedResource->getPath(), parentPath.back(), name, stackedName });
             m_nestedResourcesOpened[stackedName] = false;
             shouldReturn = true;
         }

@@ -12,6 +12,7 @@
 
 ImGuiRenderPassWindow::ImGuiRenderPassWindow(const std::string_view& name, const bool defaultOpen) : ImGuiGraphWindow(name, defaultOpen)
 {
+    m_sidePanel.getVariableChangedSignal().connect(this, &ImGuiRenderPassWindow::sidePanelVariableChanged);
 }
 
 void ImGuiRenderPassWindow::resourceSelected(const std::string& resource)
@@ -36,41 +37,39 @@ void ImGuiRenderPassWindow::resourceSelected(const std::string& resource)
         {
             m_selectedPassMeta = gflow::parser::ResourceManager::createResource<RenderpassResource>(metaPath, nullptr, true);
             InitNodeResource* initNodeRes = m_selectedPassMeta->addNode<InitNodeResource>();
-            const std::shared_ptr<InitRenderpassNode> newNode = m_grid.addNode<InitRenderpassNode>(ImVec2(1, 1), this, initNodeRes);
-            initNodeRes->setPos({1, 1});
+            const std::shared_ptr<InitRenderpassNode> newNode = m_grid.addNode<InitRenderpassNode>(ImVec2(5, 5), this, initNodeRes);
+            initNodeRes->setPos({newNode->getPos().x, newNode->getPos().y});
             initNodeRes->setNodeID(newNode->getUID());
             loadRenderPass(false);
         }
     }
 }
 
-void ImGuiRenderPassWindow::resourceVariableChanged(const std::string& resourcePath, const std::string& field, const std::string& subpath)
+void ImGuiRenderPassWindow::resourceVariableChanged(const gflow::parser::ResourceElemPath& element)
 {
     if (m_selectedPass == nullptr) return;
-    gflow::parser::Resource* res = gflow::parser::ResourceManager::getSubresource(resourcePath, subpath);
+    gflow::parser::Resource* res = gflow::parser::ResourceManager::getSubresource(element.path, element.stackedPath);
     if (res == nullptr || res->isSubresource() || res->getType() != gflow::parser::Pipeline::getTypeStatic()) 
         return;
-    VulkanShader::ReflectionData data;
+
     Editor::ShaderStage type;
-    if (field == "vertex")
-    {
-        data = Editor::getShaderResourceReflectionData(res->getValue<std::string>(field), Editor::VERTEX);
-        type = Editor::VERTEX;
-    }
-    else if (field == "fragment")
-    {
-        data = Editor::getShaderResourceReflectionData(res->getValue<std::string>(field), Editor::FRAGMENT);
-        type = Editor::FRAGMENT;
-    }
-    else if (field == "geometry")
-    {
-        data = Editor::getShaderResourceReflectionData(res->getValue<std::string>(field), Editor::GEOMETRY);
-        type = Editor::GEOMETRY;
-    }
+    if (element.element == "vertex")        type = Editor::VERTEX;
+    else if (element.element == "fragment") type = Editor::FRAGMENT;
+    else if (element.element == "geometry") type = Editor::GEOMETRY;
     else return;
+
+    const VulkanShader::ReflectionData data = Editor::getShaderReflectionData(res->getValue<std::string>(element.element), type);
 
     if (!data.valid) return;
     // TODO: Update renderpass with new shader elements
+}
+
+void ImGuiRenderPassWindow::sidePanelVariableChanged(const gflow::parser::ResourceElemPath& element)
+{
+    if (element.element == "pipeline")
+    {
+        //TODO: Update renderpass with new pipeline
+    }
 }
 
 void ImGuiRenderPassWindow::draw()
@@ -79,6 +78,11 @@ void ImGuiRenderPassWindow::draw()
     {
         ImGuiGraphWindow::draw();
     }
+}
+
+void ImGuiRenderPassWindow::save()
+{
+    saveRenderPass();
 }
 
 void ImGuiRenderPassWindow::onNodeDestroyed(GFlowNode* node)
@@ -140,12 +144,27 @@ void ImGuiRenderPassWindow::clearGrid()
     ImGuiGraphWindow::clearGrid();
 }
 
+void ImGuiRenderPassWindow::onNodeCreated(ImFlow::BaseNode* node)
+{
+    std::cout << "Node created" << '\n';
+}
+
+void ImGuiRenderPassWindow::onNodeDeleted(ImFlow::BaseNode* node)
+{
+    std::cout << "Node deleted" << '\n';
+}
+
+void ImGuiRenderPassWindow::onConnection(ImFlow::Pin* pin1, ImFlow::Pin* pin2)
+{
+    std::cout << "Connection created" << '\n';
+}
+
 void ImGuiRenderPassWindow::saveRenderPass()
 {
     if (m_selectedPass == nullptr) return;
-    for (std::pair<const unsigned long long, std::shared_ptr<ImFlow::BaseNode>>& node : m_grid.getNodes())
+    for (std::shared_ptr<ImFlow::BaseNode>& val : m_grid.getNodes() | std::views::values)
     {
-        GFlowNode* gnode = dynamic_cast<GFlowNode*>(node.second.get());
+        GFlowNode* gnode = dynamic_cast<GFlowNode*>(val.get());
         if (gnode == nullptr) continue;
         NodeResource* resource = gnode->getLinkedResource();
         if (resource == nullptr) continue;

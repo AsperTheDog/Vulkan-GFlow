@@ -78,7 +78,6 @@ namespace gflow::parser
         EXPORT_RESOURCE(PipelineColorBlendState, colorBlendState);
         EXPORT_GROUP(shaders, "Shaders");
         EXPORT(FilePath, vertex);
-        EXPORT(FilePath, geometry);
         EXPORT(FilePath, fragment);
         
     public:
