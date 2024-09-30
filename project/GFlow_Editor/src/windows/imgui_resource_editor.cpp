@@ -256,7 +256,7 @@ void ImGuiResourceEditorWindow::drawResource(const std::string& stackedName, voi
         }
         ImGui::EndDisabled();
         if (changed)
-            m_variableChangedSignal.emit({m_selectedResource->getPath(), parentPath.back(), exportElem.name, stackedName});
+            m_variableChangedSignal.emit({m_selectedResource->getPath(), m_selectedResource, exportElem.name, stackedName});
     }
     (*resource)->exportsChanged();
 }
