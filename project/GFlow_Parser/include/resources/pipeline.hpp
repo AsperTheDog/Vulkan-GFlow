@@ -1,5 +1,6 @@
 #pragma once
-#include "../resource.hpp"
+#include "../resource_manager.hpp"
+
 #include "list.hpp"
 
 
@@ -12,7 +13,7 @@ namespace gflow::parser
         EXPORT(std::string, something);
         
     public:
-        DECLARE_RESOURCE(PipelineInputAssemblyState)
+        DECLARE_PUBLIC_RESOURCE(PipelineInputAssemblyState)
     };
 
     class PipelineRasterizationState final : public Resource
@@ -22,7 +23,7 @@ namespace gflow::parser
         EXPORT_ENUM(frontFace, EnumContexts::frontFace);
         
     public:
-        DECLARE_RESOURCE(PipelineRasterizationState)
+        DECLARE_PUBLIC_RESOURCE(PipelineRasterizationState)
     };
 
     class PipelineDepthStencilState final : public Resource
@@ -32,7 +33,7 @@ namespace gflow::parser
         EXPORT_ENUM(depthCompareOp, EnumContexts::compareOp);
         
     public:
-        DECLARE_RESOURCE(PipelineDepthStencilState)
+        DECLARE_PUBLIC_RESOURCE(PipelineDepthStencilState)
     };
 
     class PipelineColorBlendAttachment final : public Resource
@@ -50,7 +51,7 @@ namespace gflow::parser
         DataUsage isUsed(const std::string& variable, const std::vector<Resource*>& parentPath = {}) override;
         
     public:
-        DECLARE_RESOURCE(PipelineColorBlendAttachment)
+        DECLARE_PUBLIC_RESOURCE(PipelineColorBlendAttachment)
 
         template <typename T>
         friend class List;
@@ -66,7 +67,7 @@ namespace gflow::parser
         DataUsage isUsed(const std::string& variable, const std::vector<Resource*>& parentPath = {}) override;
         
     public:
-        DECLARE_RESOURCE(PipelineColorBlendState)
+        DECLARE_PUBLIC_RESOURCE(PipelineColorBlendState)
     };
 
     class Pipeline final : public Resource
@@ -79,9 +80,10 @@ namespace gflow::parser
         EXPORT_GROUP(shaders, "Shaders");
         EXPORT(FilePath, vertex);
         EXPORT(FilePath, fragment);
+        EXPORT_RESOURCE(Pipeline, test);
         
     public:
-        DECLARE_RESOURCE(Pipeline)
+        DECLARE_PUBLIC_RESOURCE(Pipeline)
     };
 
     // ********************

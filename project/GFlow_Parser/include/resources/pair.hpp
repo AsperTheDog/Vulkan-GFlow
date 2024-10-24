@@ -1,5 +1,5 @@
 #pragma once
-#include "../resource.hpp"
+#include "../resource_manager.hpp"
 
 namespace gflow::parser
 {

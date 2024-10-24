@@ -8,7 +8,7 @@ class InitNodeResource final : public NodeResource
     void initContext(ExportData* metadata) override {}
 
 public:
-    DECLARE_RESOURCE_ANCESTOR(InitNodeResource, NodeResource)
+    DECLARE_PRIVATE_RESOURCE_ANCESTOR(InitNodeResource, NodeResource)
 };
 
 class ImageNodeResource final : public NodeResource
@@ -20,7 +20,7 @@ class ImageNodeResource final : public NodeResource
     gflow::parser::DataUsage isUsed(const std::string& variable, const std::vector<Resource*>& parentPath) override;
 
 public:
-    DECLARE_RESOURCE_ANCESTOR(ImageNodeResource, NodeResource)
+    DECLARE_PRIVATE_RESOURCE_ANCESTOR(ImageNodeResource, NodeResource)
 };
 
 class SubpassNodeResource final : public NodeResource
@@ -31,7 +31,7 @@ class SubpassNodeResource final : public NodeResource
     gflow::parser::DataUsage isUsed(const std::string& variable, const std::vector<Resource*>& parentPath) override;
 
 public:
-    DECLARE_RESOURCE_ANCESTOR(SubpassNodeResource, NodeResource)
+    DECLARE_PRIVATE_RESOURCE_ANCESTOR(SubpassNodeResource, NodeResource)
 };
 
 class PipelineNodeResource final : public NodeResource
@@ -42,7 +42,7 @@ class PipelineNodeResource final : public NodeResource
     gflow::parser::DataUsage isUsed(const std::string& variable, const std::vector<Resource*>& parentPath) override;
 
 public:
-    DECLARE_RESOURCE_ANCESTOR(PipelineNodeResource, NodeResource)
+    DECLARE_PRIVATE_RESOURCE_ANCESTOR(PipelineNodeResource, NodeResource)
 };
 
 class RenderpassResource final : public GraphResource
@@ -56,7 +56,7 @@ public:
 
     void addConnection(size_t left_uid, size_t left_pin, size_t right_uid, size_t right_pin);
 
-    DECLARE_RESOURCE_ANCESTOR(RenderpassResource, GraphResource)
+    DECLARE_PRIVATE_RESOURCE_ANCESTOR(RenderpassResource, GraphResource)
 };
 
 // **************

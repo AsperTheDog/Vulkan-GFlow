@@ -1,7 +1,6 @@
 #include "editor.hpp"
 
 #include <filesystem>
-#include <ranges>
 
 #include "context.hpp"
 #include "imgui.h"
@@ -33,7 +32,6 @@ void Editor::init(const std::string& projectPath)
     initImgui();
     connectSignals();
     createWindows();
-    injectResourceFactories();
 
     if (!projectPath.empty())
     {
@@ -217,15 +215,6 @@ void Editor::createWindows()
         s_resourceSelectedSignal.connect(renderPassWindow, &ImGuiRenderPassWindow::resourceSelected);
         dynamic_cast<ImGuiResourceEditorWindow*>(getWindow("Resource Editor"))->getVariableChangedSignal().connect(renderPassWindow, &ImGuiRenderPassWindow::resourceVariableChanged);
     }
-}
-
-void Editor::injectResourceFactories()
-{
-    gflow::parser::ResourceManager::injectResourceFactory(RenderpassResource::getTypeStatic(), gflow::parser::Resource::create<RenderpassResource>);
-    gflow::parser::ResourceManager::injectResourceFactory(InitNodeResource::getTypeStatic(), gflow::parser::Resource::create<InitNodeResource>);
-    gflow::parser::ResourceManager::injectResourceFactory(ImageNodeResource::getTypeStatic(), gflow::parser::Resource::create<ImageNodeResource>);
-    gflow::parser::ResourceManager::injectResourceFactory(SubpassNodeResource::getTypeStatic(), gflow::parser::Resource::create<SubpassNodeResource>);
-    gflow::parser::ResourceManager::injectResourceFactory(PipelineNodeResource::getTypeStatic(), gflow::parser::Resource::create<PipelineNodeResource>);
 }
 
 bool Editor::renderImgui()
@@ -585,7 +574,7 @@ void Editor::createResourceModal()
         ImGui::InputText("Resource Name", resourceName, IM_ARRAYSIZE(resourceName));
         const std::vector<std::string> types = gflow::parser::ResourceManager::getResourceTypes();
         static uint32_t currentSelection = 0;
-        if (ImGui::BeginCombo("Resource type", types[currentSelection].c_str(), 0))
+        if (!types.empty() && ImGui::BeginCombo("Resource type", types[currentSelection].c_str(), 0))
         {
             for (uint32_t n = 0; n < types.size(); n++)
             {
@@ -598,7 +587,7 @@ void Editor::createResourceModal()
             }
             ImGui::EndCombo();
         }
-        ImGui::BeginDisabled(strcmp(resourceName, "") == 0 || resourceName[0] == '_');
+        ImGui::BeginDisabled(!types.empty() && strcmp(resourceName, "") == 0 || resourceName[0] == '_');
         if (ImGui::Button("Create"))
         {
             gflow::parser::ResourceManager::createResource(types[currentSelection], s_modalBasePath + resourceName);

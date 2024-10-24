@@ -1,8 +1,7 @@
 #pragma once
-#include <functional>
-#include <unordered_map>
+#include "../resource_manager.hpp"
 
-#include "../resource.hpp"
+#include <functional>
 
 namespace gflow::parser
 {
@@ -15,7 +14,7 @@ namespace gflow::parser
         EXPORT(std::string, name);
         
     public:
-        DECLARE_RESOURCE(Project)
+        DECLARE_PRIVATE_RESOURCE(Project)
     };
 }
 

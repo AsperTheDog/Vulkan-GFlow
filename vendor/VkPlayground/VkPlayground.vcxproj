@@ -162,6 +162,7 @@
     <ClInclude Include="repo\include\vulkan_sync.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="repo\src\logger.cpp" />
     <ClCompile Include="repo\src\vulkan_binding.cpp" />
     <ClCompile Include="repo\src\vulkan_buffer.cpp" />
     <ClCompile Include="repo\src\vulkan_command_buffer.cpp" />

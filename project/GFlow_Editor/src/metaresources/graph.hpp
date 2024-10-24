@@ -13,7 +13,7 @@ protected:
     gflow::parser::DataUsage isUsed(const std::string& variable, const std::vector<Resource*>& parentPath) override;
     
 public:
-    DECLARE_RESOURCE(NodeResource)
+    DECLARE_PRIVATE_RESOURCE(NodeResource)
 
     template <typename T>
     friend class gflow::parser::List;
@@ -45,7 +45,7 @@ public:
     gflow::parser::List<NodeResource*>& getNodes() { return *nodes; }
     gflow::parser::List<Connection*>& getConnections() { return *connections; }
 
-    DECLARE_RESOURCE(GraphResource)
+    DECLARE_PRIVATE_RESOURCE(GraphResource)
 };
 
 // **************

@@ -1,4 +1,6 @@
 #pragma once
+#include <iostream>
+#include <stdexcept>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -14,25 +16,25 @@
 #define EXPORT_BITMASK(name, context) gflow::parser::Export<gflow::parser::EnumBitmask> ##name{#name, this, context}
 #define EXPORT_RESOURCE(type, name) gflow::parser::Export<type*> ##name{#name, this}
 
-#define DECLARE_RESOURCE_ANCESTOR(type, parent)                                       \
-        explicit type(const std::string& path) : parent(path) {}                      \
-        [[nodiscard]] static std::string getTypeStatic() { return #type; }            \
-        [[nodiscard]] std::string getType() const override { return #type; }          \
-        friend class ResourceManager;                                                 \
-        template <typename U> friend class Export;                                    \
+#define DECLARE_RESOURCE_ANCESTOR_NO_CONST(type, parent)                                     \
+        [[nodiscard]] static std::string getTypeStatic() { return #type; }                   \
+        [[nodiscard]] std::string getType() const override { return #type; }                 \
+        static Resource* create(const std::string& path, Resource::ExportData* metadata)     \
+        {                                                                                    \
+            ##type* newRes = new type(path);                                                 \
+            newRes->initContext(metadata);                                                   \
+            return newRes;                                                                   \
+        }                                                                                    \
+        friend class ResourceManager;                                                        \
+        template <typename U> friend class Export;                                           \
         friend class Resource;
 
-#define DECLARE_RESOURCE_ANCESTOR_CUSTOM_CONST(type, parent)                          \
-        explicit type(const std::string& path);                                       \
-        [[nodiscard]] static std::string getTypeStatic() { return #type; }            \
-        [[nodiscard]] std::string getType() const override { return #type; }          \
-        friend class ResourceManager;                                                 \
-        template <typename U> friend class Export;                                    \
-        friend class Resource;
+#define DECLARE_RESOURCE_ANCESTOR(type, parent)                                              \
+        explicit type(const std::string& path) : parent(path) {}                             \
+        DECLARE_RESOURCE_ANCESTOR_NO_CONST(type, parent)                                           
 
 #define DECLARE_RESOURCE(type) DECLARE_RESOURCE_ANCESTOR(type, Resource)
-#define DECLARE_RESOURCE_CUSTOM_CONST(type) DECLARE_RESOURCE_ANCESTOR_CUSTOM_CONST(type, Resource)
-
+#define DECLARE_RESOURCE_NO_CONST(type) DECLARE_RESOURCE_ANCESTOR_NO_CONST(type, Resource)
 
 namespace gflow::parser
 {
@@ -189,7 +191,7 @@ namespace gflow::parser
         static Resource* create(const std::string& path, ExportData* metadata);
 
     protected:
-        explicit Resource(const std::string_view path) : m_isSubresource(path.empty()), m_path(path) { setID(0); }
+        explicit Resource(const std::string& path) : m_isSubresource(path.empty()), m_path(path) { setID(0); }
 
         bool m_isSubresource;
         std::string m_path;

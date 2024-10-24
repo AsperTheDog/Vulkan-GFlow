@@ -1,5 +1,5 @@
 #pragma once
-#include "../resource_manager.hpp"
+#include "../resource.hpp"
 
 #define EXPORT_LIST(type, name) gflow::parser::Export<gflow::parser::List<type>*> ##name{#name, this}
 #define EXPORT_ENUM_LIST(name, context) gflow::parser::Export<gflow::parser::List<gflow::parser::EnumExport>*> ##name{#name, this, context}

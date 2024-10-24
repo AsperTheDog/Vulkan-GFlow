@@ -4,7 +4,6 @@
 #include <fstream>
 #include <ranges>
 
-#include "resources/pipeline.hpp"
 #include "resources/project.hpp"
 #include "string_helper.hpp"
 #include "resources/render_pass.hpp"
@@ -59,14 +58,14 @@ namespace gflow::parser
         }
     }
 
-    FileTree::FileDirectory& FileTree::FileDirectory::getOrAddDirectory(const std::string& name)
+    FileTree::FileDirectory& FileTree::FileDirectory::getOrAddDirectory(const std::string& dirName)
     {
         for (FileDirectory& directory : directories)
         {
-            if (directory.name == name)
+            if (directory.name == dirName)
                 return directory;
         }
-        directories.emplace_back(name);
+        directories.emplace_back(dirName);
         return directories.back();
     }
 
@@ -176,15 +175,6 @@ namespace gflow::parser
     {
         root = FileDirectory(root.name);
     }
-
-    std::unordered_map<std::string, std::function<Resource* (const std::string&, Resource::ExportData*)>> ResourceManager::s_resourceFactories = {
-        {gflow::parser::RenderPass::getTypeStatic(), gflow::parser::Resource::create<RenderPass>},
-        {gflow::parser::Pipeline::getTypeStatic(), gflow::parser::Resource::create<Pipeline>},
-        {gflow::parser::PipelineInputAssemblyState::getTypeStatic(), gflow::parser::Resource::create<PipelineInputAssemblyState>},
-        {gflow::parser::PipelineRasterizationState::getTypeStatic(), gflow::parser::Resource::create<PipelineRasterizationState>},
-        {gflow::parser::PipelineDepthStencilState::getTypeStatic(), gflow::parser::Resource::create<PipelineDepthStencilState>},
-        {gflow::parser::PipelineColorBlendState::getTypeStatic(), gflow::parser::Resource::create<PipelineColorBlendState>}
-    };
     
     bool ResourceManager::hasResource(const std::string& path)
     {
@@ -234,7 +224,7 @@ namespace gflow::parser
         //Find all resources contained in this folder
         for (const std::string& path : m_fileTree.getOrderedPaths())
         {
-            if (path.find(string) == 0 && hasResource(path))
+            if (path.starts_with(string) && hasResource(path))
                 deleteResource(path);
         }
         m_fileTree.deletePath(string, m_workingDir);
@@ -248,11 +238,11 @@ namespace gflow::parser
         }
     }
 
-    bool ResourceManager::injectResourceFactory(const std::string& type, const std::function<Resource*(const std::string&, Resource::ExportData*)>& factory)
+    bool ResourceManager::injectResourceFactory(const std::string& type, const ResourceFactory& factory, bool isPrivate)
     {
         if (s_resourceFactories.contains(type))
             return false;
-        s_resourceFactories[type] = factory;
+        s_resourceFactories[type] = {factory, isPrivate};
         return true;
     }
 
@@ -341,10 +331,10 @@ namespace gflow::parser
         if (!s_resourceFactories.contains(type))
             throw std::runtime_error("Unknown resource type " + (type.empty() ? "<empty type>" : type));
 
-        if (s_resourceFactories[type] == nullptr)
+        if (s_resourceFactories[type].first == nullptr)
             throw std::runtime_error("Resource type " + type + " is not implemented yet");
 
-        return createResource(path, s_resourceFactories[type], data, recursive);
+        return createResource(path, s_resourceFactories[type].first, data, recursive);
     }
 
     Resource* ResourceManager::createResource(const std::string& path, const ResourceFactory& factory, Resource::ExportData* data, const bool recursive)
@@ -426,8 +416,11 @@ namespace gflow::parser
     {
         std::vector<std::string> types{};
         types.reserve(s_resourceFactories.size());
-        for (const auto& type : s_resourceFactories | std::views::keys)
-            types.push_back(type);
+        for (const auto& [type, data] : s_resourceFactories)
+        {
+            if (!data.second)
+                types.push_back(type);
+        }
         return types;
     }
 

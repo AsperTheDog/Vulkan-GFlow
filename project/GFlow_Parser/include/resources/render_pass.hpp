@@ -1,31 +1,12 @@
 #pragma once
+#include "../resource_manager.hpp"
+
+#include "image.hpp"
 #include "internal_list.hpp"
-#include "../resource.hpp"
 #include "pipeline.hpp"
 
 namespace gflow::parser
 {
-    class RenderPassImage final : public Resource
-    {
-        EXPORT(std::string, imageID);
-        EXPORT(int, referenceCount);
-        EXPORT_GROUP(g_properties, "Properties");
-        EXPORT(bool, matchWindow);
-        EXPORT(Vec2, size);
-        EXPORT(bool, clear);
-        EXPORT_GROUP(g_data, "Data");
-        EXPORT(bool, external);
-        EXPORT(FilePath, data);
-
-        void initContext(ExportData* metadata) override {}
-        DataUsage isUsed(const std::string& variable, const std::vector<Resource*>& parentPath) override;
-    public:
-        DECLARE_RESOURCE(RenderPassImage)
-
-        template <typename T>
-        friend class List;
-    };
-
     class SubpassAttachment final : public Resource
     {
         EXPORT(std::string, imageID);
@@ -34,7 +15,7 @@ namespace gflow::parser
         void initContext(ExportData* metadata) override {}
 
     public:
-        DECLARE_RESOURCE(SubpassAttachment)
+        DECLARE_PRIVATE_RESOURCE(SubpassAttachment)
 
         template <typename T>
         friend class List;
@@ -49,7 +30,7 @@ namespace gflow::parser
 
         bool hasDepthAttachment();
     public:
-        DECLARE_RESOURCE(RenderPassSubpass)
+        DECLARE_PRIVATE_RESOURCE(RenderPassSubpass)
 
         template <typename T>
         friend class List;
@@ -62,7 +43,7 @@ namespace gflow::parser
 
         void initContext(ExportData* metadata) override {}
     public:
-        DECLARE_RESOURCE(RenderPassCustomDependency)
+        DECLARE_PRIVATE_RESOURCE(RenderPassCustomDependency)
 
         template <typename T>
         friend class List;
@@ -70,30 +51,15 @@ namespace gflow::parser
 
     class RenderPass final : public Resource
     {
-        EXPORT_RESOURCE_LIST(RenderPassImage, attachments);
+        EXPORT_RESOURCE_LIST(Image, attachments);
         EXPORT_RESOURCE_LIST(RenderPassCustomDependency, customDependencies);
 
         EXPORT_RESOURCE_LIST(RenderPassSubpass, subpasses);
 
         DataUsage isUsed(const std::string& variable, const std::vector<Resource*>& parentPath) override;
     public:
-        DECLARE_RESOURCE(RenderPass)
+        DECLARE_PUBLIC_RESOURCE(RenderPass)
     };
-
-    inline DataUsage RenderPassImage::isUsed(const std::string& variable, const std::vector<Resource*>& parentPath)
-    {
-        if (*matchWindow && variable == "size")
-            return NOT_USED;
-        if (variable == "referenceCount")
-            return READ_ONLY;
-        if (variable == "data")
-        {
-            if (*external)
-                return NOT_USED;
-            return USED;
-        }
-        return USED;
-    }
 
     inline bool RenderPassSubpass::hasDepthAttachment()
     {

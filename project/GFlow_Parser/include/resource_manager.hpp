@@ -5,6 +5,35 @@
 
 #include "resource.hpp"
 
+#define DECLARE_PUBLIC_RESOURCE_ANCESTOR(type, parent)                                               \
+    DECLARE_RESOURCE_ANCESTOR(type, parent)                                                          \
+    inline static gflow::parser::PublicResourceDeclarationFactory<type> __##type##Factory{};
+
+#define DECLARE_PUBLIC_RESOURCE_ANCESTOR_NO_CONST(type, parent)                                      \
+    DECLARE_RESOURCE_ANCESTOR_NO_CONST(type, parent)                                                 \
+    inline static gflow::parser::PublicResourceDeclarationFactory<type> __##type##Factory{};
+
+#define DECLARE_PRIVATE_RESOURCE_ANCESTOR(type, parent)                                              \
+    DECLARE_RESOURCE_ANCESTOR(type, parent)                                                          \
+    inline static gflow::parser::PrivateResourceDeclarationFactory<type> __##type##Factory{};
+
+#define DECLARE_PRIVATE_RESOURCE_ANCESTOR_NO_CONST(type, parent)                                     \
+    DECLARE_RESOURCE_ANCESTOR_NO_CONST(type, parent)                                                 \
+    inline static gflow::parser::PrivateResourceDeclarationFactory<type> __##type##Factory{};
+
+#define DECLARE_PUBLIC_RESOURCE(type)                                                                \
+    DECLARE_PUBLIC_RESOURCE_ANCESTOR(type, Resource)
+
+#define DECLARE_PUBLIC_RESOURCE_NO_CONST(type)                                                       \
+    DECLARE_PUBLIC_RESOURCE_ANCESTOR_NO_CONST(type, Resource)
+
+#define DECLARE_PRIVATE_RESOURCE(type)                                                               \
+    DECLARE_PRIVATE_RESOURCE_ANCESTOR(type, Resource)
+
+#define DECLARE_PRIVATE_RESOURCE_NO_CONST(type)                                                      \
+    DECLARE_PRIVATE_RESOURCE_ANCESTOR_NO_CONST(type, Resource)
+
+
 namespace gflow::parser
 {
     class Project;
@@ -90,7 +119,7 @@ namespace gflow::parser
 
         static void saveAll();
 
-        static bool injectResourceFactory(const std::string& type, const ResourceFactory& factory);
+        static bool injectResourceFactory(const std::string& type, const ResourceFactory& factory, bool isPrivate);
         [[nodiscard]] static bool hasResourceFactory(const std::string& type);
 
     private:
@@ -103,7 +132,27 @@ namespace gflow::parser
 
         inline static FileTree m_fileTree{ "root" };
 
-        static std::unordered_map<std::string, ResourceFactory> s_resourceFactories;
+        inline static std::unordered_map<std::string, std::pair<ResourceFactory, bool>> s_resourceFactories{};
+    };
+
+    template <typename T>
+    class PublicResourceDeclarationFactory
+    {
+    public:
+        PublicResourceDeclarationFactory()
+        {
+            ResourceManager::injectResourceFactory(T::getTypeStatic(), &T::create, false);
+        }
+    };
+
+    template <typename T>
+    class PrivateResourceDeclarationFactory
+    {
+    public:
+        PrivateResourceDeclarationFactory()
+        {
+            ResourceManager::injectResourceFactory(T::getTypeStatic(), &T::create, false);
+        }
     };
 
     template <typename T>
