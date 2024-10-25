@@ -571,7 +571,9 @@ void Editor::createResourceModal()
     {
         static char resourceName[128] = "";
         ImGui::InputText("Resource Name", resourceName, IM_ARRAYSIZE(resourceName));
-        const std::vector<std::string> types = gflow::parser::ResourceManager::getResourceTypes();
+        std::vector<std::string> types = gflow::parser::ResourceManager::getResourceTypes();
+        std::ranges::sort(types);
+
         static uint32_t currentSelection = 0;
         if (!types.empty() && ImGui::BeginCombo("Resource type", types[currentSelection].c_str(), 0))
         {

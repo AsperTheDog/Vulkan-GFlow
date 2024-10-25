@@ -329,7 +329,7 @@ namespace gflow::parser
     Resource* ResourceManager::createResource(const std::string& type, const std::string& path, Resource::ExportData* data, const bool recursive)
     {
         if (!s_resourceFactories.contains(type))
-            throw std::runtime_error("Unknown resource type " + (type.empty() ? "<empty type>" : type));
+            throw std::runtime_error("Unknown resource type " + (type.empty() ? "<empty type>" : type) + " while parsing file '" + path + "'");
 
         if (s_resourceFactories[type].first == nullptr)
             throw std::runtime_error("Resource type " + type + " is not implemented yet");
