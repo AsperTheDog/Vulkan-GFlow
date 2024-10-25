@@ -135,8 +135,8 @@ namespace gflow::parser
     public:
         struct ExportData
         {
-            DataType type;
-            std::string name;
+            DataType type = NONE;
+            std::string name{};
             void* data = nullptr;
             EnumContext* enumContext = nullptr;
             Resource* (*resourceFactory)(const std::string&, Resource::ExportData*) = nullptr;

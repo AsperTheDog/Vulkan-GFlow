@@ -16,6 +16,8 @@ void ImGuiGraphWindow::draw()
 
 void ImGuiGraphWindow::drawBody()
 {
+    if (ImGui::Button("Recalculate"))
+        m_refreshRequestedSignal.emit();
     m_grid.update();
     ImGui::End();
     if (m_sidePanelTarget != nullptr)

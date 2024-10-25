@@ -5,7 +5,7 @@
 #include "resource.hpp"
 #include "resource_manager.hpp"
 
-#define LEFT_ALIGN_ITEM (-13)
+#define LEFT_ALIGN_ITEM (-13.f)
 
 
 ImGuiResourceEditorWindow::ImGuiResourceEditorWindow(const std::string_view& name, const bool defaultOpen) : ImGuiEditorWindow(name, defaultOpen)
@@ -114,7 +114,7 @@ bool ImGuiResourceEditorWindow::drawString(const std::string& name, void* data, 
     if (!str->empty()) strcpy_s(buff, str->c_str());
     ImGui::Text(name.c_str());
     ImGui::SameLine(m_inlinePadding);
-    ImGui::PushItemWidth(isShort ? -80 : LEFT_ALIGN_ITEM);
+    ImGui::PushItemWidth(isShort ? -80.f : LEFT_ALIGN_ITEM);
     ImGui::InputText(("##" + name).c_str(), buff, 256);
     if (!isShort) ImGui::Spacing();
     ImGui::PopItemWidth();

@@ -27,5 +27,6 @@ protected:
 
     GFlowNode* m_sidePanelTarget = nullptr;
     ImGuiResourceEditorWindow m_sidePanel{"Side Panel", false};
+    Signal<> m_refreshRequestedSignal;
 };
 

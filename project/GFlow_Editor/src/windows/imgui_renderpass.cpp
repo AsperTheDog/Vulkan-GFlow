@@ -12,7 +12,7 @@
 
 ImGuiRenderPassWindow::ImGuiRenderPassWindow(const std::string_view& name, const bool defaultOpen) : ImGuiGraphWindow(name, defaultOpen)
 {
-    m_sidePanel.getVariableChangedSignal().connect(this, &ImGuiRenderPassWindow::sidePanelVariableChanged);
+    m_refreshRequestedSignal.connect(this, &ImGuiRenderPassWindow::recreateParserData);
 }
 
 void ImGuiRenderPassWindow::resourceSelected(const std::string& resource)
@@ -45,31 +45,11 @@ void ImGuiRenderPassWindow::resourceSelected(const std::string& resource)
     }
 }
 
-void ImGuiRenderPassWindow::resourceVariableChanged(const gflow::parser::ResourceElemPath& element)
+void ImGuiRenderPassWindow::recreateParserData()
 {
     if (m_selectedPass == nullptr) return;
-    gflow::parser::Resource* res = gflow::parser::ResourceManager::getSubresource(element.path, element.stackedPath);
-    if (res == nullptr || res->isSubresource() || res->getType() != gflow::parser::Pipeline::getTypeStatic()) 
-        return;
-
-    Editor::ShaderStage type;
-    if (element.element == "vertex")        type = Editor::VERTEX;
-    else if (element.element == "fragment") type = Editor::FRAGMENT;
-    else if (element.element == "geometry") type = Editor::GEOMETRY;
-    else return;
-
-    const VulkanShader::ReflectionData data = Editor::getShaderReflectionData(res->getValue<std::string>(element.element), type);
-
-    if (!data.valid) return;
-    // TODO: Update renderpass with new shader elements
-}
-
-void ImGuiRenderPassWindow::sidePanelVariableChanged(const gflow::parser::ResourceElemPath& element)
-{
-    if (element.element == "pipeline")
-    {
-        //TODO: Update renderpass with new pipeline
-    }
+    m_selectedPass->clearSubpasses();
+    //TODO
 }
 
 void ImGuiRenderPassWindow::draw()
@@ -209,7 +189,7 @@ void ImGuiRenderPassWindow::loadRenderPass(const bool loadInit)
     {
         GraphResource::Connection* connection = m_selectedPassMeta->getConnections()[i];
         const size_t leftUID = connection->getFirst()->getFirst();
-        const int leftPin = connection->getFirst()->getSecond();
+        const int leftPin = static_cast<int>(connection->getFirst()->getSecond());
         const size_t rightUID = connection->getSecond()->getFirst();
         const int rightPin = connection->getSecond()->getSecond();
         ImFlow::Pin* left = m_grid.getNodes().at(leftUID)->outPinByFilderID(leftPin);

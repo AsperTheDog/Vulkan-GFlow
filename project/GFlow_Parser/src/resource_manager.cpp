@@ -376,6 +376,8 @@ namespace gflow::parser
 
     bool ResourceManager::deleteResource(const Resource* resource)
     {
+        if (resource == nullptr)
+            return false;
         if (deleteResource(resource->getPath())) return true;
         for (auto it = m_embeddedResources.begin(); it != m_embeddedResources.end(); ++it)
         {

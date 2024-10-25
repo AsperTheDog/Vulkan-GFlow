@@ -18,8 +18,7 @@ public:
     explicit ImGuiRenderPassWindow(const std::string_view& name, bool defaultOpen = true);
 
     void resourceSelected(const std::string& resource);
-    void resourceVariableChanged(const gflow::parser::ResourceElemPath& element);
-    void sidePanelVariableChanged(const gflow::parser::ResourceElemPath& element);
+    void recreateParserData();
 
     void draw() override;
 

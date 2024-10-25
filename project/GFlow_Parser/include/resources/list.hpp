@@ -33,9 +33,10 @@ namespace gflow::parser
 
         [[nodiscard]] const std::vector<T>& data() const { return m_data; }
 
-        void remove(int index) { m_data.erase(m_data.begin() + index); m_size--; }
-        void erase(T value) { m_data.erase(std::remove(m_data.begin(), m_data.end(), value), m_data.end()); m_size--; }
+        void remove(int index);
+        void erase(T value);
         void push_back(T value) { m_data.push_back(value); m_size++; }
+        void clear();
 
         T* emplace_back(bool createRecursive = true);
 
@@ -91,7 +92,7 @@ namespace gflow::parser
         for (int i = 0; i < m_size; i++)
         {
             ExportData data = createElemExportData();
-            data.data = &m_data[i];
+            data.data = static_cast<void*>(&m_data[i]);
             data.name = std::to_string(i);
             exports.push_back(data);
         }
@@ -124,6 +125,40 @@ namespace gflow::parser
         if (m_readonlySize && variable == "size")
             return READ_ONLY;
         return USED;
+    }
+
+    template <typename T>
+    void List<T>::remove(int index)
+    {
+        if (index < 0 || index >= m_size) return;
+        if constexpr (std::is_pointer_v<T> && std::is_base_of_v<Resource, std::remove_pointer_t<T>>)
+            if (static_cast<Resource*>(m_data[index])->isSubresource())
+                ResourceManager::deleteResource(m_data[index]);
+
+        m_data.erase(m_data.begin() + index);
+        m_size--;
+    }
+
+    template <typename T>
+    void List<T>::erase(T value)
+    {
+        const uint32_t index = std::distance(m_data.begin(), std::find(m_data.begin(), m_data.end(), value));
+        remove(index);
+    }
+
+    template <typename T>
+    void List<T>::clear()
+    {
+        if constexpr (std::is_pointer_v<T> && std::is_base_of_v<Resource, std::remove_pointer_t<T>>)
+        {
+            for (T elem : m_data)
+            {
+                if (static_cast<Resource*>(elem)->isSubresource())
+                    ResourceManager::deleteResource(elem);
+            }
+        }
+        m_data.clear();
+        m_size = 0;
     }
 
     template <typename T>
@@ -202,7 +237,7 @@ namespace gflow::parser
 
     private:
         std::string m_name;
-        List<T>* m_data;
+        List<T>* m_data = nullptr;
 
         Resource* m_parent;
     };

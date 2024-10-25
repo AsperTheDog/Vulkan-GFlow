@@ -151,7 +151,7 @@ namespace gflow::parser
     public:
         PrivateResourceDeclarationFactory()
         {
-            ResourceManager::injectResourceFactory(T::getTypeStatic(), &T::create, false);
+            ResourceManager::injectResourceFactory(T::getTypeStatic(), &T::create, true);
         }
     };
 

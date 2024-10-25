@@ -213,7 +213,6 @@ void Editor::createWindows()
         // Setup renderpass window
         ImGuiRenderPassWindow* renderPassWindow = dynamic_cast<ImGuiRenderPassWindow*>(getWindow("RenderPass"));
         s_resourceSelectedSignal.connect(renderPassWindow, &ImGuiRenderPassWindow::resourceSelected);
-        dynamic_cast<ImGuiResourceEditorWindow*>(getWindow("Resource Editor"))->getVariableChangedSignal().connect(renderPassWindow, &ImGuiRenderPassWindow::resourceVariableChanged);
     }
 }
 
