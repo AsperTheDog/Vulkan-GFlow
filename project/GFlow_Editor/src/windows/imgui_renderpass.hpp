@@ -1,7 +1,8 @@
 #pragma once
 #include "imgui_graph_window.hpp"
-#include "imgui_resource_editor.hpp"
 #include "ImNodeFlow.h"
+#include "nodes/renderpass_nodes.hpp"
+#include "resources/render_pass.hpp"
 
 class RenderpassResource;
 
@@ -36,6 +37,11 @@ private:
 
     void saveRenderPass();
     void loadRenderPass(bool loadInit = true);
+
+    void processSubpassConnections(SubpassNode* subpass, gflow::parser::RenderPassSubpass* subpassResource);
+    void processPipelineConnections(SubpassPipelineNode* pipeline);
+
+    InitRenderpassNode* getInit();
 
     gflow::parser::RenderPass* m_selectedPass = nullptr;
     RenderpassResource* m_selectedPassMeta = nullptr;

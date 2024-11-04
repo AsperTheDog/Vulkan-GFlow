@@ -1,4 +1,6 @@
 #pragma once
+#include <stdbool.h>
+
 #include "graph.hpp"
 #include "resources/pipeline.hpp"
 #include "windows/nodes/base_node.hpp"
@@ -38,10 +40,13 @@ class PipelineNodeResource final : public NodeResource
 {
     EXPORT_RESOURCE(gflow::parser::Pipeline, pipeline);
 
+    
     void initContext(ExportData* metadata) override {}
     gflow::parser::DataUsage isUsed(const std::string& variable, const std::vector<Resource*>& parentPath) override;
 
 public:
+    gflow::parser::Pipeline* getPipeline() { return *pipeline; }
+
     DECLARE_PRIVATE_RESOURCE_ANCESTOR(PipelineNodeResource, NodeResource)
 };
 
@@ -95,7 +100,7 @@ U* RenderpassResource::addNode(const gflow::parser::Vec2 position)
 {
     static_assert(std::is_base_of_v<NodeResource, U>, "T must be a subclass of NodeResource");
 
-    U* node = (*nodes).emplace_subclass_back<U>(true);
+    U* node = (*nodes).emplace_subclass_back<U>(false);
     node->set("position", position.toString());
     return node;
 }

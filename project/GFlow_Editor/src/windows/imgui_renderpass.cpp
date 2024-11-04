@@ -2,13 +2,14 @@
 
 #include "editor.hpp"
 #include "imgui.h"
+
 #include "resource_manager.hpp"
-#include "vulkan_shader.hpp"
-#include "nodes/renderpass/img_node.hpp"
-#include "nodes/renderpass/init_node.hpp"
-#include "nodes/renderpass/subpass_node.hpp"
-#include "nodes/renderpass/subpass_pipeline_node.hpp"
 #include "resources/render_pass.hpp"
+
+#include "metaresources/graph.hpp"
+#include "metaresources/Renderpass.hpp"
+
+#include "nodes/renderpass_nodes.hpp"
 
 ImGuiRenderPassWindow::ImGuiRenderPassWindow(const std::string_view& name, const bool defaultOpen) : ImGuiGraphWindow(name, defaultOpen)
 {
@@ -49,7 +50,26 @@ void ImGuiRenderPassWindow::recreateParserData()
 {
     if (m_selectedPass == nullptr) return;
     m_selectedPass->clearSubpasses();
-    //TODO
+    GFlowNode* next = getInit()->getNext();
+    SubpassNode* subpass = nullptr;
+    gflow::parser::RenderPassSubpass* subpassResource = nullptr;
+    while (next != nullptr)
+    {
+        if (SubpassNode* subpassNode = dynamic_cast<SubpassNode*>(next))
+        {
+            processSubpassConnections(subpass, subpassResource);
+            subpass = subpassNode;
+            subpassResource = &m_selectedPass->addSubpass();
+            next = subpassNode->getNext();
+        }
+        else if (SubpassPipelineNode* pipelineNode = dynamic_cast<SubpassPipelineNode*>(next))
+        {
+            PipelineNodeResource* pipelineResource = dynamic_cast<PipelineNodeResource*>(pipelineNode->getLinkedResource());
+            subpassResource->addPipeline(pipelineResource->getPipeline());
+            processPipelineConnections(pipelineNode);
+            next = pipelineNode->getNext();
+        }
+    }
 }
 
 void ImGuiRenderPassWindow::draw()
@@ -126,17 +146,17 @@ void ImGuiRenderPassWindow::clearGrid()
 
 void ImGuiRenderPassWindow::onNodeCreated(ImFlow::BaseNode* node)
 {
-    std::cout << "Node created" << '\n';
+    
 }
 
 void ImGuiRenderPassWindow::onNodeDeleted(ImFlow::BaseNode* node)
 {
-    std::cout << "Node deleted" << '\n';
+    
 }
 
 void ImGuiRenderPassWindow::onConnection(ImFlow::Pin* pin1, ImFlow::Pin* pin2)
 {
-    std::cout << "Connection created" << '\n';
+    
 }
 
 void ImGuiRenderPassWindow::saveRenderPass()
@@ -196,4 +216,30 @@ void ImGuiRenderPassWindow::loadRenderPass(const bool loadInit)
         ImFlow::Pin* right = m_grid.getNodes().at(rightUID)->inPinByFilderID(rightPin);
         left->createLink(right);
     }
+}
+
+void ImGuiRenderPassWindow::processSubpassConnections(SubpassNode* subpass, gflow::parser::RenderPassSubpass* subpassResource)
+{
+
+}
+
+void ImGuiRenderPassWindow::processPipelineConnections(SubpassPipelineNode* pipeline)
+{
+    const gflow::parser::Pipeline* pipelineResource = dynamic_cast<PipelineNodeResource*>(pipeline->getLinkedResource())->getPipeline();
+    if (pipelineResource == nullptr)
+    {
+        //TODO: Clear all connections
+    }
+
+}
+
+InitRenderpassNode* ImGuiRenderPassWindow::getInit()
+{
+    for (const std::shared_ptr<ImFlow::BaseNode>& val : m_grid.getNodes() | std::views::values)
+    {
+        InitRenderpassNode* node = dynamic_cast<InitRenderpassNode*>(val.get());
+        if (node != nullptr)
+            return node;
+    }
+    return nullptr;
 }

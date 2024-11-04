@@ -80,7 +80,6 @@ namespace gflow::parser
         EXPORT_GROUP(shaders, "Shaders");
         EXPORT(FilePath, vertex);
         EXPORT(FilePath, fragment);
-        EXPORT_RESOURCE(Pipeline, test);
         
     public:
         DECLARE_PUBLIC_RESOURCE(Pipeline)

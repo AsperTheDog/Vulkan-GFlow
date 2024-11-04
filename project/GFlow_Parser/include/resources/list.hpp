@@ -132,7 +132,7 @@ namespace gflow::parser
     {
         if (index < 0 || index >= m_size) return;
         if constexpr (std::is_pointer_v<T> && std::is_base_of_v<Resource, std::remove_pointer_t<T>>)
-            if (static_cast<Resource*>(m_data[index])->isSubresource())
+            if (m_data[index] != nullptr && static_cast<Resource*>(m_data[index])->isSubresource())
                 ResourceManager::deleteResource(m_data[index]);
 
         m_data.erase(m_data.begin() + index);
@@ -153,7 +153,7 @@ namespace gflow::parser
         {
             for (T elem : m_data)
             {
-                if (static_cast<Resource*>(elem)->isSubresource())
+                if (elem != nullptr && static_cast<Resource*>(elem)->isSubresource())
                     ResourceManager::deleteResource(elem);
             }
         }
@@ -229,11 +229,14 @@ namespace gflow::parser
         Export(std::string_view name, Resource* parent);
         Export(std::string_view name, Resource* parent, EnumContext& enumContext);
 
+        void setData(Resource* value) { m_data = dynamic_cast<List<T>*>(value); }
+
         const List<T>& operator*() const { return *m_data; }
         List<T>& operator*() { return *m_data; }
 
+        [[nodiscard]] bool isNull() const { return m_data == nullptr; }
         [[nodiscard]] Resource* getParent() const { return m_parent; }
-        void setData(Resource* value) { m_data = dynamic_cast<List<T>*>(value); }
+
 
     private:
         std::string m_name;

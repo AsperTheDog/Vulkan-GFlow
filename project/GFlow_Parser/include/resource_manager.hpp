@@ -159,7 +159,10 @@ namespace gflow::parser
     T* ResourceManager::createResource(const std::string& path, Resource::ExportData* data, bool recursive)
     {
         static_assert(std::is_base_of_v<Resource, T>, "T must be a subclass of Resource");
-        return dynamic_cast<T*>(createResource(path, Resource::create<T>, data, recursive));
+        Resource* elem = createResource(path, Resource::create<T>, data, recursive);
+        if (!elem->isSubresource())
+            elem->serialize();
+        return dynamic_cast<T*>(elem);
     }
 }
 

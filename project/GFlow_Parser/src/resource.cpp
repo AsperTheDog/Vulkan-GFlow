@@ -40,16 +40,10 @@ namespace gflow::parser
         return data;
     }
 
-    void Resource::initContext(ExportData* metadata)
-    {
-        if (!deserialize())
-            serialize();
-    }
-
     std::string Resource::serialize()
     {
         std::ofstream file;
-        if (!m_isSubresource)
+        if (!isSubresource())
         {
             file.open(ResourceManager::getWorkingDir() + m_path);
             if (!file.is_open())
@@ -60,7 +54,7 @@ namespace gflow::parser
         }
         std::string str;
         std::string dependencies;
-        str += "[id=" + std::to_string(m_id) + ", type=" + getType() + ", level=" + (m_isSubresource ? "Subresource" : "Main") + "]\n";
+        str += "[id=" + std::to_string(m_id) + ", type=" + getType() + ", level=" + (isSubresource() ? "Subresource" : "Main") + "]\n";
         for (const ExportData& exportData : getExports())
         {
             if (exportData.data == nullptr) continue;
@@ -70,7 +64,7 @@ namespace gflow::parser
             str += exportData.name + " = " + value + "\n";
         }
         if (!dependencies.empty()) str += "\n" + dependencies;
-        if (!m_isSubresource)
+        if (!isSubresource())
         {
             file << str;
             file.close();
@@ -152,7 +146,7 @@ namespace gflow::parser
                 Resource** resource = static_cast<Resource**>(exportData.data);
                 if (*resource == nullptr)
                     return { "null", "" };
-                if (!(*resource)->m_isSubresource)
+                if (!(*resource)->isSubresource())
                     return { (*resource)->getPath(), "" };
                 return { std::to_string((*resource)->getID()),(*resource)->serialize() };
             }
@@ -242,6 +236,12 @@ namespace gflow::parser
                     *static_cast<Resource**>(exportData.data) = nullptr;
                     break;
                 }
+                if (value.empty())
+                {
+                    // Default value
+                    *static_cast<Resource**>(exportData.data) = ResourceManager::createResource("", exportData.resourceFactory, &exportData);
+                    return true;
+                }
                 try
                 {
                     const uint32_t id = std::stoi(value);
@@ -277,6 +277,22 @@ namespace gflow::parser
         if (!custom.empty())
             exports.insert(exports.end(), custom.begin(), custom.end());
         return exports;
+    }
+
+    bool Resource::isNull(const std::string& variable)
+    {
+        for (const ExportData& exportData : getExports())
+        {
+            if (exportData.type == RESOURCE)
+            {
+                Resource** resource = static_cast<Resource**>(exportData.data);
+                if (variable == exportData.name && *resource == nullptr)
+                    return true;
+            }
+            else if (variable == exportData.name) 
+                return false;
+        }
+        return false;
     }
 
     void Resource::setID(const uint32_t id)

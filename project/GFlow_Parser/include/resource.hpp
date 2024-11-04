@@ -160,7 +160,7 @@ namespace gflow::parser
 
         struct Ref { std::string path; };
 
-        virtual void initContext(ExportData* metadata);
+        virtual void initContext(ExportData* metadata) {}
 
         virtual std::string serialize();
         virtual void deserialize(const ResourceData& data, const ResourceEntries& dependencies);
@@ -185,15 +185,16 @@ namespace gflow::parser
         [[nodiscard]] std::string getPath() const { return m_path; }
         [[nodiscard]] std::string getMetaPath() const { return gflow::string::getPathDirectory(m_path) + "/_" + gflow::string::getPathFilename(m_path) + ".meta"; }
         [[nodiscard]] uint32_t getID() const { return m_id; }
-        [[nodiscard]] bool isSubresource() const { return m_isSubresource; }
+        [[nodiscard]] bool isSubresource() const { return m_path.empty(); }
+
+        [[nodiscard]] bool isNull(const std::string& variable);
 
         template <typename T>
         static Resource* create(const std::string& path, ExportData* metadata);
 
     protected:
-        explicit Resource(const std::string& path) : m_isSubresource(path.empty()), m_path(path) { setID(0); }
+        explicit Resource(const std::string& path) : m_path(path) { setID(0); }
 
-        bool m_isSubresource;
         std::string m_path;
         uint32_t m_id;
 

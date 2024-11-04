@@ -323,7 +323,9 @@ namespace gflow::parser
                 }
             }
         }
-        return createResource(resourceType, path);
+        Resource* elem = createResource(resourceType, path);
+        elem->deserialize();
+        return elem;
     }
 
     Resource* ResourceManager::createResource(const std::string& type, const std::string& path, Resource::ExportData* data, const bool recursive)

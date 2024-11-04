@@ -6,51 +6,30 @@
 
 namespace gflow::parser
 {
-    class SubpassAttachment final : public Resource
+    class SubpassAttachment final
     {
-        EXPORT(std::string, imageID);
-        EXPORT_ENUM(attachmentType, EnumContexts::attachmentType);
-
-        void initContext(ExportData* metadata) override {}
-
     public:
-        DECLARE_PRIVATE_RESOURCE(SubpassAttachment)
+        enum Type { DEPTH, COLOR, INPUT};
 
-        template <typename T>
-        friend class List;
+        SubpassAttachment(const std::string& imageID, const Type attachmentType) : imageID(imageID), attachmentType(attachmentType) {}
+
+    private:
+        std::string imageID;
+        Type attachmentType;
     };
 
-    class SubpassPipeline final : public Resource
+    class RenderPassSubpass final
     {
-        EXPORT_RESOURCE(Pipeline, pipeline);
-
-        void initContext(ExportData* metadata) override {}
-
+        using SubpassType = SubpassAttachment::Type;
     public:
-        Pipeline* getPipeline() { return *pipeline; }
+        void addPipeline(Pipeline* pipeline) { return pipelines.push_back(pipeline); }
+        SubpassAttachment& addAttachment(const std::string& imageID, const SubpassType attachmentType) { return attachments.emplace_back(imageID, attachmentType); }
 
-        DECLARE_PRIVATE_RESOURCE(SubpassPipeline)
+        bool hasDepthAttachment() const;
 
-        template <typename T>
-        friend class List;
-    };
-
-    class RenderPassSubpass final : public Resource
-    {
-        EXPORT_RESOURCE_LIST(SubpassPipeline, pipelines);
-        EXPORT_RESOURCE_LIST(SubpassAttachment, attachments);
-
-        void initContext(ExportData* metadata) override {}
-    public:
-        SubpassPipeline* addPipeline() { return *(*pipelines).emplace_back(); }
-        SubpassAttachment* addAttachment() { return *(*attachments).emplace_back(); }
-
-        bool hasDepthAttachment();
-
-        DECLARE_PRIVATE_RESOURCE(RenderPassSubpass)
-
-        template <typename T>
-        friend class List;
+    private:
+        std::vector<Pipeline*> pipelines;
+        std::vector<SubpassAttachment> attachments;
     };
 
     class RenderPassCustomDependency final : public Resource
@@ -71,22 +50,22 @@ namespace gflow::parser
         EXPORT_RESOURCE_LIST(Image, attachments);
         EXPORT_RESOURCE_LIST(RenderPassCustomDependency, customDependencies);
 
-        EXPORT_RESOURCE_LIST(RenderPassSubpass, subpasses);
+        std::vector<RenderPassSubpass> subpasses;
 
         DataUsage isUsed(const std::string& variable, const std::vector<Resource*>& parentPath) override;
 
     public:
-        void clearSubpasses() { (*subpasses).clear(); }
-        RenderPassSubpass* addSubpass() { return *(*subpasses).emplace_back(); }
+        void clearSubpasses() { subpasses.clear(); }
+        RenderPassSubpass& addSubpass() { return subpasses.emplace_back(); }
 
         DECLARE_PUBLIC_RESOURCE(RenderPass)
     };
 
-    inline bool RenderPassSubpass::hasDepthAttachment()
+    inline bool RenderPassSubpass::hasDepthAttachment() const
     {
-        for (SubpassPipeline* pipeline : (*pipelines).data())
+        for (Pipeline* pipeline : pipelines)
         {
-            PipelineDepthStencilState* depthState = pipeline->getPipeline()->getValue<PipelineDepthStencilState*>("depthStencilState");
+            PipelineDepthStencilState* depthState = pipeline->getValue<PipelineDepthStencilState*>("depthStencilState");
             if (depthState != nullptr && depthState->getValue<bool>("depthTestEnable"))
                 return true;
         }

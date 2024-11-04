@@ -143,10 +143,7 @@
     <ClInclude Include="src\metaresources\graph.hpp" />
     <ClInclude Include="src\metaresources\Renderpass.hpp" />
     <ClInclude Include="src\windows\imgui_graph_window.hpp" />
-    <ClInclude Include="src\windows\nodes\renderpass\img_node.hpp" />
-    <ClInclude Include="src\windows\nodes\renderpass\init_node.hpp" />
     <ClInclude Include="src\windows\nodes\base_node.hpp" />
-    <ClInclude Include="src\windows\nodes\node_pin.hpp" />
     <ClInclude Include="src\windows\imgui_project_settings.hpp" />
     <ClInclude Include="src\windows\imgui_renderpass.hpp" />
     <ClInclude Include="src\windows\imgui_execution.hpp" />
@@ -155,14 +152,11 @@
     <ClInclude Include="src\windows\imgui_resources.hpp" />
     <ClInclude Include="src\editor.hpp" />
     <ClInclude Include="src\sdl_window.hpp" />
-    <ClInclude Include="src\windows\nodes\renderpass\renderpass_node_pins.hpp" />
-    <ClInclude Include="src\windows\nodes\renderpass\subpass_node.hpp" />
-    <ClInclude Include="src\windows\nodes\renderpass\subpass_pipeline_node.hpp" />
+    <ClInclude Include="src\windows\nodes\renderpass_nodes.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\metaresources\Renderpass.cpp" />
     <ClCompile Include="src\windows\imgui_graph_window.cpp" />
-    <ClCompile Include="src\windows\nodes\renderpass\img_node.cpp" />
     <ClCompile Include="src\windows\nodes\base_node.cpp" />
     <ClCompile Include="src\windows\imgui_project_settings.cpp" />
     <ClCompile Include="src\windows\imgui_renderpass.cpp" />
@@ -172,10 +166,7 @@
     <ClCompile Include="src\editor.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\sdl_window.cpp" />
-    <ClCompile Include="src\windows\nodes\renderpass\init_node.cpp" />
-    <ClCompile Include="src\windows\nodes\renderpass\renderpass_node_pins.cpp" />
-    <ClCompile Include="src\windows\nodes\renderpass\subpass_node.cpp" />
-    <ClCompile Include="src\windows\nodes\renderpass\subpass_pipeline_node.cpp" />
+    <ClCompile Include="src\windows\nodes\renderpass_nodes.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\_shaders\shader.frag" />
