@@ -2,7 +2,7 @@
 #include "imgui_graph_window.hpp"
 #include "ImNodeFlow.h"
 #include "nodes/renderpass_nodes.hpp"
-#include "resources/render_pass.hpp"
+#include "resources/renderpass.hpp"
 
 class RenderpassResource;
 
@@ -39,7 +39,6 @@ private:
     void loadRenderPass(bool loadInit = true);
 
     void processSubpassConnections(SubpassNode* subpass, gflow::parser::RenderPassSubpass* subpassResource);
-    void processPipelineConnections(SubpassPipelineNode* pipeline);
 
     InitRenderpassNode* getInit();
 

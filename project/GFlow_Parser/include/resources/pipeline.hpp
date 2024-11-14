@@ -1,7 +1,10 @@
 #pragma once
+#include <filesystem>
+
 #include "../resource_manager.hpp"
 
 #include "list.hpp"
+#include "vulkan_shader.hpp"
 
 
 namespace gflow::parser
@@ -82,6 +85,9 @@ namespace gflow::parser
         EXPORT(FilePath, fragment);
         
     public:
+        enum ShaderStage { VERTEX, FRAGMENT };
+        VulkanShader::ReflectionData getShaderReflectionData(ShaderStage type) const;
+
         DECLARE_PUBLIC_RESOURCE(Pipeline)
     };
 
@@ -103,5 +109,17 @@ namespace gflow::parser
         if (variable == "logicOpEnable" || variable == "colorBlendAttachments")
             return USED;
         return *logicOpEnable ? USED : NOT_USED;
+    }
+
+    inline VulkanShader::ReflectionData Pipeline::getShaderReflectionData(const ShaderStage type) const
+    {
+        switch (type)
+        {
+        case VERTEX:
+            return VulkanShader::getReflectionDataFromFile((*vertex).path, VK_SHADER_STAGE_VERTEX_BIT);
+        case FRAGMENT:
+            return VulkanShader::getReflectionDataFromFile((*fragment).path, VK_SHADER_STAGE_FRAGMENT_BIT);
+        }
+        return {};
     }
 }

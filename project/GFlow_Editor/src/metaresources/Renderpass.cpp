@@ -1,4 +1,4 @@
-#include "Renderpass.hpp"
+#include "renderpass.hpp"
 
 #include "windows/nodes/base_node.hpp"
 
@@ -17,7 +17,6 @@ void RenderpassResource::removeNode(GFlowNode* node)
 
 void RenderpassResource::addConnection(const size_t left_uid, const size_t left_pin, const size_t right_uid, const size_t right_pin)
 {
-    //Check if it exists
     for (int i = 0; i < (*connections).size(); i++)
     {
         if ((*connections)[i]->getFirst()->getFirst() == left_uid && (*connections)[i]->getFirst()->getSecond() == left_pin &&

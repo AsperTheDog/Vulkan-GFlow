@@ -1,6 +1,6 @@
 #include "renderpass_nodes.hpp"
 
-#include "metaresources/Renderpass.hpp"
+#include "metaresources/renderpass.hpp"
 
 ImageNode::ImageNode(ImGuiGraphWindow* parent, NodeResource* resource)
     : GFlowNode("Image", parent), m_resource(dynamic_cast<ImageNodeResource*>(resource))
@@ -49,6 +49,15 @@ GFlowNode* SubpassPipelineNode::getNext() const
     return dynamic_cast<GFlowNode*>(link.lock()->right()->getParent());
 }
 
+std::vector<std::string> SubpassPipelineNode::getColorAttachmentPins()
+{
+    std::vector<std::string> pins;
+    for (const std::shared_ptr<ImFlow::Pin>& pin : getIns())
+        if (pin->getFilterID() == IMAGE)
+            pins.push_back(pin->getName());
+    return pins;
+}
+
 SubpassNode::SubpassNode(ImGuiGraphWindow* parent, NodeResource* resource)
     : GFlowNode("Subpass", parent), m_resource(dynamic_cast<SubpassNodeResource*>(resource))
 {
@@ -71,6 +80,63 @@ GFlowNode* SubpassNode::getNext() const
     const std::weak_ptr<ImFlow::Link> link = m_out->getLink();
     if (link.expired()) return nullptr;
     return dynamic_cast<GFlowNode*>(link.lock()->right()->getParent());
+}
+
+void SubpassNode::addColorAttachmentPin(const std::string& name)
+{
+    const std::shared_ptr<ImFlow::InPin<int>> newAttachment = addIN(name, 0, getLambdaFilter(IMAGE), ImFlow::PinStyle::green());
+    newAttachment->setFilterID(IMAGE);
+    m_ColorAttachmentPins.push_back(newAttachment);
+}
+
+void SubpassNode::addInputAttachmentPin(const std::string& name)
+{
+    const std::shared_ptr<ImFlow::InPin<int>> newAttachment = addIN(name, 0, getLambdaFilter(IMAGE), ImFlow::PinStyle::green());
+    newAttachment->setFilterID(IMAGE);
+    m_InputAttachmentPins.push_back(newAttachment);
+}
+
+void SubpassNode::removeInputAttachmentPin(const std::string& name)
+{
+    dropIN(name);
+}
+
+void SubpassNode::removeAllAttachmentPins()
+{
+    for (const std::shared_ptr<ImFlow::InPin<int>>& pin : m_ColorAttachmentPins)
+        dropIN(pin->getName());
+    for (const std::shared_ptr<ImFlow::InPin<int>>& pin : m_InputAttachmentPins)
+        dropIN(pin->getName());
+    setDepthAttachment(false);
+}
+
+std::unordered_set<std::string> SubpassNode::getColorAttachments() const
+{
+    std::unordered_set<std::string> pins;
+    for (const std::shared_ptr<ImFlow::InPin<int>>& pin : m_ColorAttachmentPins)
+        pins.insert(pin->getName());
+    return pins;
+}
+
+std::unordered_set<std::string> SubpassNode::getInputAttachments() const
+{
+    std::unordered_set<std::string> pins;
+    for (const std::shared_ptr<ImFlow::InPin<int>>& pin : m_InputAttachmentPins)
+        pins.insert(pin->getName());
+    return pins;
+}
+
+void SubpassNode::setDepthAttachment(const bool enabled)
+{
+    if (enabled)
+    {
+        m_DepthAttachmentPin = addIN("Depth", 0, getLambdaFilter(IMAGE), ImFlow::PinStyle::light_green());
+        m_DepthAttachmentPin->setFilterID(IMAGE);
+    }
+    else
+    {
+        dropIN("Depth");
+    }
 }
 
 InitRenderpassNode::InitRenderpassNode(ImGuiGraphWindow* parent, NodeResource* resource)

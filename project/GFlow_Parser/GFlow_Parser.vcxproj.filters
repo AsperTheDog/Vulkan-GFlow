@@ -36,7 +36,7 @@
     <ClInclude Include="include\enum_contexts.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\resources\render_pass.hpp">
+    <ClInclude Include="include\resources\renderpass.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\resources\internal_list.hpp">

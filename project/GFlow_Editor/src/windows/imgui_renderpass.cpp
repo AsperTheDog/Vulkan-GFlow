@@ -4,10 +4,10 @@
 #include "imgui.h"
 
 #include "resource_manager.hpp"
-#include "resources/render_pass.hpp"
+#include "resources/renderpass.hpp"
 
 #include "metaresources/graph.hpp"
-#include "metaresources/Renderpass.hpp"
+#include "metaresources/renderpass.hpp"
 
 #include "nodes/renderpass_nodes.hpp"
 
@@ -65,8 +65,8 @@ void ImGuiRenderPassWindow::recreateParserData()
         else if (SubpassPipelineNode* pipelineNode = dynamic_cast<SubpassPipelineNode*>(next))
         {
             PipelineNodeResource* pipelineResource = dynamic_cast<PipelineNodeResource*>(pipelineNode->getLinkedResource());
-            subpassResource->addPipeline(pipelineResource->getPipeline());
-            processPipelineConnections(pipelineNode);
+            if (pipelineResource->getPipeline() != nullptr)
+                subpassResource->addPipeline(pipelineResource->getPipeline());
             next = pipelineNode->getNext();
         }
     }
@@ -220,17 +220,16 @@ void ImGuiRenderPassWindow::loadRenderPass(const bool loadInit)
 
 void ImGuiRenderPassWindow::processSubpassConnections(SubpassNode* subpass, gflow::parser::RenderPassSubpass* subpassResource)
 {
+    std::unordered_set<std::string> oldColorAttachments = subpass->getColorAttachments();
+    std::unordered_set<std::string> oldInputAttachments = subpass->getInputAttachments();
 
-}
-
-void ImGuiRenderPassWindow::processPipelineConnections(SubpassPipelineNode* pipeline)
-{
-    const gflow::parser::Pipeline* pipelineResource = dynamic_cast<PipelineNodeResource*>(pipeline->getLinkedResource())->getPipeline();
-    if (pipelineResource == nullptr)
+    std::vector<std::string> colorAttachments;
+    std::vector<std::string> inputAttachments;
+    for (gflow::parser::Pipeline* pipelineResource : subpassResource->getPipelines())
     {
-        //TODO: Clear all connections
-    }
+        VulkanShader::ReflectionData data = pipelineResource->getShaderReflectionData(gflow::parser::Pipeline::VERTEX);
 
+    }
 }
 
 InitRenderpassNode* ImGuiRenderPassWindow::getInit()

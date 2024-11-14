@@ -1,4 +1,6 @@
 #pragma once
+#include <unordered_set>
+
 #include "windows/nodes/base_node.hpp"
 
 
@@ -37,6 +39,8 @@ public:
 	NodeResource* getLinkedResource() override;
     [[nodiscard]] GFlowNode* getNext() const;
 
+    std::vector<std::string> getColorAttachmentPins();
+
 private:
 	PipelineNodeResource* m_resource = nullptr;
     
@@ -52,11 +56,26 @@ public:
     NodeResource* getLinkedResource() override;
     [[nodiscard]] GFlowNode* getNext() const;
 
+    void addColorAttachmentPin(const std::string& name);
+    void addInputAttachmentPin(const std::string& name);
+    void removeInputAttachmentPin(const std::string& name);
+    void removeAllAttachmentPins();
+
+    void setDepthAttachment(bool enabled);
+
+    [[nodiscard]] std::unordered_set<std::string> getColorAttachments() const;
+    [[nodiscard]] std::unordered_set<std::string> getInputAttachments() const;
+
+
 private:
     SubpassNodeResource* m_resource = nullptr;
     
     std::shared_ptr<ImFlow::InPin<int>> m_in;
     std::shared_ptr<ImFlow::OutPin<int>> m_out;
+
+    std::vector<std::shared_ptr<ImFlow::InPin<int>>> m_ColorAttachmentPins;
+    std::vector<std::shared_ptr<ImFlow::InPin<int>>> m_InputAttachmentPins;
+    std::shared_ptr<ImFlow::InPin<int>> m_DepthAttachmentPin;
 };
 
 class InitRenderpassNode final : public GFlowNode

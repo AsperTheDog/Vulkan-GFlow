@@ -26,6 +26,7 @@ namespace gflow::parser
         SubpassAttachment& addAttachment(const std::string& imageID, const SubpassType attachmentType) { return attachments.emplace_back(imageID, attachmentType); }
 
         bool hasDepthAttachment() const;
+        std::vector<Pipeline*>& getPipelines() { return pipelines; }
 
     private:
         std::vector<Pipeline*> pipelines;

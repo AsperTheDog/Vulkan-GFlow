@@ -13,7 +13,7 @@
     <ClCompile Include="src\windows\imgui_project_settings.cpp" />
     <ClCompile Include="src\windows\nodes\base_node.cpp" />
     <ClCompile Include="src\windows\imgui_graph_window.cpp" />
-    <ClCompile Include="src\metaresources\Renderpass.cpp" />
+    <ClCompile Include="src\metaresources\renderpass.cpp" />
     <ClCompile Include="src\windows\nodes\renderpass_nodes.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -31,7 +31,7 @@
     <ClInclude Include="src\windows\imgui_project_settings.hpp" />
     <ClInclude Include="src\windows\nodes\base_node.hpp" />
     <ClInclude Include="src\windows\imgui_graph_window.hpp" />
-    <ClInclude Include="src\metaresources\Renderpass.hpp" />
+    <ClInclude Include="src\metaresources\renderpass.hpp" />
     <ClInclude Include="src\metaresources\graph.hpp" />
     <ClInclude Include="src\windows\nodes\renderpass_nodes.hpp" />
   </ItemGroup>

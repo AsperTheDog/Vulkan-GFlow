@@ -1,4 +1,5 @@
 #pragma once
+#include "resource_manager.hpp"
 #include "../resource.hpp"
 
 #define EXPORT_LIST(type, name) gflow::parser::Export<gflow::parser::List<type>*> ##name{#name, this}
@@ -142,7 +143,7 @@ namespace gflow::parser
     template <typename T>
     void List<T>::erase(T value)
     {
-        const uint32_t index = std::distance(m_data.begin(), std::find(m_data.begin(), m_data.end(), value));
+        const uint32_t index = static_cast<uint32_t>(std::distance(m_data.begin(), std::find(m_data.begin(), m_data.end(), value)));
         remove(index);
     }
 

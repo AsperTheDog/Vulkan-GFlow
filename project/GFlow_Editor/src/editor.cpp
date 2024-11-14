@@ -8,7 +8,7 @@
 #include "string_helper.hpp"
 #include "vulkan_context.hpp"
 #include "backends/imgui_impl_vulkan.h"
-#include "metaresources/Renderpass.hpp"
+#include "metaresources/renderpass.hpp"
 #include "utils/logger.hpp"
 #include "windows/imgui_execution.hpp"
 #include "windows/imgui_project_settings.hpp"
@@ -363,21 +363,6 @@ void Editor::resourceSelected(const std::string& path)
 gflow::parser::Resource* Editor::getSelectedResource() const
 {
     return gflow::parser::ResourceManager::getResource(s_selectedResource);
-}
-
-VulkanShader::ReflectionData Editor::getShaderReflectionData(const std::string& string, const ShaderStage stage)
-{
-    const std::string path = gflow::parser::ResourceManager::makePathAbsolute(string);
-    switch (stage)
-    {
-    case VERTEX:
-        return gflow::Context::getEnvironment(s_environment).man_getReflectionData(path, VK_SHADER_STAGE_VERTEX_BIT);
-    case GEOMETRY:
-        return gflow::Context::getEnvironment(s_environment).man_getReflectionData(path, VK_SHADER_STAGE_GEOMETRY_BIT);
-    case FRAGMENT:
-        return gflow::Context::getEnvironment(s_environment).man_getReflectionData(path, VK_SHADER_STAGE_FRAGMENT_BIT);
-    }
-    return {};
 }
 
 void Editor::showCreateFolderModal(const std::string& path)

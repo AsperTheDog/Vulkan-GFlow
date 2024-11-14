@@ -104,7 +104,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>IMGUI_DEFINE_MATH_OPERATORS;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)repo;$(ProjectDir)nodeRepo/include;$(VULKAN_SDK)\Include;$(VULKAN_SDK)\Include\SDL2;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)repo;$(ProjectDir)nodeRepo/include;$(VULKAN_SDK)\Include;$(VULKAN_SDK)\Include\SDL2;$(SolutionDir)vendor\VkPlayground\repo\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>

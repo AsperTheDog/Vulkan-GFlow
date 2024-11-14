@@ -46,9 +46,6 @@ public: // Editor Management
     static void resourceSelected(const std::string& path);
     [[nodiscard]] gflow::parser::Resource* getSelectedResource() const;
 
-    enum ShaderStage { VERTEX, GEOMETRY, FRAGMENT };
-    static VulkanShader::ReflectionData getShaderReflectionData(const std::string& string, ShaderStage stage);
-
     static void showCreateFolderModal(const std::string& path);
     static void showRenameFolderModal(const std::string& path);
     static void showDeleteFolderModal(const std::string& path);
