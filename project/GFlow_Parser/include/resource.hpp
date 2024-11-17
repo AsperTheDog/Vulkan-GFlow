@@ -174,6 +174,8 @@ namespace gflow::parser
         template <typename T>
         T getValue(const std::string& variable);
 
+        void initializeExport(const std::string& name);
+
         virtual void exportsChanged() {}
         virtual void exportChanged(const std::string& variable) {}
         [[nodiscard]] virtual std::vector<ExportData> getCustomExports() { return {}; }

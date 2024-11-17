@@ -116,9 +116,13 @@ namespace gflow::parser
         switch (type)
         {
         case VERTEX:
-            return VulkanShader::getReflectionDataFromFile((*vertex).path, VK_SHADER_STAGE_VERTEX_BIT);
+            return VulkanShader::getReflectionDataFromFile(
+                ResourceManager::makePathAbsolute((*vertex).path), 
+                VK_SHADER_STAGE_VERTEX_BIT);
         case FRAGMENT:
-            return VulkanShader::getReflectionDataFromFile((*fragment).path, VK_SHADER_STAGE_FRAGMENT_BIT);
+            return VulkanShader::getReflectionDataFromFile(
+                ResourceManager::makePathAbsolute((*fragment).path), 
+                VK_SHADER_STAGE_FRAGMENT_BIT);
         }
         return {};
     }

@@ -270,6 +270,23 @@ namespace gflow::parser
         return false;
     }
 
+    void Resource::initializeExport(const std::string& name)
+    {
+        for (ExportData& exp : getExports())
+        {
+            if (exp.name == name)
+            {
+                if (exp.type == RESOURCE)
+                {
+                    Resource** resource = static_cast<Resource**>(exp.data);
+                    if (*resource == nullptr)
+                        *resource = ResourceManager::createResource("", exp.resourceFactory, &exp);
+                }
+                return;
+            }
+        }
+    }
+
     std::vector<Resource::ExportData> Resource::getExports()
     {
         std::vector<ExportData> exports = m_exports;

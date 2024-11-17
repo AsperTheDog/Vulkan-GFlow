@@ -3,9 +3,17 @@
 #include "resources/list.hpp"
 #include "resources/pair.hpp"
 
+enum RenderPassPinType : uint8_t
+{
+    INIT,
+    SUBPASS,
+    PIPELINE,
+    IMAGE
+};
+
 class NodeResource : public gflow::parser::Resource
 {
-
+private:
     EXPORT(size_t, nodeID);
     EXPORT(gflow::parser::Vec2, position);
 

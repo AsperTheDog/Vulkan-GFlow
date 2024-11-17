@@ -237,7 +237,7 @@ namespace gflow::parser
 
         [[nodiscard]] bool isNull() const { return m_data == nullptr; }
         [[nodiscard]] Resource* getParent() const { return m_parent; }
-
+        [[nodiscard]] const std::string& getName() const { return m_name; }
 
     private:
         std::string m_name;

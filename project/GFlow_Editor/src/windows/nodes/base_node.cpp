@@ -1,5 +1,6 @@
 #include "base_node.hpp"
 
+#include "metaresources/graph.hpp"
 #include "windows/imgui_graph_window.hpp"
 
 GFlowNode::GFlowNode(const std::string& name, ImGuiGraphWindow* parent) : m_parent(parent)

@@ -1,21 +1,8 @@
 #pragma once
 #include <unordered_set>
 
+#include "metaresources/renderpass.hpp"
 #include "windows/nodes/base_node.hpp"
-
-
-class InitNodeResource;
-class SubpassNodeResource;
-class PipelineNodeResource;
-class ImageNodeResource;
-
-enum RenderPassPinType : uint8_t
-{
-    INIT,
-    SUBPASS,
-    PIPELINE,
-    IMAGE
-};
 
 class ImageNode final : public GFlowNode
 {
@@ -56,8 +43,9 @@ public:
     NodeResource* getLinkedResource() override;
     [[nodiscard]] GFlowNode* getNext() const;
 
-    void addColorAttachmentPin(const std::string& name);
-    void addInputAttachmentPin(const std::string& name);
+    void addColorAttachmentPin(const std::string& name, bool addToResource);
+    void removeColorAttachmentPin(const std::string& name);
+    void addInputAttachmentPin(const std::string& name, bool addToResource);
     void removeInputAttachmentPin(const std::string& name);
     void removeAllAttachmentPins();
 

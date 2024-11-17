@@ -41,6 +41,7 @@ void ImGuiRenderPassWindow::resourceSelected(const std::string& resource)
             const std::shared_ptr<InitRenderpassNode> newNode = m_grid.addNode<InitRenderpassNode>(ImVec2(5, 5), this, initNodeRes);
             initNodeRes->setPos({newNode->getPos().x, newNode->getPos().y});
             initNodeRes->setNodeID(newNode->getUID());
+            m_selectedPassMeta->serialize();
             loadRenderPass(false);
         }
     }
@@ -57,7 +58,8 @@ void ImGuiRenderPassWindow::recreateParserData()
     {
         if (SubpassNode* subpassNode = dynamic_cast<SubpassNode*>(next))
         {
-            processSubpassConnections(subpass, subpassResource);
+            if (subpass != nullptr)
+                processSubpassConnections(subpass, subpassResource);
             subpass = subpassNode;
             subpassResource = &m_selectedPass->addSubpass();
             next = subpassNode->getNext();
@@ -70,6 +72,8 @@ void ImGuiRenderPassWindow::recreateParserData()
             next = pipelineNode->getNext();
         }
     }
+    if (subpass != nullptr)
+        processSubpassConnections(subpass, subpassResource);
 }
 
 void ImGuiRenderPassWindow::draw()
@@ -161,6 +165,8 @@ void ImGuiRenderPassWindow::onConnection(ImFlow::Pin* pin1, ImFlow::Pin* pin2)
 
 void ImGuiRenderPassWindow::saveRenderPass()
 {
+    //TODO: SAVE CUSTOM INPUTS
+
     if (m_selectedPass == nullptr) return;
     for (std::shared_ptr<ImFlow::BaseNode>& val : m_grid.getNodes() | std::views::values)
     {
@@ -218,18 +224,51 @@ void ImGuiRenderPassWindow::loadRenderPass(const bool loadInit)
     }
 }
 
-void ImGuiRenderPassWindow::processSubpassConnections(SubpassNode* subpass, gflow::parser::RenderPassSubpass* subpassResource)
+void ImGuiRenderPassWindow::processSubpassConnections(SubpassNode* subpass, gflow::parser::RenderPassSubpass* subpassResource) const
 {
-    std::unordered_set<std::string> oldColorAttachments = subpass->getColorAttachments();
-    std::unordered_set<std::string> oldInputAttachments = subpass->getInputAttachments();
+    const std::unordered_set<std::string> oldColorAttachments = subpass->getColorAttachments();
+    const std::unordered_set<std::string> oldInputAttachments = subpass->getInputAttachments();
 
-    std::vector<std::string> colorAttachments;
-    std::vector<std::string> inputAttachments;
-    for (gflow::parser::Pipeline* pipelineResource : subpassResource->getPipelines())
+    std::unordered_set<std::string> colorAttachments;
+    std::unordered_set<std::string> inputAttachments;
+    bool hasDepth = false;
+    for (const gflow::parser::Pipeline* pipelineResource : subpassResource->getPipelines())
     {
         VulkanShader::ReflectionData data = pipelineResource->getShaderReflectionData(gflow::parser::Pipeline::VERTEX);
+        if (data.valid)
+        {
+            for (const spirv_cross::Resource& resource : data.resources.stage_outputs)
+                colorAttachments.insert(resource.name);
+            for (const spirv_cross::Resource& resource : data.resources.subpass_inputs)
+                inputAttachments.insert(resource.name);
+        }
+        data = pipelineResource->getShaderReflectionData(gflow::parser::Pipeline::FRAGMENT);
+        if (data.valid)
+        {
+            for (const spirv_cross::Resource& resource : data.resources.stage_outputs)
+                colorAttachments.insert(resource.name);
+            for (const spirv_cross::Resource& resource : data.resources.subpass_inputs)
+                inputAttachments.insert(resource.name);
+        }
 
+        hasDepth |= subpassResource->hasDepthAttachment();
     }
+
+    for (const std::string& attachment : oldColorAttachments)
+        if (!colorAttachments.contains(attachment))
+            subpass->removeInputAttachmentPin(attachment);
+    for (const std::string& attachment : colorAttachments)
+        if (!oldColorAttachments.contains(attachment))
+            subpass->addColorAttachmentPin(attachment, true);
+
+    for (const std::string& attachment : oldInputAttachments)
+        if (!inputAttachments.contains(attachment))
+            subpass->removeInputAttachmentPin(attachment);
+    for (const std::string& attachment : inputAttachments)
+        if (!oldInputAttachments.contains(attachment))
+            subpass->addInputAttachmentPin(attachment, true);
+
+    subpass->setDepthAttachment(hasDepth);
 }
 
 InitRenderpassNode* ImGuiRenderPassWindow::getInit()

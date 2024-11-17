@@ -2,6 +2,22 @@
 
 #include "windows/nodes/base_node.hpp"
 
+void SubpassNodeResource::initContext(ExportData* metadata)
+{
+    if (colorAttachments.isNull())
+        initializeExport(colorAttachments.getName());
+
+    if (inputAttachments.isNull())
+        initializeExport(inputAttachments.getName());
+}
+
+void SubpassNodeResource::clearAttachments()
+{
+    (*colorAttachments).clear();
+    (*inputAttachments).clear();
+    *depthAttachment = false;
+}
+
 void RenderpassResource::removeNode(GFlowNode* node)
 {
     (*nodes).erase(node->getLinkedResource());

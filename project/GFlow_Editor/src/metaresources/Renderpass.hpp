@@ -1,6 +1,4 @@
 #pragma once
-#include <stdbool.h>
-
 #include "graph.hpp"
 #include "resources/pipeline.hpp"
 #include "windows/nodes/base_node.hpp"
@@ -29,11 +27,27 @@ class SubpassNodeResource final : public NodeResource
 {
     EXPORT(int, subpassID);
 
-    void initContext(ExportData* metadata) override {}
+    EXPORT_LIST(std::string, colorAttachments);
+    EXPORT_LIST(std::string, inputAttachments);
+    EXPORT(bool, depthAttachment);
+
+    void initContext(ExportData* metadata) override;
     gflow::parser::DataUsage isUsed(const std::string& variable, const std::vector<Resource*>& parentPath) override;
 
 public:
     DECLARE_PRIVATE_RESOURCE_ANCESTOR(SubpassNodeResource, NodeResource)
+
+    std::vector<std::string> getColorAttachments() { return (*colorAttachments).data(); }
+    std::vector<std::string> getInputAttachments() { return (*inputAttachments).data(); }
+    bool hasDepthAttachment() { return *depthAttachment; }
+
+    void addColorAttachment(const std::string& name) { (*colorAttachments).push_back(name); }
+    void removeColorAttachment(const std::string& name) { (*colorAttachments).erase(name); }
+    void addInputAttachment(const std::string& name) { (*inputAttachments).push_back(name); }
+    void removeInputAttachment(const std::string& name) { (*inputAttachments).erase(name); }
+    void setDepthAttachment(const bool enabled) { *depthAttachment = enabled; }
+
+    void clearAttachments();
 };
 
 class PipelineNodeResource final : public NodeResource
