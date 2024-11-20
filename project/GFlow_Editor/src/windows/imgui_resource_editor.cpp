@@ -256,9 +256,11 @@ void ImGuiResourceEditorWindow::drawResource(const std::string& stackedName, voi
         }
         ImGui::EndDisabled();
         if (changed)
+        {
             m_variableChangedSignal.emit({m_selectedResource->getPath(), m_selectedResource, exportElem.name, stackedName});
+            (*resource)->exportChanged(exportElem.name);
+        }
     }
-    (*resource)->exportsChanged();
 }
 
 void ImGuiResourceEditorWindow::drawSubresource(const std::string& name, std::string stackedName, gflow::parser::Resource::ExportData& data, const std::vector<gflow::parser::Resource*>& parentPath)

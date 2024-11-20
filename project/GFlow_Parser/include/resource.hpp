@@ -120,7 +120,7 @@ namespace gflow::parser
         T& operator*() { return m_data; }
 
         [[nodiscard]] Resource* getParent() const { return m_parent; }
-        void setData(T value) { m_data = value; }
+        void setData(T value);
 
     private:
         bool m_isGroup = false;
@@ -177,7 +177,7 @@ namespace gflow::parser
         void initializeExport(const std::string& name);
 
         virtual void exportsChanged() {}
-        virtual void exportChanged(const std::string& variable) {}
+        virtual void exportChanged(const std::string& variable) { exportsChanged(); }
         [[nodiscard]] virtual std::vector<ExportData> getCustomExports() { return {}; }
 
         [[nodiscard]] std::vector<ExportData> getExports();
@@ -279,6 +279,13 @@ namespace gflow::parser
             return;
         }
         parent->registerExport(data);
+    }
+
+    template <typename T>
+    void Export<T>::setData(T value)
+    {
+         m_data = value;
+         m_parent->exportChanged(m_name);
     }
 
     template <typename T>

@@ -167,22 +167,22 @@ namespace gflow::parser
             {
             case STRING:
                 *static_cast<std::string*>(exportData.data) = value;
-                return true;
+                break;
             case FILE:
                 static_cast<FilePath*>(exportData.data)->path = value;
-                return true;
+                break;
             case INT:
                 *static_cast<int*>(exportData.data) = std::stoi(value);
-                return true;
+                break;
             case BIGINT:
                 *static_cast<size_t*>(exportData.data) = std::stoull(value);
-                return true;
+                break;
             case FLOAT:
                 *static_cast<float*>(exportData.data) = std::stof(value);
-                return true;
+                break;
             case BOOL:
                 *static_cast<bool*>(exportData.data) = value != "0";
-                return true;
+                break;
             case VEC2:
             {
                 Vec2* vec = static_cast<Vec2*>(exportData.data);
@@ -194,7 +194,7 @@ namespace gflow::parser
                 }
                 vec->x = std::stof(values[0]);
                 vec->y = std::stof(values[1]);
-                return true;
+                break;
             }
             case VEC3:
             {
@@ -208,7 +208,7 @@ namespace gflow::parser
                 vec->x = std::stof(values[0]);
                 vec->y = std::stof(values[1]);
                 vec->z = std::stof(values[2]);
-                return true;
+                break;
             }
             case VEC4:
             {
@@ -223,12 +223,12 @@ namespace gflow::parser
                 vec->y = std::stof(values[1]);
                 vec->z = std::stof(values[2]);
                 vec->w = std::stof(values[3]);
-                return true;
+                break;
             }
             case ENUM_BITMASK:
             case ENUM:
                 static_cast<EnumExport*>(exportData.data)->id = std::stoi(value);
-                return true;
+                break;
             case RESOURCE:
             {
                 if (value == "null")
@@ -240,7 +240,7 @@ namespace gflow::parser
                 {
                     // Default value
                     *static_cast<Resource**>(exportData.data) = ResourceManager::createResource("", exportData.resourceFactory, &exportData);
-                    return true;
+                    break;
                 }
                 try
                 {
@@ -252,20 +252,22 @@ namespace gflow::parser
                         else
                             *static_cast<Resource**>(exportData.data) = ResourceManager::createResource("", exportData.resourceFactory, &exportData);
                         (*static_cast<Resource**>(exportData.data))->deserialize(dependencies.at(id), dependencies);
-                        return true;
+                        break;
                     }
                     Logger::print("Resource with id " + std::to_string(id) + " not found in dependencies", Logger::ERR);
                 }
                 catch (const std::invalid_argument&)
                 {
                     *static_cast<Resource**>(exportData.data) = ResourceManager::loadResource(value);
-                    return true;
+                    break;
                 }
             }
             default:
                 Logger::print("Export type not supported for export " + variable, Logger::ERR);
                 return false;
             }
+            exportChanged(variable);
+            return true;
         }
         return false;
     }
@@ -280,7 +282,10 @@ namespace gflow::parser
                 {
                     Resource** resource = static_cast<Resource**>(exp.data);
                     if (*resource == nullptr)
+                    {
                         *resource = ResourceManager::createResource("", exp.resourceFactory, &exp);
+                        exportChanged(name);
+                    }
                 }
                 return;
             }

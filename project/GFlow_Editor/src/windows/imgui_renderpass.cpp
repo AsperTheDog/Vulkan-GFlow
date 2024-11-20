@@ -232,7 +232,7 @@ void ImGuiRenderPassWindow::processSubpassConnections(SubpassNode* subpass, gflo
     std::unordered_set<std::string> colorAttachments;
     std::unordered_set<std::string> inputAttachments;
     bool hasDepth = false;
-    for (const gflow::parser::Pipeline* pipelineResource : subpassResource->getPipelines())
+    for (gflow::parser::Pipeline* pipelineResource : subpassResource->getPipelines())
     {
         VulkanShader::ReflectionData data = pipelineResource->getShaderReflectionData(gflow::parser::Pipeline::VERTEX);
         if (data.valid)

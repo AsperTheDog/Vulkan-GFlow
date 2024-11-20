@@ -31,7 +31,6 @@ void ImGuiGraphWindow::drawBody()
             m_sidePanel.resourceSelected(nullptr);
         }
     }
-
 }
 
 void ImGuiGraphWindow::clearGrid()
