@@ -49,7 +49,7 @@ public:
     void removeInputAttachmentPin(const std::string& name);
     void removeAllAttachmentPins();
 
-    void setDepthAttachment(bool enabled);
+    void setDepthAttachment(bool enabled, bool force);
 
     [[nodiscard]] std::unordered_set<std::string> getColorAttachments() const;
     [[nodiscard]] std::unordered_set<std::string> getInputAttachments() const;

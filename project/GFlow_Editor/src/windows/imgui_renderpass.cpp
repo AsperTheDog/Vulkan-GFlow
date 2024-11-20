@@ -268,7 +268,7 @@ void ImGuiRenderPassWindow::processSubpassConnections(SubpassNode* subpass, gflo
         if (!oldInputAttachments.contains(attachment))
             subpass->addInputAttachmentPin(attachment, true);
 
-    subpass->setDepthAttachment(hasDepth);
+    subpass->setDepthAttachment(hasDepth, false);
 }
 
 InitRenderpassNode* ImGuiRenderPassWindow::getInit()

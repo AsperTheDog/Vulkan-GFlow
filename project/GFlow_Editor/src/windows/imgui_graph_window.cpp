@@ -21,7 +21,17 @@ void ImGuiGraphWindow::drawBody()
     m_grid.update();
     ImGui::End();
     if (m_sidePanelTarget != nullptr)
+    {
+        m_sidePanel.open = true;
         m_sidePanel.draw();
+        if (!m_sidePanel.open)
+        {
+            m_sidePanelTarget->setInspectionStatus(false);
+            m_sidePanelTarget = nullptr;
+            m_sidePanel.resourceSelected(nullptr);
+        }
+    }
+
 }
 
 void ImGuiGraphWindow::clearGrid()

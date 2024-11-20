@@ -11,6 +11,9 @@ ImageNode::ImageNode(ImGuiGraphWindow* parent, NodeResource* resource)
     m_out = addOUT<int>("-->", ImFlow::PinStyle::green());
     m_out->behaviour([this]() -> int { return 0; }); //Not used, but needed to prevent segfault
     m_out->setFilterID(IMAGE);
+
+    const std::string newID = getLinkedResource()->get("imageID").first;
+    setTitle("Image" + (newID.empty() ? "" : " (" + newID + ")"));
 }
 
 NodeResource* ImageNode::getLinkedResource()
@@ -76,7 +79,7 @@ SubpassNode::SubpassNode(ImGuiGraphWindow* parent, NodeResource* resource)
         addInputAttachmentPin(attachment, false);
 
     if (m_resource->hasDepthAttachment())
-        setDepthAttachment(true);
+        setDepthAttachment(true, true);
 }
 
 NodeResource* SubpassNode::getLinkedResource()
@@ -127,7 +130,7 @@ void SubpassNode::removeAllAttachmentPins()
         dropIN(pin->getName());
     for (const std::shared_ptr<ImFlow::InPin<int>>& pin : m_InputAttachmentPins)
         dropIN(pin->getName());
-    setDepthAttachment(false);
+    setDepthAttachment(false, false);
     m_resource->clearAttachments();
 }
 
@@ -147,9 +150,9 @@ std::unordered_set<std::string> SubpassNode::getInputAttachments() const
     return pins;
 }
 
-void SubpassNode::setDepthAttachment(const bool enabled)
+void SubpassNode::setDepthAttachment(const bool enabled, const bool force)
 {
-    if (m_resource->hasDepthAttachment() == enabled) return;
+    if (m_resource->hasDepthAttachment() == enabled && !force) return;
 
     if (enabled)
     {
