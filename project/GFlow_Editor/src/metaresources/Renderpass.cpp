@@ -41,8 +41,8 @@ void RenderpassResource::addConnection(const size_t left_uid, const size_t left_
             return;
         }
     }
-    Connection** connection = (*connections).emplace_back(true);
+    Connection** connection = (*connections).emplace_back();
     (*connection)->getFirst()->setValues(left_uid, left_pin);
-    (*connection)->getSecond()->setValues(right_uid, static_cast<int>(right_pin));
+    (*connection)->getSecond()->setValues(right_uid, right_pin);
 }
 

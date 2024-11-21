@@ -12,10 +12,10 @@ namespace gflow::parser
     public:
         DECLARE_RESOURCE(Pair)
 
-        void setValues(const T& first, const U& second)
+        void setValues(const T& firstVal, const U& secondVal)
         {
-            *this->first = first;
-            *this->second = second;
+            *this->first = firstVal;
+            *this->second = secondVal;
         }
 
         [[nodiscard]] T getFirst() const { return *first; }
@@ -27,11 +27,11 @@ namespace gflow::parser
         friend class List;
     };
 
-    template <typename T, typename U>
+    template <typename T, typename U, bool C = true>
     class ResPair final : public Resource
     {
-        EXPORT_RESOURCE(T, first);
-        EXPORT_RESOURCE(U, second);
+        EXPORT_RESOURCE(T, first, C);
+        EXPORT_RESOURCE(U, second, C);
 
     public:
         DECLARE_RESOURCE(ResPair)
@@ -45,6 +45,8 @@ namespace gflow::parser
 
     typedef Pair<int, int> IntPair;
     typedef Pair<size_t, size_t> BigIntPair;
+    typedef Pair<float, float> FloatPair;
+    typedef Pair<std::string, std::string> StringPair;
 
     template <typename T, typename U, typename V>
     class Triple final : public Resource
@@ -56,11 +58,11 @@ namespace gflow::parser
     public:
         DECLARE_RESOURCE(Triple)
 
-        void setValues(const T& first, const U& second, const V& third)
+        void setValues(const T& firstVal, const U& secondVal, const V& thirdVal)
         {
-            *this->first = first;
-            *this->second = second;
-            *this->third = third;
+            *this->first = firstVal;
+            *this->second = secondVal;
+            *this->third = thirdVal;
         }
         [[nodiscard]] T getFirst() const { return *first; }
         [[nodiscard]] U getSecond() const { return *second; }
@@ -72,12 +74,12 @@ namespace gflow::parser
         friend class List;
     };
 
-    template <typename T, typename U, typename V>
+    template <typename T, typename U, typename V, bool C = true>
     class ResTriple final : public Resource
     {
-        EXPORT_RESOURCE(T, first);
-        EXPORT_RESOURCE(U, second);
-        EXPORT_RESOURCE(V, third);
+        EXPORT_RESOURCE(T, first, C);
+        EXPORT_RESOURCE(U, second, C);
+        EXPORT_RESOURCE(V, third, C);
 
     public:
         DECLARE_RESOURCE(ResTriple)

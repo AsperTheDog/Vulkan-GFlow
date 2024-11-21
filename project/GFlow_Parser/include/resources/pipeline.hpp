@@ -1,9 +1,8 @@
 #pragma once
-#include <filesystem>
-
 #include "../resource_manager.hpp"
 
 #include "list.hpp"
+#include "pair.hpp"
 #include "vulkan_shader.hpp"
 
 
@@ -16,7 +15,7 @@ namespace gflow::parser
         EXPORT(std::string, something);
         
     public:
-        DECLARE_PUBLIC_RESOURCE(PipelineInputAssemblyState)
+        DECLARE_PRIVATE_RESOURCE(PipelineInputAssemblyState)
     };
 
     class PipelineRasterizationState final : public Resource
@@ -26,7 +25,7 @@ namespace gflow::parser
         EXPORT_ENUM(frontFace, EnumContexts::frontFace);
         
     public:
-        DECLARE_PUBLIC_RESOURCE(PipelineRasterizationState)
+        DECLARE_PRIVATE_RESOURCE(PipelineRasterizationState)
     };
 
     class PipelineDepthStencilState final : public Resource
@@ -36,7 +35,7 @@ namespace gflow::parser
         EXPORT_ENUM(depthCompareOp, EnumContexts::compareOp);
         
     public:
-        DECLARE_PUBLIC_RESOURCE(PipelineDepthStencilState)
+        DECLARE_PRIVATE_RESOURCE(PipelineDepthStencilState)
     };
 
     class PipelineColorBlendAttachment final : public Resource
@@ -54,7 +53,7 @@ namespace gflow::parser
         DataUsage isUsed(const std::string& variable, const std::vector<Resource*>& parentPath = {}) override;
         
     public:
-        DECLARE_PUBLIC_RESOURCE(PipelineColorBlendAttachment)
+        DECLARE_PRIVATE_RESOURCE(PipelineColorBlendAttachment)
 
         template <typename T>
         friend class List;
@@ -70,26 +69,29 @@ namespace gflow::parser
         DataUsage isUsed(const std::string& variable, const std::vector<Resource*>& parentPath = {}) override;
         
     public:
-        DECLARE_PUBLIC_RESOURCE(PipelineColorBlendState)
+        DECLARE_PRIVATE_RESOURCE(PipelineColorBlendState)
     };
 
     class Pipeline final : public Resource
     {
-    public:
-        void exportChanged(const std::string& variable) override;
+        using StrPair = Pair<std::string, std::string>;
 
     private:
-        EXPORT_RESOURCE(PipelineInputAssemblyState, inputAssemblyState);
-        EXPORT_RESOURCE(PipelineRasterizationState, rasterizationState);
-        EXPORT_RESOURCE(PipelineDepthStencilState, depthStencilState);
-        EXPORT_RESOURCE(PipelineColorBlendState, colorBlendState);
+        EXPORT_RESOURCE(PipelineInputAssemblyState, inputAssemblyState, true);
+        EXPORT_RESOURCE(PipelineRasterizationState, rasterizationState, true);
+        EXPORT_RESOURCE(PipelineDepthStencilState, depthStencilState, true);
+        EXPORT_RESOURCE(PipelineColorBlendState, colorBlendState, true);
         EXPORT_GROUP(shaders, "Shaders");
         EXPORT(FilePath, vertex);
         EXPORT(FilePath, fragment);
+
+        EXPORT_RESOURCE_LIST(StrPair, attachments);
         
     public:
-        enum ShaderStage { VERTEX, FRAGMENT };
+        enum ShaderStage : uint8_t { VERTEX, FRAGMENT };
         VulkanShader::ReflectionData getShaderReflectionData(ShaderStage type, bool forceRecalculation = false);
+        void exportChanged(const std::string& variable) override;
+        DataUsage isUsed(const std::string& variable, const std::vector<Resource*>& parentPath = {}) override;
 
         VulkanShader::ReflectionData m_vertexReflection;
         VulkanShader::ReflectionData m_fragmentReflection;
@@ -126,28 +128,36 @@ namespace gflow::parser
         Resource::exportChanged(variable);
     }
 
+    inline DataUsage Pipeline::isUsed(const std::string& variable, const std::vector<Resource*>& parentPath)
+    {
+        if (variable == "attachments")
+            return NOT_USED;
+        return Resource::isUsed(variable, parentPath);
+    }
+
     inline VulkanShader::ReflectionData Pipeline::getShaderReflectionData(const ShaderStage type, const bool forceRecalculation)
     {
-        switch (type)
+        try
         {
-        case VERTEX:
+            switch (type)
             {
-                if (!(*vertex).path.empty() && m_vertexReflection.valid && !forceRecalculation)
-                    return m_vertexReflection;
-                m_vertexReflection = VulkanShader::getReflectionDataFromFile(
-                    ResourceManager::makePathAbsolute((*vertex).path),
-                    VK_SHADER_STAGE_VERTEX_BIT);
+            case VERTEX:
+                if ((*vertex).path.empty())
+                    m_vertexReflection = {};
+                else if (!m_vertexReflection.valid || forceRecalculation)
+                    m_vertexReflection = VulkanShader::getReflectionDataFromFile(ResourceManager::makePathAbsolute((*vertex).path), VK_SHADER_STAGE_VERTEX_BIT);
+                return m_vertexReflection;
+            case FRAGMENT:
+                if ((*fragment).path.empty())
+                    m_fragmentReflection = {};
+                else if (!m_fragmentReflection.valid || forceRecalculation)
+                    m_fragmentReflection = VulkanShader::getReflectionDataFromFile(ResourceManager::makePathAbsolute((*fragment).path), VK_SHADER_STAGE_FRAGMENT_BIT);
+                return m_fragmentReflection;
             }
-            return m_vertexReflection;
-        case FRAGMENT:
-            {
-                if (!(*fragment).path.empty() && m_fragmentReflection.valid && !forceRecalculation)
-                    return m_fragmentReflection;
-                m_fragmentReflection = VulkanShader::getReflectionDataFromFile(
-                    ResourceManager::makePathAbsolute((*fragment).path), 
-                    VK_SHADER_STAGE_FRAGMENT_BIT);
-            }
-            return m_fragmentReflection;
+        }
+        catch (const std::runtime_error& e)
+        {
+            Logger::print(e.what(), Logger::WARN);
         }
         return {};
     }

@@ -11,6 +11,32 @@
 
 #include "nodes/renderpass_nodes.hpp"
 
+class NodeCreateHelper
+{
+public:
+    template <typename T, typename Tr>
+    static std::shared_ptr<T> createNode(ImGuiRenderPassWindow* window)
+    {
+        Tr* resource = window->m_selectedPassMeta->addNode<Tr>();
+        const std::shared_ptr<T> newNode = window->m_grid.placeNode<T>(window, resource);
+        resource->setPos({ newNode->getPos().x, newNode->getPos().y });
+        resource->setNodeID(newNode->getUID());
+        newNode->getDestroyedSignal().connect(window, &ImGuiRenderPassWindow::onNodeDestroyed);
+        return newNode;
+    }
+
+    template <typename T, typename Tr>
+    static std::shared_ptr<T> createNodeAtPlace(ImGuiRenderPassWindow* window, const ImVec2& pos)
+    {
+        Tr* resource = window->m_selectedPassMeta->addNode<Tr>();
+        const std::shared_ptr<T> newNode = window->m_grid.addNode<T>(pos, window, resource);
+        resource->setPos({ newNode->getPos().x, newNode->getPos().y });
+        resource->setNodeID(newNode->getUID());
+        newNode->getDestroyedSignal().connect(window, &ImGuiRenderPassWindow::onNodeDestroyed);
+        return newNode;
+    }
+};
+
 ImGuiRenderPassWindow::ImGuiRenderPassWindow(const std::string_view& name, const bool defaultOpen) : ImGuiGraphWindow(name, defaultOpen)
 {
     m_refreshRequestedSignal.connect(this, &ImGuiRenderPassWindow::recreateParserData);
@@ -36,11 +62,8 @@ void ImGuiRenderPassWindow::resourceSelected(const std::string& resource)
         }
         else
         {
-            m_selectedPassMeta = gflow::parser::ResourceManager::createResource<RenderpassResource>(metaPath, nullptr, true);
-            InitNodeResource* initNodeRes = m_selectedPassMeta->addNode<InitNodeResource>();
-            const std::shared_ptr<InitRenderpassNode> newNode = m_grid.addNode<InitRenderpassNode>(ImVec2(5, 5), this, initNodeRes);
-            initNodeRes->setPos({newNode->getPos().x, newNode->getPos().y});
-            initNodeRes->setNodeID(newNode->getUID());
+            m_selectedPassMeta = gflow::parser::ResourceManager::createResource<RenderpassResource>(metaPath, nullptr);
+            const std::shared_ptr<InitRenderpassNode> newNode = NodeCreateHelper::createNodeAtPlace<InitRenderpassNode, InitNodeResource>(this, {20, 20});
             m_selectedPassMeta->serialize();
             loadRenderPass(false);
         }
@@ -61,7 +84,7 @@ void ImGuiRenderPassWindow::recreateParserData()
             if (subpass != nullptr)
                 processSubpassConnections(subpass, subpassResource);
             subpass = subpassNode;
-            subpassResource = &m_selectedPass->addSubpass();
+            subpassResource = m_selectedPass->addSubpass();
             next = subpassNode->getNext();
         }
         else if (SubpassPipelineNode* pipelineNode = dynamic_cast<SubpassPipelineNode*>(next))
@@ -108,33 +131,15 @@ void ImGuiRenderPassWindow::rightClick(ImFlow::BaseNode* node)
             if (ImGui::BeginMenu("Structure"))
             {
                 if (ImGui::MenuItem("Subpass"))
-                {
-                    SubpassNodeResource* resource = m_selectedPassMeta->addNode<SubpassNodeResource>();
-                    const std::shared_ptr<SubpassNode> newNode = m_grid.placeNode<SubpassNode>(this, resource);
-                    resource->setPos({newNode->getPos().x, newNode->getPos().y});
-                    resource->setNodeID(newNode->getUID());
-                    newNode->getDestroyedSignal().connect(this, &ImGuiRenderPassWindow::onNodeDestroyed);
-                }
+                    NodeCreateHelper::createNode<SubpassNode, SubpassNodeResource>(this);
                 if (ImGui::MenuItem("Pipeline"))
-                {
-                    PipelineNodeResource* resource = m_selectedPassMeta->addNode<PipelineNodeResource>();
-                    const std::shared_ptr<SubpassPipelineNode> newNode = m_grid.placeNode<SubpassPipelineNode>(this, resource);
-                    resource->setPos({newNode->getPos().x, newNode->getPos().y});
-                    resource->setNodeID(newNode->getUID());
-                    newNode->getDestroyedSignal().connect(this, &ImGuiRenderPassWindow::onNodeDestroyed);
-                }
+                    NodeCreateHelper::createNode<SubpassPipelineNode, PipelineNodeResource>(this);
                 ImGui::EndMenu();
             }
             if (ImGui::BeginMenu("Resources"))
             {
                 if (ImGui::MenuItem("Attachment"))
-                {
-                    ImageNodeResource* resource = m_selectedPassMeta->addNode<ImageNodeResource>();
-                    const std::shared_ptr<ImageNode> newNode = m_grid.placeNode<ImageNode>(this, resource);
-                    resource->setPos({newNode->getPos().x, newNode->getPos().y});
-                    resource->setNodeID(newNode->getUID());
-                    newNode->getDestroyedSignal().connect(this, &ImGuiRenderPassWindow::onNodeDestroyed);
-                }
+                    NodeCreateHelper::createNode<ImageNode, ImageNodeResource>(this);
                 ImGui::EndMenu();
             }
             ImGui::EndMenu();
@@ -165,8 +170,6 @@ void ImGuiRenderPassWindow::onConnection(ImFlow::Pin* pin1, ImFlow::Pin* pin2)
 
 void ImGuiRenderPassWindow::saveRenderPass()
 {
-    //TODO: SAVE CUSTOM INPUTS
-
     if (m_selectedPass == nullptr) return;
     for (std::shared_ptr<ImFlow::BaseNode>& val : m_grid.getNodes() | std::views::values)
     {
@@ -178,13 +181,17 @@ void ImGuiRenderPassWindow::saveRenderPass()
     }
 
     // Get connection
+    // TODO: Move this to Graph!! Tasks to do first
+    // TODO: - Make each attachment type have its own color
+    // TODO: - Add color to the types of serializable fields
+    // TODO: - Make Connection resource
     for (const std::weak_ptr<ImFlow::Link>& connection : m_grid.getLinks())
     {
         const ImFlow::Link* link = connection.lock().get();
         const size_t leftUID = link->left()->getParent()->getUID();
-        const size_t leftPin = link->left()->getFilterID();
+        const size_t leftPin = link->left()->getUID();
         const size_t rightUID = link->right()->getParent()->getUID();
-        const size_t rightPin = link->right()->getFilterID();
+        const size_t rightPin = link->right()->getUID();
         m_selectedPassMeta->addConnection(leftUID, leftPin, rightUID, rightPin);
     }
 }
@@ -215,11 +222,11 @@ void ImGuiRenderPassWindow::loadRenderPass(const bool loadInit)
     {
         GraphResource::Connection* connection = m_selectedPassMeta->getConnections()[i];
         const size_t leftUID = connection->getFirst()->getFirst();
-        const int leftPin = static_cast<int>(connection->getFirst()->getSecond());
+        const size_t leftPin = connection->getFirst()->getSecond();
         const size_t rightUID = connection->getSecond()->getFirst();
-        const int rightPin = connection->getSecond()->getSecond();
-        ImFlow::Pin* left = m_grid.getNodes().at(leftUID)->outPinByFilderID(leftPin);
-        ImFlow::Pin* right = m_grid.getNodes().at(rightUID)->inPinByFilderID(rightPin);
+        const size_t rightPin = connection->getSecond()->getSecond();
+        ImFlow::Pin* left = m_grid.getNodes().at(leftUID)->outPin(leftPin);
+        ImFlow::Pin* right = m_grid.getNodes().at(rightUID)->inPin(rightPin);
         left->createLink(right);
     }
 }

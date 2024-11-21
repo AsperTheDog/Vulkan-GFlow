@@ -77,15 +77,13 @@ namespace gflow::parser
     class ResourceManager
     {
     public:
-        typedef std::function<Resource* (const std::string&, Resource::ExportData*)> ResourceFactory;
-
         static void resetWorkingDir(const std::string& path);
 
         static Resource* loadResource(const std::string& path);
 
-        static Resource* createResource(const std::string& type, const std::string& path, Resource::ExportData* data = nullptr, bool recursive = false);
-        template <typename T> static T* createResource(const std::string& path, Resource::ExportData* data = nullptr, bool recursive = false);
-        static Resource* createResource(const std::string& path, const ResourceFactory& factory, Resource::ExportData* data = nullptr, bool recursive = false);
+        static Resource* createResource(const std::string& type, const std::string& path, Resource::ExportData* data = nullptr);
+        template <typename T> static T* createResource(const std::string& path, Resource::ExportData* data = nullptr);
+        static Resource* createResource(const std::string& path, const Resource::ResourceFactory& factory, Resource::ExportData* data = nullptr);
 
         static bool deleteResource(const std::string& path);
         static bool deleteResource(const Resource* resource);
@@ -119,7 +117,7 @@ namespace gflow::parser
 
         static void saveAll();
 
-        static bool injectResourceFactory(const std::string& type, const ResourceFactory& factory, bool isPrivate);
+        static bool injectResourceFactory(const std::string& type, const Resource::ResourceFactory& factory, bool isPrivate);
         [[nodiscard]] static bool hasResourceFactory(const std::string& type);
 
     private:
@@ -132,7 +130,7 @@ namespace gflow::parser
 
         inline static FileTree m_fileTree{ "root" };
 
-        inline static std::unordered_map<std::string, std::pair<ResourceFactory, bool>> s_resourceFactories{};
+        inline static std::unordered_map<std::string, std::pair<Resource::ResourceFactory, bool>> s_resourceFactories{};
     };
 
     template <typename T>
@@ -156,10 +154,10 @@ namespace gflow::parser
     };
 
     template <typename T>
-    T* ResourceManager::createResource(const std::string& path, Resource::ExportData* data, bool recursive)
+    T* ResourceManager::createResource(const std::string& path, Resource::ExportData* data)
     {
         static_assert(std::is_base_of_v<Resource, T>, "T must be a subclass of Resource");
-        Resource* elem = createResource(path, Resource::create<T>, data, recursive);
+        Resource* elem = createResource(path, Resource::create<T>, data);
         if (!elem->isSubresource())
             elem->serialize();
         return dynamic_cast<T*>(elem);

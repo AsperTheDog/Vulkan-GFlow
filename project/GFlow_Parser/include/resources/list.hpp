@@ -2,9 +2,9 @@
 #include "resource_manager.hpp"
 #include "../resource.hpp"
 
-#define EXPORT_LIST(type, name) gflow::parser::Export<gflow::parser::List<type>*> ##name{#name, this}
-#define EXPORT_ENUM_LIST(name, context) gflow::parser::Export<gflow::parser::List<gflow::parser::EnumExport>*> ##name{#name, this, context}
-#define EXPORT_RESOURCE_LIST(type, name) gflow::parser::Export<gflow::parser::List<type*>*> ##name{#name, this}
+#define EXPORT_LIST(type, name) gflow::parser::Export<gflow::parser::List<type>*, true> ##name{#name, this}
+#define EXPORT_ENUM_LIST(name, context) gflow::parser::Export<gflow::parser::List<gflow::parser::EnumExport>*, true> ##name{#name, this, context}
+#define EXPORT_RESOURCE_LIST(type, name) gflow::parser::Export<gflow::parser::List<type*>*, true> ##name{#name, this}
 
 namespace gflow::parser
 {
@@ -24,7 +24,7 @@ namespace gflow::parser
         void setEnumContext(EnumContext* enumContext) { m_enumContext = enumContext; }
         void setReadonly(const bool readonly) { m_readonlySize = readonly; }
 
-        bool set(const std::string& variable, const std::string& value, const ResourceEntries& dependencies) override;
+        bool set(const std::string& variable, const std::string& value, const SerializedResourceEntries& dependencies) override;
         [[nodiscard]] std::vector<ExportData> getCustomExports() override;
 
         void exportsChanged() override;
@@ -39,10 +39,10 @@ namespace gflow::parser
         void push_back(T value) { m_data.push_back(value); m_size++; }
         void clear();
 
-        T* emplace_back(bool createRecursive = true);
+        T* emplace_back();
 
         template<typename U>
-        U* emplace_subclass_back(bool createRecursive = true);
+        U* emplace_subclass_back();
 
     private:
         int m_size = 0;
@@ -69,7 +69,7 @@ namespace gflow::parser
     }
 
     template <typename T>
-    bool List<T>::set(const std::string& variable, const std::string& value, const ResourceEntries& dependencies)
+    bool List<T>::set(const std::string& variable, const std::string& value, const SerializedResourceEntries& dependencies)
     {
         if (variable == "size")
         {
@@ -163,14 +163,14 @@ namespace gflow::parser
     }
 
     template <typename T>
-    T* List<T>::emplace_back(const bool createRecursive)
+    T* List<T>::emplace_back()
     {
         if constexpr (std::is_pointer_v<T> && std::is_base_of_v<Resource, std::remove_pointer_t<T>>)
         {
             ExportData elem = createElemExportData();
             elem.name = std::to_string(m_size);
 
-            T data = ResourceManager::createResource<std::remove_pointer_t<T>>("", &elem, createRecursive);
+            T data = ResourceManager::createResource<std::remove_pointer_t<T>>("", &elem);
             m_data.push_back(data);
         }
         else
@@ -183,7 +183,7 @@ namespace gflow::parser
 
     template <typename T>
     template <typename U>
-    U* List<T>::emplace_subclass_back(const bool createRecursive)
+    U* List<T>::emplace_subclass_back()
     {
         static_assert(std::is_base_of_v<std::remove_pointer_t<T>, U>, "U must be a child class of T");
         static_assert(std::is_base_of_v<Resource, std::remove_pointer_t<T>>, "T must be a Resource");
@@ -191,7 +191,7 @@ namespace gflow::parser
         ExportData elem = createElemExportData();
         elem.name = std::to_string(m_size);
 
-        U* data = ResourceManager::createResource<U>("", &elem, createRecursive);
+        U* data = ResourceManager::createResource<U>("", &elem);
         m_data.push_back(dynamic_cast<T>(data));
         m_size++;
         return dynamic_cast<U*>(m_data.back());
@@ -224,7 +224,7 @@ namespace gflow::parser
     }
 
     template <typename T>
-    class Export<List<T>*>
+    class Export<List<T>*, true>
     {
     public:
         Export(std::string_view name, Resource* parent);
@@ -247,7 +247,7 @@ namespace gflow::parser
     };
 
     template <typename T>
-    Export<List<T>*>::Export(std::string_view name, Resource* parent) : m_parent(parent)
+    Export<List<T>*, true>::Export(std::string_view name, Resource* parent) : m_parent(parent)
     {
         Resource::ExportData data;
         this->m_name = name;
@@ -256,12 +256,13 @@ namespace gflow::parser
         data.resourceFactory = &Resource::create<List<T>>;
         data.getType = List<T>::getTypeStatic;
         data.data = &this->m_data;
+        *static_cast<Resource**>(data.data) = createResourceInManager(data.resourceFactory);
 
         parent->registerExport(data);
     }
 
     template <typename T>
-    Export<List<T>*>::Export(std::string_view name, Resource* parent, EnumContext& enumContext) : m_parent(parent)
+    Export<List<T>*, true>::Export(std::string_view name, Resource* parent, EnumContext& enumContext) : m_parent(parent)
     {
         Resource::ExportData data;
         this->m_name = name;
@@ -271,6 +272,7 @@ namespace gflow::parser
         data.getType = List<T>::getTypeStatic;
         data.enumContext = &enumContext;
         data.data = &this->m_data;
+        *static_cast<Resource**>(data.data) = createResourceInManager(data.resourceFactory);
 
         parent->registerExport(data);
     }

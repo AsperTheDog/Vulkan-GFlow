@@ -9,9 +9,9 @@
 
 namespace gflow::parser
 {
-    static Resource::ResourceData parseToData(const std::string& serialized)
+    static Resource::SerializedResourceEntry parseToData(const std::string& serialized)
     {
-        Resource::ResourceData data{};
+        Resource::SerializedResourceEntry data{};
         for (std::string& line : string::split(serialized, "\n"))
         {
             if (line.empty()) continue;
@@ -75,8 +75,8 @@ namespace gflow::parser
     bool Resource::deserialize(std::string filename)
     {
         if (filename.empty()) filename = m_path;
-        ResourceEntries dependencies;
-        ResourceData mainResource;
+        SerializedResourceEntries dependencies;
+        SerializedResourceEntry mainResource;
         std::ifstream file(ResourceManager::getWorkingDir() + filename);
         if (!file.is_open()) return false;
         std::string entry;
@@ -86,7 +86,7 @@ namespace gflow::parser
             std::getline(file, line);
             if (string::contains(line, "[") && !entry.empty())
             {
-                ResourceData data = parseToData(entry);
+                SerializedResourceEntry data = parseToData(entry);
                 if (data.isSubresource) dependencies[data.key] = data;
                 else mainResource = data;
                 entry.clear();
@@ -96,7 +96,7 @@ namespace gflow::parser
         }
         if (!entry.empty())
         {
-            ResourceData data = parseToData(entry);
+            SerializedResourceEntry data = parseToData(entry);
             if (data.isSubresource) dependencies[data.key] = data;
             else mainResource = data;
         }
@@ -104,7 +104,7 @@ namespace gflow::parser
         return true;
     }
 
-    void Resource::deserialize(const ResourceData& data, const ResourceEntries& dependencies)
+    void Resource::deserialize(const SerializedResourceEntry& data, const SerializedResourceEntries& dependencies)
     {
         for (const auto& [key, value] : data.data)
         {
@@ -157,7 +157,7 @@ namespace gflow::parser
         return { "", "" };
     }
 
-    bool Resource::set(const std::string& variable, const std::string& value, const ResourceEntries& dependencies)
+    bool Resource::set(const std::string& variable, const std::string& value, const SerializedResourceEntries& dependencies)
     {
         for (ExportData& exportData : getExports())
         {
@@ -233,12 +233,16 @@ namespace gflow::parser
             {
                 if (value == "null")
                 {
+                    if (exportData.data != nullptr && !exportData.isRef)
+                        ResourceManager::deleteResource(*static_cast<Resource**>(exportData.data));
                     *static_cast<Resource**>(exportData.data) = nullptr;
                     break;
                 }
                 if (value.empty())
                 {
                     // Default value
+                    if (exportData.data != nullptr && !exportData.isRef)
+                        ResourceManager::deleteResource(*static_cast<Resource**>(exportData.data));
                     *static_cast<Resource**>(exportData.data) = ResourceManager::createResource("", exportData.resourceFactory, &exportData);
                     break;
                 }
@@ -247,18 +251,24 @@ namespace gflow::parser
                     const uint32_t id = std::stoi(value);
                     if (dependencies.contains(id))
                     {
+                        if (exportData.data != nullptr && !exportData.isRef)
+                            ResourceManager::deleteResource(*static_cast<Resource**>(exportData.data));
                         if (ResourceManager::hasResourceFactory(dependencies.at(id).type))
                             *static_cast<Resource**>(exportData.data) = ResourceManager::createResource(dependencies.at(id).type, "", &exportData);
                         else
                             *static_cast<Resource**>(exportData.data) = ResourceManager::createResource("", exportData.resourceFactory, &exportData);
                         (*static_cast<Resource**>(exportData.data))->deserialize(dependencies.at(id), dependencies);
+                        exportData.isRef = false;
                         break;
                     }
                     Logger::print("Resource with id " + std::to_string(id) + " not found in dependencies", Logger::ERR);
                 }
                 catch (const std::invalid_argument&)
                 {
+                    if (exportData.data != nullptr && !exportData.isRef)
+                        ResourceManager::deleteResource(*static_cast<Resource**>(exportData.data));
                     *static_cast<Resource**>(exportData.data) = ResourceManager::loadResource(value);
+                    exportData.isRef = true;
                     break;
                 }
             }
@@ -323,5 +333,10 @@ namespace gflow::parser
         while (m_id == 0 || s_ids.contains(m_id))
             m_id = rand();
         s_ids.insert(m_id);
+    }
+
+    Resource* createResourceInManager(const Resource::ResourceFactory& factory)
+    {
+        return ResourceManager::createResource("", factory);
     }
 }

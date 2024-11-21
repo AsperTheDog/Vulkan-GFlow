@@ -1,4 +1,5 @@
 #pragma once
+#include <functional>
 #include <iostream>
 #include <stdexcept>
 #include <string>
@@ -10,11 +11,11 @@
 #include "string_helper.hpp"
 #include "utils/logger.hpp"
 
-#define EXPORT(type, name) gflow::parser::Export<type> ##name{#name, this}
-#define EXPORT_GROUP(name, title) gflow::parser::Export<bool> _##name{title, this, true}
-#define EXPORT_ENUM(name, context) gflow::parser::Export<gflow::parser::EnumExport> ##name{#name, this, context}
-#define EXPORT_BITMASK(name, context) gflow::parser::Export<gflow::parser::EnumBitmask> ##name{#name, this, context}
-#define EXPORT_RESOURCE(type, name) gflow::parser::Export<type*> ##name{#name, this}
+#define EXPORT(type, name) gflow::parser::Export<type, false> ##name{#name, this}
+#define EXPORT_GROUP(name, title) gflow::parser::Export<bool, false> _##name{title, this, true}
+#define EXPORT_ENUM(name, context) gflow::parser::Export<gflow::parser::EnumExport, false> ##name{#name, this, context}
+#define EXPORT_BITMASK(name, context) gflow::parser::Export<gflow::parser::EnumBitmask, false> ##name{#name, this, context}
+#define EXPORT_RESOURCE(type, name, createOnInit) gflow::parser::Export<type*, createOnInit> ##name{#name, this}
 
 #define DECLARE_RESOURCE_ANCESTOR_NO_CONST(type, parent)                                     \
         [[nodiscard]] static std::string getTypeStatic() { return #type; }                   \
@@ -26,7 +27,7 @@
             return newRes;                                                                   \
         }                                                                                    \
         friend class ResourceManager;                                                        \
-        template <typename U> friend class Export;                                           \
+        template <typename U, bool C> friend class Export;                                   \
         friend class Resource;
 
 #define DECLARE_RESOURCE_ANCESTOR(type, parent)                                              \
@@ -41,7 +42,7 @@ namespace gflow::parser
     class Project;
     class Resource;
 
-    enum DataType
+    enum DataType : uint8_t
     {
         NONE,
         STRING,
@@ -58,7 +59,7 @@ namespace gflow::parser
         RESOURCE
     };
 
-    enum DataUsage
+    enum DataUsage : uint8_t
     {
         USED,
         READ_ONLY,
@@ -98,9 +99,9 @@ namespace gflow::parser
         std::string element;
         std::string stackedPath;
 
-        bool pointsToResource(const gflow::parser::Resource* parentResource, const std::string& element) const
+        bool pointsToResource(const gflow::parser::Resource* parent, const std::string& elem) const
         {
-            return this->parentResource == parentResource && this->element == element;
+            return this->parentResource == parent && this->element == elem;
         }
 
         bool operator==(const ResourceElemPath& other) const
@@ -109,7 +110,7 @@ namespace gflow::parser
         }
     };
 
-    template <typename T>
+    template <typename T, bool C>
     class Export
     {
     public:
@@ -133,18 +134,22 @@ namespace gflow::parser
     class Resource
     {
     public:
+        struct ExportData;
+        using ResourceFactory = std::function<Resource* (const std::string&, Resource::ExportData*)>;
+
         struct ExportData
         {
             DataType type = NONE;
             std::string name{};
             void* data = nullptr;
             EnumContext* enumContext = nullptr;
-            Resource* (*resourceFactory)(const std::string&, Resource::ExportData*) = nullptr;
+            ResourceFactory resourceFactory = nullptr;
             Resource* parent = nullptr;
             std::string (*getType)() = nullptr;
+            bool isRef = false;
         };
 
-        struct ResourceData
+        struct SerializedResourceEntry
         {
             uint32_t key;
             std::string type;
@@ -152,7 +157,7 @@ namespace gflow::parser
             std::unordered_map<std::string, std::string> data;
         };
 
-        typedef std::unordered_map<uint32_t, ResourceData> ResourceEntries;
+        typedef std::unordered_map<uint32_t, SerializedResourceEntry> SerializedResourceEntries;
 
     public:
         Resource() { setID(0); }
@@ -163,12 +168,12 @@ namespace gflow::parser
         virtual void initContext(ExportData* metadata) {}
 
         virtual std::string serialize();
-        virtual void deserialize(const ResourceData& data, const ResourceEntries& dependencies);
+        virtual void deserialize(const SerializedResourceEntry& data, const SerializedResourceEntries& dependencies);
 
         bool deserialize(std::string filename = "");
 
         virtual std::pair<std::string, std::string> get(const std::string& variable);
-        virtual bool set(const std::string& variable, const std::string& value, const ResourceEntries& dependencies = {});
+        virtual bool set(const std::string& variable, const std::string& value, const SerializedResourceEntries& dependencies = {});
         virtual DataUsage isUsed(const std::string& variable, const std::vector<Resource*>& parentPath = {}) { return USED; }
 
         template <typename T>
@@ -195,7 +200,7 @@ namespace gflow::parser
         static Resource* create(const std::string& path, ExportData* metadata);
 
     protected:
-        explicit Resource(const std::string& path) : m_path(path) { setID(0); }
+        explicit Resource(std::string path) : m_path(std::move(path)) { setID(0); }
 
         std::string m_path;
         uint32_t m_id;
@@ -209,19 +214,21 @@ namespace gflow::parser
 
         inline static std::unordered_set<uint32_t> s_ids;
 
-        template <typename T>
+        template <typename T, bool C>
         friend class Export;
 
         friend class ResourceManager;
         friend class Project;
     };
 
+    Resource* createResourceInManager(const Resource::ResourceFactory& factory);
+
     //***************************************************************
     //*********************** Implementations ***********************
     //***************************************************************
 
-    template <typename T>
-    Export<T>::Export(const std::string& name, Resource* parent, const bool group) : m_data{}, m_parent(parent)
+    template <typename T, bool C>
+    Export<T, C>::Export(const std::string& name, Resource* parent, const bool group) : m_data{}, m_parent(parent)
     {
         m_isGroup = group;
 
@@ -252,6 +259,8 @@ namespace gflow::parser
             exportData.type = RESOURCE;
             exportData.resourceFactory = &Resource::create<std::remove_pointer_t<T>>;
             exportData.getType = std::remove_pointer_t<T>::getTypeStatic;
+            if constexpr (C)
+                *static_cast<Resource**>(exportData.data) = createResourceInManager(exportData.resourceFactory);
         }
         else
         {
@@ -262,8 +271,8 @@ namespace gflow::parser
         parent->registerExport(exportData);
     }
 
-    template <typename T>
-    Export<T>::Export(const std::string& name, Resource* parent, EnumContext& enumContext) : m_parent(parent)
+    template <typename T, bool C>
+    Export<T, C>::Export(const std::string& name, Resource* parent, EnumContext& enumContext) : m_parent(parent)
     {
         Resource::ExportData data;
         this->m_name = name;
@@ -281,8 +290,8 @@ namespace gflow::parser
         parent->registerExport(data);
     }
 
-    template <typename T>
-    void Export<T>::setData(T value)
+    template <typename T, bool C>
+    void Export<T, C>::setData(T value)
     {
          m_data = value;
          m_parent->exportChanged(m_name);

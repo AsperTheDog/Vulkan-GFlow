@@ -44,4 +44,6 @@ private:
 
     gflow::parser::RenderPass* m_selectedPass = nullptr;
     RenderpassResource* m_selectedPassMeta = nullptr;
+
+    friend class NodeCreateHelper;
 };

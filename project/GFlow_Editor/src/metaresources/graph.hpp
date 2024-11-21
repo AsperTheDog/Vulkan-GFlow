@@ -41,7 +41,7 @@ protected:
 class GraphResource : public gflow::parser::Resource
 {
 public:
-    typedef gflow::parser::ResPair<gflow::parser::BigIntPair, gflow::parser::Pair<size_t, int>> Connection;
+    typedef gflow::parser::ResPair<gflow::parser::BigIntPair, gflow::parser::BigIntPair> Connection;
 protected:
 
     EXPORT_RESOURCE_LIST(NodeResource, nodes);

@@ -8,7 +8,7 @@ namespace gflow::string
     {
         const size_t first = str.find_first_not_of(token);
         if (std::string::npos == first)
-            return str;
+            return "";
         const size_t last = str.find_last_not_of(token);
         return str.substr(first, last - first + 1);
     }

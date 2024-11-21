@@ -238,7 +238,7 @@ namespace gflow::parser
         }
     }
 
-    bool ResourceManager::injectResourceFactory(const std::string& type, const ResourceFactory& factory, bool isPrivate)
+    bool ResourceManager::injectResourceFactory(const std::string& type, const Resource::ResourceFactory& factory, bool isPrivate)
     {
         if (s_resourceFactories.contains(type))
             return false;
@@ -328,7 +328,7 @@ namespace gflow::parser
         return elem;
     }
 
-    Resource* ResourceManager::createResource(const std::string& type, const std::string& path, Resource::ExportData* data, const bool recursive)
+    Resource* ResourceManager::createResource(const std::string& type, const std::string& path, Resource::ExportData* data)
     {
         if (!s_resourceFactories.contains(type))
             throw std::runtime_error("Unknown resource type " + (type.empty() ? "<empty type>" : type) + " while parsing file '" + path + "'");
@@ -336,19 +336,15 @@ namespace gflow::parser
         if (s_resourceFactories[type].first == nullptr)
             throw std::runtime_error("Resource type " + type + " is not implemented yet");
 
-        return createResource(path, s_resourceFactories[type].first, data, recursive);
+        return createResource(path, s_resourceFactories[type].first, data);
     }
 
-    Resource* ResourceManager::createResource(const std::string& path, const ResourceFactory& factory, Resource::ExportData* data, const bool recursive)
+    Resource* ResourceManager::createResource(const std::string& path, const Resource::ResourceFactory& factory, Resource::ExportData* data)
     {
         if (path.empty())
         {
             m_embeddedResources.push_back(factory("", data));
             Resource* res = m_embeddedResources.back();
-            if (recursive)
-                for (Resource::ExportData& exportData : res->getExports())
-                    if (exportData.type == RESOURCE)
-                        *static_cast<Resource**>(exportData.data) = createResource("", exportData.resourceFactory, &exportData, true);
             return res;
         }
 
@@ -356,10 +352,6 @@ namespace gflow::parser
             throw std::runtime_error("Resource already exists");
 
         m_resources[path] = factory(path, data);
-        if (recursive)
-            for (Resource::ExportData& exportData : m_resources[path]->getExports())
-                if (exportData.type == RESOURCE)
-                    *static_cast<Resource**>(exportData.data) = createResource("", exportData.resourceFactory, &exportData, true);
         m_fileTree.addPath(path);
         return m_resources[path];
     }

@@ -52,7 +52,7 @@ public:
 
 class PipelineNodeResource final : public NodeResource
 {
-    EXPORT_RESOURCE(gflow::parser::Pipeline, pipeline);
+    EXPORT_RESOURCE(gflow::parser::Pipeline, pipeline, false);
 
     
     void initContext(ExportData* metadata) override {}
@@ -114,7 +114,7 @@ U* RenderpassResource::addNode(const gflow::parser::Vec2 position)
 {
     static_assert(std::is_base_of_v<NodeResource, U>, "T must be a subclass of NodeResource");
 
-    U* node = (*nodes).emplace_subclass_back<U>(false);
+    U* node = (*nodes).emplace_subclass_back<U>();
     node->set("position", position.toString());
     return node;
 }
