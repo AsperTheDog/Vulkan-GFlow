@@ -77,6 +77,19 @@ namespace gflow::parser
             exportChanged("size");
             return true;
         }
+
+        try
+        {
+            const int32_t index = std::stoi(variable);
+            if (index < 0) return false;
+            if (index >= m_size)
+            {
+                m_size = index + 1;
+                exportChanged("size");
+            }
+        }
+        catch (const std::exception&) { return false; }
+
         return Resource::set(variable, value, dependencies);
     }
 
