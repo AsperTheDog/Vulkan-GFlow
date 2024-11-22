@@ -27,11 +27,11 @@ namespace gflow::parser
         friend class List;
     };
 
-    template <typename T, typename U, bool C = true>
+    template <typename T, typename U, bool C = true, bool R = false>
     class ResPair final : public Resource
     {
-        EXPORT_RESOURCE(T, first, C);
-        EXPORT_RESOURCE(U, second, C);
+        EXPORT_RESOURCE(T, first, C, R);
+        EXPORT_RESOURCE(U, second, C, R);
 
     public:
         DECLARE_RESOURCE(ResPair)
@@ -74,12 +74,12 @@ namespace gflow::parser
         friend class List;
     };
 
-    template <typename T, typename U, typename V, bool C = true>
+    template <typename T, typename U, typename V, bool C = true, bool R = false>
     class ResTriple final : public Resource
     {
-        EXPORT_RESOURCE(T, first, C);
-        EXPORT_RESOURCE(U, second, C);
-        EXPORT_RESOURCE(V, third, C);
+        EXPORT_RESOURCE(T, first, C, R);
+        EXPORT_RESOURCE(U, second, C, R);
+        EXPORT_RESOURCE(V, third, C, R);
 
     public:
         DECLARE_RESOURCE(ResTriple)

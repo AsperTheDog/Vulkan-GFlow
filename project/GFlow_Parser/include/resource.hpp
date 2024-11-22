@@ -11,11 +11,11 @@
 #include "string_helper.hpp"
 #include "utils/logger.hpp"
 
-#define EXPORT(type, name) gflow::parser::Export<type, false> ##name{#name, this}
-#define EXPORT_GROUP(name, title) gflow::parser::Export<bool, false> _##name{title, this, true}
-#define EXPORT_ENUM(name, context) gflow::parser::Export<gflow::parser::EnumExport, false> ##name{#name, this, context}
-#define EXPORT_BITMASK(name, context) gflow::parser::Export<gflow::parser::EnumBitmask, false> ##name{#name, this, context}
-#define EXPORT_RESOURCE(type, name, createOnInit) gflow::parser::Export<type*, createOnInit> ##name{#name, this}
+#define EXPORT(type, name) gflow::parser::Export<type, false, false> ##name{#name, this}
+#define EXPORT_GROUP(name, title) gflow::parser::Export<bool, false, false> _##name{title, this, true}
+#define EXPORT_ENUM(name, context) gflow::parser::Export<gflow::parser::EnumExport, false, false> ##name{#name, this, context}
+#define EXPORT_BITMASK(name, context) gflow::parser::Export<gflow::parser::EnumBitmask, false, false> ##name{#name, this, context}
+#define EXPORT_RESOURCE(type, name, createOnInit, IsRef) gflow::parser::Export<type*, createOnInit, IsRef> ##name{#name, this}
 
 #define DECLARE_RESOURCE_ANCESTOR_NO_CONST(type, parent)                                     \
         [[nodiscard]] static std::string getTypeStatic() { return #type; }                   \
@@ -27,7 +27,7 @@
             return newRes;                                                                   \
         }                                                                                    \
         friend class ResourceManager;                                                        \
-        template <typename U, bool C> friend class Export;                                   \
+        template <typename U, bool C, bool R> friend class Export;                           \
         friend class Resource;
 
 #define DECLARE_RESOURCE_ANCESTOR(type, parent)                                              \
@@ -132,7 +132,7 @@ namespace gflow::parser
         }
     };
 
-    template <typename T, bool C>
+    template <typename T, bool CreateOnInit, bool IsRef>
     class Export
     {
     public:
@@ -236,7 +236,7 @@ namespace gflow::parser
 
         inline static std::unordered_set<uint32_t> s_ids;
 
-        template <typename T, bool C>
+        template <typename T, bool C, bool R>
         friend class Export;
 
         friend class ResourceManager;
@@ -249,8 +249,8 @@ namespace gflow::parser
     //*********************** Implementations ***********************
     //***************************************************************
 
-    template <typename T, bool C>
-    Export<T, C>::Export(const std::string& name, Resource* parent, const bool group) : m_data{}, m_parent(parent)
+    template <typename T, bool C, bool R>
+    Export<T, C, R>::Export(const std::string& name, Resource* parent, const bool group) : m_data{}, m_parent(parent)
     {
         m_isGroup = group;
 
@@ -266,6 +266,7 @@ namespace gflow::parser
         }
 
         exportData.data = &m_data;
+        exportData.isRef = R;
 
         if constexpr (std::is_same_v<T, std::string>) exportData.type = STRING;
         else if constexpr (std::is_same_v<T, FilePath>) exportData.type = FILE;
@@ -295,14 +296,15 @@ namespace gflow::parser
         parent->registerExport(exportData);
     }
 
-    template <typename T, bool C>
-    Export<T, C>::Export(const std::string& name, Resource* parent, EnumContext& enumContext) : m_parent(parent)
+    template <typename T, bool C, bool R>
+    Export<T, C, R>::Export(const std::string& name, Resource* parent, EnumContext& enumContext) : m_parent(parent)
     {
         Resource::ExportData data;
         this->m_name = name;
         data.name = name;
         data.enumContext = &enumContext;
         data.data = &this->m_data;
+        data.isRef = R;
         if constexpr (std::is_same_v<T, EnumExport>) data.type = ENUM;
         else if constexpr (std::is_same_v<T, EnumBitmask>) data.type = ENUM_BITMASK;
         else
@@ -314,8 +316,8 @@ namespace gflow::parser
         parent->registerExport(data);
     }
 
-    template <typename T, bool C>
-    void Export<T, C>::setData(T value)
+    template <typename T, bool C, bool R>
+    void Export<T, C, R>::setData(T value)
     {
          m_data = value;
          m_parent->exportChanged(m_name);

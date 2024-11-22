@@ -2,9 +2,11 @@
 #include "resource_manager.hpp"
 #include "../resource.hpp"
 
-#define EXPORT_LIST(type, name) gflow::parser::Export<gflow::parser::List<type>*, true> ##name{#name, this}
-#define EXPORT_ENUM_LIST(name, context) gflow::parser::Export<gflow::parser::List<gflow::parser::EnumExport>*, true> ##name{#name, this, context}
-#define EXPORT_RESOURCE_LIST(type, name) gflow::parser::Export<gflow::parser::List<type*>*, true> ##name{#name, this}
+#define EXPORT_LIST(type, name) gflow::parser::Export<gflow::parser::List<type>*, true, false> ##name{#name, this}
+#define EXPORT_ENUM_LIST(name, context) gflow::parser::Export<gflow::parser::List<gflow::parser::EnumExport>*, true, false> ##name{#name, this, context}
+#define EXPORT_RESOURCE_LIST(type, name) gflow::parser::Export<gflow::parser::List<type*>*, true, false> ##name{#name, this}
+
+// TODO: Figure out how to allow a list of references
 
 namespace gflow::parser
 {
@@ -237,7 +239,7 @@ namespace gflow::parser
     }
 
     template <typename T>
-    class Export<List<T>*, true>
+    class Export<List<T>*, true, false>
     {
     public:
         Export(std::string_view name, Resource* parent);
@@ -260,7 +262,7 @@ namespace gflow::parser
     };
 
     template <typename T>
-    Export<List<T>*, true>::Export(std::string_view name, Resource* parent) : m_parent(parent)
+    Export<List<T>*, true, false>::Export(std::string_view name, Resource* parent) : m_parent(parent)
     {
         Resource::ExportData data;
         this->m_name = name;
@@ -269,13 +271,14 @@ namespace gflow::parser
         data.resourceFactory = &Resource::create<List<T>>;
         data.getType = List<T>::getTypeStatic;
         data.data = &this->m_data;
+        data.isRef = false;
         *static_cast<Resource**>(data.data) = createResourceInManager(data.resourceFactory);
 
         parent->registerExport(data);
     }
 
     template <typename T>
-    Export<List<T>*, true>::Export(std::string_view name, Resource* parent, EnumContext& enumContext) : m_parent(parent)
+    Export<List<T>*, true, false>::Export(std::string_view name, Resource* parent, EnumContext& enumContext) : m_parent(parent)
     {
         Resource::ExportData data;
         this->m_name = name;
@@ -285,6 +288,7 @@ namespace gflow::parser
         data.getType = List<T>::getTypeStatic;
         data.enumContext = &enumContext;
         data.data = &this->m_data;
+        data.isRef = false;
         *static_cast<Resource**>(data.data) = createResourceInManager(data.resourceFactory);
 
         parent->registerExport(data);

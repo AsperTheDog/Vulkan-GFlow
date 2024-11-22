@@ -228,6 +228,7 @@ void ImGuiResourceEditorWindow::drawResource(const std::string& stackedName, voi
     bool isHeaderOpen = true;
     gflow::parser::Resource** resource = static_cast<gflow::parser::Resource**>(data);
     if (*resource == nullptr) return;
+    std::vector<std::string> changedExports{};
     for (gflow::parser::Resource::ExportData& exportElem : (*resource)->getExports())
     {
         const gflow::parser::DataUsage usage = (*resource)->isUsed(exportElem.name, parentPath);
@@ -293,11 +294,15 @@ void ImGuiResourceEditorWindow::drawResource(const std::string& stackedName, voi
             }
         }
         ImGui::EndDisabled();
+
         if (changed)
-        {
-            m_variableChangedSignal.emit({m_selectedResource->getPath(), m_selectedResource, exportElem.name, stackedName});
-            (*resource)->exportChanged(exportElem.name);
-        }
+            changedExports.push_back(exportElem.name);
+    }
+
+    for (const std::string& changedExport : changedExports)
+    {
+        m_variableChangedSignal.emit({m_selectedResource->getPath(), m_selectedResource, changedExport, stackedName});
+        (*resource)->exportChanged(changedExport);
     }
 }
 
@@ -334,7 +339,7 @@ void ImGuiResourceEditorWindow::drawSubresource(const std::string& name, std::st
     if (ImGui::BeginPopupContextItem())
     {
         bool shouldReturn = false;
-        if (m_allowEmbedded)
+        if (!data.isRef)
         {
             if (ImGui::MenuItem("Create embedded"))
             {

@@ -48,7 +48,8 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <None Include="assets\_shaders\shader.vert" />
-    <None Include="assets\_shaders\shader.frag" />
+    <None Include="assets\_shaders\depth.vert" />
+    <None Include="assets\_shaders\color.frag" />
+    <None Include="assets\_shaders\color.vert" />
   </ItemGroup>
 </Project>

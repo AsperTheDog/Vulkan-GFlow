@@ -76,10 +76,10 @@ namespace gflow::parser
         using StrPair = Pair<std::string, std::string>;
 
     private:
-        EXPORT_RESOURCE(PipelineInputAssemblyState, inputAssemblyState, true);
-        EXPORT_RESOURCE(PipelineRasterizationState, rasterizationState, true);
-        EXPORT_RESOURCE(PipelineDepthStencilState, depthStencilState, true);
-        EXPORT_RESOURCE(PipelineColorBlendState, colorBlendState, true);
+        EXPORT_RESOURCE(PipelineInputAssemblyState, inputAssemblyState, true, false);
+        EXPORT_RESOURCE(PipelineRasterizationState, rasterizationState, true, false);
+        EXPORT_RESOURCE(PipelineDepthStencilState, depthStencilState, true, false);
+        EXPORT_RESOURCE(PipelineColorBlendState, colorBlendState, true, false);
         EXPORT_GROUP(shaders, "Shaders");
         EXPORT(FilePath, vertex);
         EXPORT(FilePath, fragment);

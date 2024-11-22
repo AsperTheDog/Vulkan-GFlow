@@ -17,8 +17,6 @@ public:
     gflow::parser::Resource* getSelectedResource() const;
 
     void setInlinePadding(const float padding) { m_inlinePadding = padding; }
-
-    void setAllowEmbedded(const bool allow) { m_allowEmbedded = allow; }
     
     void updateChangedVar(const gflow::parser::Resource* resource, const std::string& name, bool commit);
 
@@ -52,6 +50,5 @@ private:
 
 private:
     float m_inlinePadding = 200.0f;
-    bool m_allowEmbedded = true;
 };
 

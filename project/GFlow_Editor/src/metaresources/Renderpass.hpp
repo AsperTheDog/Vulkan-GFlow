@@ -52,7 +52,7 @@ public:
 
 class PipelineNodeResource final : public NodeResource
 {
-    EXPORT_RESOURCE(gflow::parser::Pipeline, pipeline, false);
+    EXPORT_RESOURCE(gflow::parser::Pipeline, pipeline, false, true);
 
     
     void initContext(ExportData* metadata) override {}
@@ -74,6 +74,7 @@ public:
     void removeNode(GFlowNode* node);
 
     void addConnection(size_t left_uid, size_t left_pin, size_t right_uid, size_t right_pin);
+    void clearConnections() { (*connections).clear(); }
 
     DECLARE_PRIVATE_RESOURCE_ANCESTOR(RenderpassResource, GraphResource)
 };

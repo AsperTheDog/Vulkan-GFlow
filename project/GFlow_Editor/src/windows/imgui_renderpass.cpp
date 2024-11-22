@@ -180,6 +180,7 @@ void ImGuiRenderPassWindow::saveRenderPass()
         resource->setPos({ gnode->getPos().x, gnode->getPos().y });
     }
 
+    m_selectedPassMeta->clearConnections();
     for (const std::weak_ptr<ImFlow::Link>& connection : m_grid.getLinks())
     {
         const ImFlow::Link* link = connection.lock().get();
@@ -235,8 +236,6 @@ void ImGuiRenderPassWindow::processSubpassConnections(SubpassNode* subpass, gflo
         VulkanShader::ReflectionData data = pipelineResource->getShaderReflectionData(gflow::parser::Pipeline::VERTEX);
         if (data.valid)
         {
-            for (const spirv_cross::Resource& resource : data.resources.stage_outputs)
-                colorAttachments.insert(resource.name);
             for (const spirv_cross::Resource& resource : data.resources.subpass_inputs)
                 inputAttachments.insert(resource.name);
         }
