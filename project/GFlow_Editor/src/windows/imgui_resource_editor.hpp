@@ -33,6 +33,8 @@ private:
     bool drawVec2(const std::string& name, void* data) const;
     bool drawVec3(const std::string& name, void* data) const;
     bool drawVec4(const std::string& name, void* data) const;
+    bool drawColor(const std::string& name, void* data) const;
+    bool drawUColor(const std::string& name, void* data) const;
     void drawResource(const std::string& stackedName, void* data, const std::vector<gflow::parser::Resource*>& parentPath);
     void drawSubresource(const std::string& name, std::string stackedName, gflow::parser::Resource::ExportData& data, const std::vector<gflow::parser::Resource*>& parentPath);
     bool drawEnum(const std::string& name, void* data, const gflow::parser::EnumContext* context) const;

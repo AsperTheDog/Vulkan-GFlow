@@ -12,7 +12,6 @@ namespace gflow::parser
     {
         EXPORT_ENUM(topology, EnumContexts::primitiveTopology);
         EXPORT(bool, restartEnable);
-        EXPORT(std::string, something);
         
     public:
         DECLARE_PRIVATE_RESOURCE(PipelineInputAssemblyState)

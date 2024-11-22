@@ -96,7 +96,9 @@ GFlowNode* SubpassNode::getNext() const
 
 void SubpassNode::addColorAttachmentPin(const std::string& name, const bool addToResource)
 {
-    const std::shared_ptr<ImFlow::InPin<int>> newAttachment = addIN(name, 0, getLambdaFilter(IMAGE), ImFlow::PinStyle::green());
+    static std::shared_ptr<ImFlow::PinStyle> pinColor = std::make_shared<ImFlow::PinStyle>(ImFlow::PinStyle(IM_COL32(145,255,150,255), 4, 4.f, 4.67f, 4.2f, 1.3f));
+
+    const std::shared_ptr<ImFlow::InPin<int>> newAttachment = addIN(name, 0, getLambdaFilter(IMAGE), pinColor);
     newAttachment->setFilterID(IMAGE);
     m_ColorAttachmentPins.push_back(newAttachment);
     if (addToResource)
@@ -111,7 +113,9 @@ void SubpassNode::removeColorAttachmentPin(const std::string& name)
 
 void SubpassNode::addInputAttachmentPin(const std::string& name, const bool addToResource)
 {
-    const std::shared_ptr<ImFlow::InPin<int>> newAttachment = addIN(name, 0, getLambdaFilter(IMAGE), ImFlow::PinStyle::green());
+    static std::shared_ptr<ImFlow::PinStyle> pinColor = std::make_shared<ImFlow::PinStyle>(ImFlow::PinStyle(IM_COL32(95,184,98,255), 4, 4.f, 4.67f, 4.2f, 1.3f));
+
+    const std::shared_ptr<ImFlow::InPin<int>> newAttachment = addIN(name, 0, getLambdaFilter(IMAGE), pinColor);
     newAttachment->setFilterID(IMAGE);
     m_InputAttachmentPins.push_back(newAttachment);
     if (addToResource)
@@ -152,11 +156,13 @@ std::unordered_set<std::string> SubpassNode::getInputAttachments() const
 
 void SubpassNode::setDepthAttachment(const bool enabled, const bool force)
 {
+    static std::shared_ptr<ImFlow::PinStyle> pinColor = std::make_shared<ImFlow::PinStyle>(ImFlow::PinStyle(IM_COL32(49,130,52,255), 4, 4.f, 4.67f, 4.2f, 1.3f));
+
     if (m_resource->hasDepthAttachment() == enabled && !force) return;
 
     if (enabled)
     {
-        m_DepthAttachmentPin = addIN("depth", 0, getLambdaFilter(IMAGE), ImFlow::PinStyle::light_green());
+        m_DepthAttachmentPin = addIN("depth", 0, getLambdaFilter(IMAGE), pinColor);
         m_DepthAttachmentPin->setFilterID(IMAGE);
     }
     else

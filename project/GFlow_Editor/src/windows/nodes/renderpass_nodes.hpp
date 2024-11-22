@@ -4,6 +4,14 @@
 #include "metaresources/renderpass.hpp"
 #include "windows/nodes/base_node.hpp"
 
+enum RenderPassPinType : uint8_t
+{
+    INIT,
+    SUBPASS,
+    PIPELINE,
+    IMAGE
+};
+
 class ImageNode final : public GFlowNode
 {
 public:

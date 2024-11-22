@@ -138,6 +138,10 @@ namespace gflow::parser
                 return { static_cast<Vec3*>(exportData.data)->toString(), "" };
             case VEC4:
                 return { static_cast<Vec4*>(exportData.data)->toString(), "" };
+            case COLOR:
+                return { static_cast<Color*>(exportData.data)->toString(), "" };
+            case UCOLOR:
+                return { static_cast<UColor*>(exportData.data)->toString(), "" };
             case ENUM_BITMASK:
             case ENUM:
                 return { std::to_string(static_cast<EnumExport*>(exportData.data)->id), "" };
@@ -223,6 +227,36 @@ namespace gflow::parser
                 vec->y = std::stof(values[1]);
                 vec->z = std::stof(values[2]);
                 vec->w = std::stof(values[3]);
+                break;
+            }
+            case COLOR:
+            {
+                Color* color = static_cast<Color*>(exportData.data);
+                const std::vector<std::string> values = string::split(value, ", ");
+                if (values.size() != 4)
+                {
+                    Logger::print("Invalid value for Color: " + value, Logger::ERR);
+                    return false;
+                }
+                color->r = std::stof(values[0]);
+                color->g = std::stof(values[1]);
+                color->b = std::stof(values[2]);
+                color->a = std::stof(values[3]);
+                break;
+            }
+            case UCOLOR:
+            {
+                UColor* color = static_cast<UColor*>(exportData.data);
+                const std::vector<std::string> values = string::split(value, ", ");
+                if (values.size() != 4)
+                {
+                    Logger::print("Invalid value for UColor: " + value, Logger::ERR);
+                    return false;
+                }
+                color->r = std::stoi(values[0]);
+                color->g = std::stoi(values[1]);
+                color->b = std::stoi(values[2]);
+                color->a = std::stoi(values[3]);
                 break;
             }
             case ENUM_BITMASK:

@@ -3,12 +3,17 @@
 #include "resources/list.hpp"
 #include "resources/pair.hpp"
 
-enum RenderPassPinType : uint8_t
+class CustomPin final : public gflow::parser::Resource
 {
-    INIT,
-    SUBPASS,
-    PIPELINE,
-    IMAGE
+private:
+    EXPORT(std::string, name);
+    EXPORT(int, type);
+    EXPORT(size_t, pinID);
+    EXPORT(gflow::parser::UColor, color);
+    EXPORT_LIST(int, filters);
+
+public:
+    DECLARE_PRIVATE_RESOURCE(CustomPin)
 };
 
 class NodeResource : public gflow::parser::Resource
@@ -38,10 +43,32 @@ protected:
     NodeResource() = default;
 };
 
+class Connection final : public gflow::parser::Resource
+{
+private:
+    EXPORT(size_t, leftUID);
+    EXPORT(size_t, leftPin);
+    EXPORT(size_t, rightUID);
+    EXPORT(size_t, rightPin);
+    
+public:
+    [[nodiscard]] size_t getLeftUID() const { return *leftUID; }
+    [[nodiscard]] size_t getLeftPin() const { return *leftPin; }
+    [[nodiscard]] size_t getRightUID() const { return *rightUID; }
+    [[nodiscard]] size_t getRightPin() const { return *rightPin; }
+    void setValues(const size_t leftUID, const size_t leftPin, const size_t rightUID, const size_t rightPin)
+    {
+        *this->leftUID = leftUID;
+        *this->leftPin = leftPin;
+        *this->rightUID = rightUID;
+        *this->rightPin = rightPin;
+    }
+
+    DECLARE_PRIVATE_RESOURCE(Connection)
+};
+
 class GraphResource : public gflow::parser::Resource
 {
-public:
-    typedef gflow::parser::ResPair<gflow::parser::BigIntPair, gflow::parser::BigIntPair> Connection;
 protected:
 
     EXPORT_RESOURCE_LIST(NodeResource, nodes);

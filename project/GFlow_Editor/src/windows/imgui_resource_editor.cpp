@@ -183,6 +183,38 @@ bool ImGuiResourceEditorWindow::drawVec4(const std::string& name, void* data) co
     return changed;
 }
 
+bool ImGuiResourceEditorWindow::drawColor(const std::string& name, void* data) const
+{
+    gflow::parser::Color* value = static_cast<gflow::parser::Color*>(data);
+    gflow::parser::Color tmp = *value;
+    ImGui::Text(name.c_str());
+    ImGui::SameLine(m_inlinePadding);
+    ImGui::PushItemWidth(LEFT_ALIGN_ITEM);
+    ImGui::ColorEdit4(("##" + name).c_str(), reinterpret_cast<float*>(&tmp));
+    ImGui::PopItemWidth();
+    ImGui::Spacing();
+    const bool changed = tmp != *value;
+    *value = tmp;
+    return changed;
+}
+
+bool ImGuiResourceEditorWindow::drawUColor(const std::string& name, void* data) const
+{
+    gflow::parser::UColor* value = static_cast<gflow::parser::UColor*>(data);
+    gflow::parser::UColor tmp = *value;
+    gflow::parser::Color ftmp = value->getfColor();
+    ImGui::Text(name.c_str());
+    ImGui::SameLine(m_inlinePadding);
+    ImGui::PushItemWidth(LEFT_ALIGN_ITEM);
+    ImGui::ColorEdit4(("##" + name).c_str(), reinterpret_cast<float*>(&ftmp));
+    ImGui::PopItemWidth();
+    ImGui::Spacing();
+    tmp.fromfColor(ftmp);
+    const bool changed = tmp != *value;
+    *value = tmp;
+    return changed;
+}
+
 bool ImGuiResourceEditorWindow::drawFile(const std::string& name, void* data) const
 {
     gflow::parser::FilePath* str = static_cast<gflow::parser::FilePath*>(data);
@@ -236,6 +268,12 @@ void ImGuiResourceEditorWindow::drawResource(const std::string& stackedName, voi
             break;
         case gflow::parser::DataType::VEC4:
             changed = drawVec4(exportElem.name, exportElem.data);
+            break;
+        case gflow::parser::DataType::COLOR:
+            changed = drawColor(exportElem.name, exportElem.data);
+            break;
+        case gflow::parser::DataType::UCOLOR:
+            changed = drawUColor(exportElem.name, exportElem.data);
             break;
         case gflow::parser::DataType::FILE:
             changed = drawFile(exportElem.name, exportElem.data);

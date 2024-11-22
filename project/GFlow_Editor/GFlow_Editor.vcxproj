@@ -140,6 +140,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\metaresources\execution.hpp" />
     <ClInclude Include="src\metaresources\graph.hpp" />
     <ClInclude Include="src\metaresources\renderpass.hpp" />
     <ClInclude Include="src\windows\imgui_graph_window.hpp" />
@@ -152,9 +153,11 @@
     <ClInclude Include="src\windows\imgui_resources.hpp" />
     <ClInclude Include="src\editor.hpp" />
     <ClInclude Include="src\sdl_window.hpp" />
+    <ClInclude Include="src\windows\nodes\execution_nodes.hpp" />
     <ClInclude Include="src\windows\nodes\renderpass_nodes.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\metaresources\execution.cpp" />
     <ClCompile Include="src\metaresources\renderpass.cpp" />
     <ClCompile Include="src\windows\imgui_graph_window.cpp" />
     <ClCompile Include="src\windows\nodes\base_node.cpp" />
@@ -166,6 +169,7 @@
     <ClCompile Include="src\editor.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\sdl_window.cpp" />
+    <ClCompile Include="src\windows\nodes\execution_nodes.cpp" />
     <ClCompile Include="src\windows\nodes\renderpass_nodes.cpp" />
   </ItemGroup>
   <ItemGroup>

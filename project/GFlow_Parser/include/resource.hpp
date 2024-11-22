@@ -53,6 +53,8 @@ namespace gflow::parser
         VEC2,
         VEC3,
         VEC4,
+        COLOR,
+        UCOLOR,
         FILE,
         ENUM,
         ENUM_BITMASK,
@@ -90,6 +92,26 @@ namespace gflow::parser
         bool operator==(const Vec4& other) const { return x == other.x && y == other.y && z == other.z && w == other.w; }
 
         [[nodiscard]] std::string toString() const { return std::to_string(x) + ", " + std::to_string(y) + ", " + std::to_string(z) + ", " + std::to_string(w); }
+    };
+    struct Color
+    {
+        float r, g, b, a;
+        bool operator==(const Color& other) const { return r == other.r && g == other.g && b == other.b && a == other.a; }
+        [[nodiscard]] std::string toString() const { return std::to_string(r) + ", " + std::to_string(g) + ", " + std::to_string(b) + ", " + std::to_string(a); }
+    };
+    struct UColor
+    {
+        uint8_t r, g, b, a;
+        bool operator==(const UColor& other) const { return r == other.r && g == other.g && b == other.b && a == other.a; }
+        [[nodiscard]] std::string toString() const { return std::to_string(r) + ", " + std::to_string(g) + ", " + std::to_string(b) + ", " + std::to_string(a); }
+        gflow::parser::Color getfColor() const { return { r / 255.f, g / 255.f, b / 255.f, a / 255.f }; }
+        void fromfColor(const Color& ftmp)
+        {
+            r = static_cast<uint8_t>(ftmp.r * 255);
+            g = static_cast<uint8_t>(ftmp.g * 255);
+            b = static_cast<uint8_t>(ftmp.b * 255);
+            a = static_cast<uint8_t>(ftmp.a * 255);
+        }
     };
 
     struct ResourceElemPath
@@ -254,6 +276,8 @@ namespace gflow::parser
         else if constexpr (std::is_same_v<T, Vec2>) exportData.type = VEC2;
         else if constexpr (std::is_same_v<T, Vec3>) exportData.type = VEC3;
         else if constexpr (std::is_same_v<T, Vec4>) exportData.type = VEC4;
+        else if constexpr (std::is_same_v<T, Color>) exportData.type = COLOR;
+        else if constexpr (std::is_same_v<T, UColor>) exportData.type = UCOLOR;
         else if constexpr (std::is_pointer_v<T> && std::is_base_of_v<Resource, std::remove_pointer_t<T>>)
         {
             exportData.type = RESOURCE;

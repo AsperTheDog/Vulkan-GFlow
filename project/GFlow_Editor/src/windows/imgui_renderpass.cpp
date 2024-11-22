@@ -180,11 +180,6 @@ void ImGuiRenderPassWindow::saveRenderPass()
         resource->setPos({ gnode->getPos().x, gnode->getPos().y });
     }
 
-    // Get connection
-    // TODO: Move this to Graph!! Tasks to do first
-    // TODO: - Make each attachment type have its own color
-    // TODO: - Add color to the types of serializable fields
-    // TODO: - Make Connection resource
     for (const std::weak_ptr<ImFlow::Link>& connection : m_grid.getLinks())
     {
         const ImFlow::Link* link = connection.lock().get();
@@ -220,13 +215,9 @@ void ImGuiRenderPassWindow::loadRenderPass(const bool loadInit)
 
     for (int i = 0; i < m_selectedPassMeta->getConnections().size(); ++i)
     {
-        GraphResource::Connection* connection = m_selectedPassMeta->getConnections()[i];
-        const size_t leftUID = connection->getFirst()->getFirst();
-        const size_t leftPin = connection->getFirst()->getSecond();
-        const size_t rightUID = connection->getSecond()->getFirst();
-        const size_t rightPin = connection->getSecond()->getSecond();
-        ImFlow::Pin* left = m_grid.getNodes().at(leftUID)->outPin(leftPin);
-        ImFlow::Pin* right = m_grid.getNodes().at(rightUID)->inPin(rightPin);
+        const Connection* connection = m_selectedPassMeta->getConnections()[i];
+        ImFlow::Pin* left = m_grid.getNodes().at(connection->getLeftUID())->outPin(connection->getLeftPin());
+        ImFlow::Pin* right = m_grid.getNodes().at(connection->getRightUID())->inPin(connection->getRightPin());
         left->createLink(right);
     }
 }

@@ -23,7 +23,7 @@ void RenderpassResource::removeNode(GFlowNode* node)
     (*nodes).erase(node->getLinkedResource());
     for (int i = 0; i < (*connections).size(); i++)
     {
-        if ((*connections)[i]->getFirst()->getFirst() == node->getUID() || (*connections)[i]->getSecond()->getFirst() == node->getUID())
+        if ((*connections)[i]->getLeftUID() == node->getUID() || (*connections)[i]->getRightUID() == node->getUID())
         {
             (*connections).remove(i);
             i--;
@@ -35,14 +35,13 @@ void RenderpassResource::addConnection(const size_t left_uid, const size_t left_
 {
     for (int i = 0; i < (*connections).size(); i++)
     {
-        if ((*connections)[i]->getFirst()->getFirst() == left_uid && (*connections)[i]->getFirst()->getSecond() == left_pin &&
-            (*connections)[i]->getSecond()->getFirst() == right_uid && (*connections)[i]->getSecond()->getSecond() == right_pin)
+        if ((*connections)[i]->getLeftUID() == left_uid && (*connections)[i]->getLeftPin() == left_pin &&
+            (*connections)[i]->getRightUID() == right_uid && (*connections)[i]->getRightPin() == right_pin)
         {
             return;
         }
     }
     Connection** connection = (*connections).emplace_back();
-    (*connection)->getFirst()->setValues(left_uid, left_pin);
-    (*connection)->getSecond()->setValues(right_uid, right_pin);
+    (*connection)->setValues(left_uid, left_pin, right_uid, right_pin);
 }
 
