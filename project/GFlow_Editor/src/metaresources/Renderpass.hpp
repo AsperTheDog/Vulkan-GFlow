@@ -17,10 +17,21 @@ class ImageNodeResource final : public NodeResource
     EXPORT_ENUM(usage, gflow::parser::EnumContexts::ImageUsageContext);
 
     void initContext(ExportData* metadata) override {}
-    gflow::parser::DataUsage isUsed(const std::string& variable, const std::vector<Resource*>& parentPath) override;
+    gflow::parser::DataUsage isUsed(const std::string& variable, const std::vector<Resource*>& parentPath) override { return gflow::parser::USED; }
 
 public:
     DECLARE_PRIVATE_RESOURCE_ANCESTOR(ImageNodeResource, NodeResource)
+};
+
+class PushConstantNodeResource final : public NodeResource
+{
+    EXPORT(std::string, structID);
+
+    void initContext(ExportData* metadata) override {}
+    gflow::parser::DataUsage isUsed(const std::string& variable, const std::vector<Resource*>& parentPath) override { return gflow::parser::USED; }
+
+public:
+    DECLARE_PRIVATE_RESOURCE_ANCESTOR(PushConstantNodeResource, NodeResource)
 };
 
 class SubpassNodeResource final : public NodeResource
@@ -54,12 +65,20 @@ class PipelineNodeResource final : public NodeResource
 {
     EXPORT_RESOURCE(gflow::parser::Pipeline, pipeline, false, true);
 
+    EXPORT_LIST(std::string, pushConstants);
     
     void initContext(ExportData* metadata) override {}
     gflow::parser::DataUsage isUsed(const std::string& variable, const std::vector<Resource*>& parentPath) override;
 
 public:
     gflow::parser::Pipeline* getPipeline() { return *pipeline; }
+
+    std::vector<std::string> getPushConstants() { return (*pushConstants).data(); }
+
+    void addPushConstant(const std::string& name) { (*pushConstants).push_back(name); }
+    void removePushConstant(const std::string& name) { (*pushConstants).erase(name); }
+
+    void clearPushConstants() { (*pushConstants).clear(); }
 
     DECLARE_PRIVATE_RESOURCE_ANCESTOR(PipelineNodeResource, NodeResource)
 };
@@ -82,15 +101,6 @@ public:
 // **************
 // Implementation
 // **************
-
-inline gflow::parser::DataUsage ImageNodeResource::isUsed(const std::string& variable, const std::vector<Resource*>& parentPath)
-{
-    if (variable == "imageID" || variable == "usage")
-    {
-        return gflow::parser::USED;
-    }
-    return NodeResource::isUsed(variable, parentPath);
-}
 
 inline gflow::parser::DataUsage SubpassNodeResource::isUsed(const std::string& variable, const std::vector<Resource*>& parentPath)
 {

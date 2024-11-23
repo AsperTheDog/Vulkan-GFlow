@@ -2,7 +2,6 @@
 #include "../resource_manager.hpp"
 
 #include "list.hpp"
-#include "pair.hpp"
 #include "vulkan_shader.hpp"
 
 
@@ -73,8 +72,6 @@ namespace gflow::parser
 
     class Pipeline final : public Resource
     {
-        using StrPair = Pair<std::string, std::string>;
-
     private:
         EXPORT_RESOURCE(PipelineInputAssemblyState, inputAssemblyState, true, false);
         EXPORT_RESOURCE(PipelineRasterizationState, rasterizationState, true, false);
@@ -83,17 +80,16 @@ namespace gflow::parser
         EXPORT_GROUP(shaders, "Shaders");
         EXPORT(FilePath, vertex);
         EXPORT(FilePath, fragment);
-
-        EXPORT_RESOURCE_LIST(StrPair, attachments);
         
     public:
         enum ShaderStage : uint8_t { VERTEX, FRAGMENT };
-        VulkanShader::ReflectionData getShaderReflectionData(ShaderStage type, bool forceRecalculation = false);
+
+        VulkanShader::ReflectionManager* getShaderReflectionData(ShaderStage type, bool forceRecalculation = false);
         void exportChanged(const std::string& variable) override;
         DataUsage isUsed(const std::string& variable, const std::vector<Resource*>& parentPath = {}) override;
 
-        VulkanShader::ReflectionData m_vertexReflection;
-        VulkanShader::ReflectionData m_fragmentReflection;
+        VulkanShader::ReflectionManager m_vertexReflection;
+        VulkanShader::ReflectionManager m_fragmentReflection;
 
         DECLARE_PUBLIC_RESOURCE(Pipeline)
     };
@@ -134,7 +130,8 @@ namespace gflow::parser
         return Resource::isUsed(variable, parentPath);
     }
 
-    inline VulkanShader::ReflectionData Pipeline::getShaderReflectionData(const ShaderStage type, const bool forceRecalculation)
+    inline VulkanShader::ReflectionManager* Pipeline::getShaderReflectionData(
+        const ShaderStage type, const bool forceRecalculation)
     {
         try
         {
@@ -143,15 +140,15 @@ namespace gflow::parser
             case VERTEX:
                 if ((*vertex).path.empty())
                     m_vertexReflection = {};
-                else if (!m_vertexReflection.valid || forceRecalculation)
+                else if (!m_vertexReflection.isValid() || forceRecalculation)
                     m_vertexReflection = VulkanShader::getReflectionDataFromFile(ResourceManager::makePathAbsolute((*vertex).path), VK_SHADER_STAGE_VERTEX_BIT);
-                return m_vertexReflection;
+                return &m_vertexReflection;
             case FRAGMENT:
                 if ((*fragment).path.empty())
                     m_fragmentReflection = {};
-                else if (!m_fragmentReflection.valid || forceRecalculation)
+                else if (!m_fragmentReflection.isValid() || forceRecalculation)
                     m_fragmentReflection = VulkanShader::getReflectionDataFromFile(ResourceManager::makePathAbsolute((*fragment).path), VK_SHADER_STAGE_FRAGMENT_BIT);
-                return m_fragmentReflection;
+                return &m_fragmentReflection;
             }
         }
         catch (const std::runtime_error& e)

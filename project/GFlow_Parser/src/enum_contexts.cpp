@@ -914,4 +914,28 @@ namespace gflow::parser
             2
         }
     };
+
+    EnumContext EnumContexts::PushConstantElement = 
+    {
+        {
+           "Int",
+           "Float",
+           "Vec2",
+           "Vec3",
+           "Vec4",
+           "Mat2",
+           "Mat3",
+           "Mat4"
+        },
+        {
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+        }
+    };
 }

@@ -39,6 +39,7 @@ private:
     void loadRenderPass(bool loadInit = true);
 
     void processSubpassConnections(SubpassNode* subpass, gflow::parser::RenderPassSubpass* subpassResource) const;
+    void processPipelineConnections(SubpassPipelineNode* pipeline, PipelineNodeResource* pipelineResource) const;
 
     InitRenderpassNode* getInit();
 

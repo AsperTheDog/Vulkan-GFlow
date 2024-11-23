@@ -98,13 +98,13 @@ namespace gflow
 		return swapchain.acquireNextImage();
 	}
 
-    VulkanShader::ReflectionData Environment::man_getReflectionData(const std::string& shaderPath, const VkShaderStageFlagBits stage) const
+    VulkanShader::ReflectionManager Environment::man_getReflectionData(const std::string& shaderPath, const VkShaderStageFlagBits stage) const
     {
         try
         {
             const uint32_t shaderID = VulkanContext::getDevice(m_device).createShader(shaderPath, stage, true, {});
             const VulkanShader& shader = VulkanContext::getDevice(m_device).getShader(shaderID);
-            VulkanShader::ReflectionData reflectionData = shader.getReflectionData();
+            VulkanShader::ReflectionManager reflectionData = shader.getReflectionData();
             VulkanContext::getDevice(m_device).freeShader(shaderID);
             return reflectionData;
         }

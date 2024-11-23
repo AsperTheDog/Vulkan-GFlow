@@ -9,7 +9,8 @@ enum RenderPassPinType : uint8_t
     INIT,
     SUBPASS,
     PIPELINE,
-    IMAGE
+    IMAGE,
+    PUSH_CONSTANT
 };
 
 class ImageNode final : public GFlowNode
@@ -26,6 +27,20 @@ private:
     std::shared_ptr<ImFlow::OutPin<int>> m_out;
 };
 
+class PushConstantNode final : public GFlowNode
+{
+public:
+    PushConstantNode(ImGuiGraphWindow* parent, NodeResource* resource);
+
+    NodeResource* getLinkedResource() override;
+    void onResourceUpdated(const gflow::parser::ResourceElemPath& element) override;
+
+private:
+    PushConstantNodeResource* m_resource = nullptr;
+
+    std::shared_ptr<ImFlow::OutPin<int>> m_out;
+};
+
 class SubpassPipelineNode final : public GFlowNode
 {
 public:
@@ -33,14 +48,20 @@ public:
 
 	NodeResource* getLinkedResource() override;
     [[nodiscard]] GFlowNode* getNext() const;
-
+    
+    void addPushConstantPin(const std::string& name, bool addToResource);
+    void removePushConstantPin(const std::string& name);
     std::vector<std::string> getColorAttachmentPins();
+
+    [[nodiscard]] std::unordered_set<std::string> getPushConstants() const;
 
 private:
 	PipelineNodeResource* m_resource = nullptr;
     
     std::shared_ptr<ImFlow::InPin<int>> m_in;
     std::shared_ptr<ImFlow::OutPin<int>> m_out;
+
+    std::vector<std::shared_ptr<ImFlow::InPin<int>>> m_PushConstantPins;
 };
 
 class SubpassNode final : public GFlowNode
@@ -55,10 +76,10 @@ public:
     void removeColorAttachmentPin(const std::string& name);
     void addInputAttachmentPin(const std::string& name, bool addToResource);
     void removeInputAttachmentPin(const std::string& name);
-    void removeAllAttachmentPins();
+    void removeAllReflectionPins();
 
     void setDepthAttachment(bool enabled, bool force);
-
+    
     [[nodiscard]] std::unordered_set<std::string> getColorAttachments() const;
     [[nodiscard]] std::unordered_set<std::string> getInputAttachments() const;
 

@@ -6,14 +6,14 @@ ImageNode::ImageNode(ImGuiGraphWindow* parent, NodeResource* resource)
     : GFlowNode("Image", parent), m_resource(dynamic_cast<ImageNodeResource*>(resource))
 {
     m_resource->set("usage", "0");
-    setStyle(std::make_shared<ImFlow::NodeStyle>(IM_COL32(181,133,0,255), ImColor(233,241,244,255), 3.5f));
+    setStyle(std::make_shared<ImFlow::NodeStyle>(IM_COL32(99,156,0,255), ImColor(233,241,244,255), 3.5f));
     
     m_out = addOUT<int>("-->", ImFlow::PinStyle::green());
     m_out->behaviour([this]() -> int { return 0; }); //Not used, but needed to prevent segfault
     m_out->setFilterID(IMAGE);
 
-    const std::string newID = getLinkedResource()->get("imageID").first;
-    setTitle("Image" + (newID.empty() ? "" : " (" + newID + ")"));
+    const std::string currentID = getLinkedResource()->get("imageID").first;
+    setTitle("Image" + (currentID.empty() ? "" : " (" + currentID + ")"));
 }
 
 NodeResource* ImageNode::getLinkedResource()
@@ -28,6 +28,32 @@ void ImageNode::onResourceUpdated(const gflow::parser::ResourceElemPath& element
     setTitle("Image" + (newID.empty() ? "" : " (" + newID + ")"));
 }
 
+PushConstantNode::PushConstantNode(ImGuiGraphWindow* parent, NodeResource* resource)
+    : GFlowNode("Image", parent), m_resource(dynamic_cast<PushConstantNodeResource*>(resource))
+{
+    m_resource->set("usage", "0");
+    setStyle(std::make_shared<ImFlow::NodeStyle>(IM_COL32(0,135,166,255), ImColor(233,241,244,255), 3.5f));
+    
+    m_out = addOUT<int>("-->", ImFlow::PinStyle::blue());
+    m_out->behaviour([this]() -> int { return 0; }); //Not used, but needed to prevent segfault
+    m_out->setFilterID(PUSH_CONSTANT);
+
+    const std::string currentID = getLinkedResource()->get("structID").first;
+    setTitle("Push" + (currentID.empty() ? "" : " (" + currentID + ")"));
+}
+
+NodeResource* PushConstantNode::getLinkedResource()
+{
+    return m_resource;
+}
+
+void PushConstantNode::onResourceUpdated(const gflow::parser::ResourceElemPath& element)
+{
+    if (element.element != "structID") return;
+    const std::string newID = getLinkedResource()->get("structID").first;
+    setTitle("Push" + (newID.empty() ? "" : " (" + newID + ")"));
+}
+
 SubpassPipelineNode::SubpassPipelineNode(ImGuiGraphWindow* parent, NodeResource* resource)
     : GFlowNode("Pipeline", parent), m_resource(dynamic_cast<PipelineNodeResource*>(resource))
 {
@@ -38,6 +64,9 @@ SubpassPipelineNode::SubpassPipelineNode(ImGuiGraphWindow* parent, NodeResource*
     m_out = addOUT<int>("-->", ImFlow::PinStyle::white());
     m_out->behaviour([this]() -> int { return 0; }); //Not used, but needed to prevent segfault
     m_out->setFilterID(PIPELINE);
+
+    for (const std::string& attachment : m_resource->getPushConstants())
+        addPushConstantPin(attachment, false);
 }
 
 NodeResource* SubpassPipelineNode::getLinkedResource()
@@ -50,6 +79,31 @@ GFlowNode* SubpassPipelineNode::getNext() const
     const std::weak_ptr<ImFlow::Link> link = m_out->getLink();
     if (link.expired()) return nullptr;
     return dynamic_cast<GFlowNode*>(link.lock()->right()->getParent());
+}
+
+void SubpassPipelineNode::addPushConstantPin(const std::string& name, const bool addToResource)
+{
+    static std::shared_ptr<ImFlow::PinStyle> pinColor = std::make_shared<ImFlow::PinStyle>(ImFlow::PinStyle(IM_COL32(90,117,191,255), 4, 4.f, 4.67f, 4.2f, 1.3f));
+
+    const std::shared_ptr<ImFlow::InPin<int>> newAttachment = addIN(name, 0, getLambdaFilter(PUSH_CONSTANT), pinColor);
+    newAttachment->setFilterID(PUSH_CONSTANT);
+    m_PushConstantPins.push_back(newAttachment);
+    if (addToResource)
+        m_resource->addPushConstant(name);
+}
+
+void SubpassPipelineNode::removePushConstantPin(const std::string& name)
+{
+    dropIN(name);
+    m_resource->removePushConstant(name);
+}
+
+std::unordered_set<std::string> SubpassPipelineNode::getPushConstants() const
+{
+    std::unordered_set<std::string> pins;
+    for (const std::shared_ptr<ImFlow::InPin<int>>& pin : m_PushConstantPins)
+        pins.insert(pin->getName());
+    return pins;
 }
 
 std::vector<std::string> SubpassPipelineNode::getColorAttachmentPins()
@@ -128,7 +182,7 @@ void SubpassNode::removeInputAttachmentPin(const std::string& name)
     m_resource->removeInputAttachment(name);
 }
 
-void SubpassNode::removeAllAttachmentPins()
+void SubpassNode::removeAllReflectionPins()
 {
     for (const std::shared_ptr<ImFlow::InPin<int>>& pin : m_ColorAttachmentPins)
         dropIN(pin->getName());

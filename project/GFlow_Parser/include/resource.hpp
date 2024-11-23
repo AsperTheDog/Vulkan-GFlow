@@ -104,7 +104,7 @@ namespace gflow::parser
         uint8_t r, g, b, a;
         bool operator==(const UColor& other) const { return r == other.r && g == other.g && b == other.b && a == other.a; }
         [[nodiscard]] std::string toString() const { return std::to_string(r) + ", " + std::to_string(g) + ", " + std::to_string(b) + ", " + std::to_string(a); }
-        gflow::parser::Color getfColor() const { return { r / 255.f, g / 255.f, b / 255.f, a / 255.f }; }
+        [[nodiscard]] gflow::parser::Color getfColor() const { return { r / 255.f, g / 255.f, b / 255.f, a / 255.f }; }
         void fromfColor(const Color& ftmp)
         {
             r = static_cast<uint8_t>(ftmp.r * 255);

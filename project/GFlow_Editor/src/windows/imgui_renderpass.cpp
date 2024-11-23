@@ -91,7 +91,11 @@ void ImGuiRenderPassWindow::recreateParserData()
         {
             PipelineNodeResource* pipelineResource = dynamic_cast<PipelineNodeResource*>(pipelineNode->getLinkedResource());
             if (pipelineResource->getPipeline() != nullptr)
-                subpassResource->addPipeline(pipelineResource->getPipeline());
+            {
+                gflow::parser::RenderPassPipeline* pipeline = subpassResource->addPipeline();
+                pipeline->setPipeline(pipelineResource->getPipeline());
+                processPipelineConnections(pipelineNode, pipelineResource);
+            }
             next = pipelineNode->getNext();
         }
     }
@@ -140,6 +144,8 @@ void ImGuiRenderPassWindow::rightClick(ImFlow::BaseNode* node)
             {
                 if (ImGui::MenuItem("Attachment"))
                     NodeCreateHelper::createNode<ImageNode, ImageNodeResource>(this);
+                if (ImGui::MenuItem("Push Constant"))
+                    NodeCreateHelper::createNode<PushConstantNode, PushConstantNodeResource>(this);
                 ImGui::EndMenu();
             }
             ImGui::EndMenu();
@@ -206,6 +212,8 @@ void ImGuiRenderPassWindow::loadRenderPass(const bool loadInit)
             newNode = m_grid.placeNode<SubpassPipelineNode>(this, resource).get();
         else if (resource->getType() == "ImageNodeResource")
             newNode = m_grid.placeNode<ImageNode>(this, resource).get();
+        else if (resource->getType() == "PushConstantNodeResource")
+            newNode = m_grid.placeNode<PushConstantNode>(this, resource).get();
 
         if (!newNode) continue;
 
@@ -231,21 +239,21 @@ void ImGuiRenderPassWindow::processSubpassConnections(SubpassNode* subpass, gflo
     std::unordered_set<std::string> colorAttachments;
     std::unordered_set<std::string> inputAttachments;
     bool hasDepth = false;
-    for (gflow::parser::Pipeline* pipelineResource : subpassResource->getPipelines())
+    for (gflow::parser::RenderPassPipeline* pipelineResource : subpassResource->getPipelines())
     {
-        VulkanShader::ReflectionData data = pipelineResource->getShaderReflectionData(gflow::parser::Pipeline::VERTEX);
-        if (data.valid)
+        VulkanShader::ReflectionManager* data = pipelineResource->getPipeline()->getShaderReflectionData(gflow::parser::Pipeline::VERTEX);
+        if (data->isValid())
         {
-            for (const spirv_cross::Resource& resource : data.resources.subpass_inputs)
-                inputAttachments.insert(resource.name);
+            for (const spirv_cross::Resource& resource : data->getResources().subpass_inputs)
+                inputAttachments.insert(data->getName(resource.id, resource.name));
         }
-        data = pipelineResource->getShaderReflectionData(gflow::parser::Pipeline::FRAGMENT);
-        if (data.valid)
+        data = pipelineResource->getPipeline()->getShaderReflectionData(gflow::parser::Pipeline::FRAGMENT);
+        if (data->isValid())
         {
-            for (const spirv_cross::Resource& resource : data.resources.stage_outputs)
-                colorAttachments.insert(resource.name);
-            for (const spirv_cross::Resource& resource : data.resources.subpass_inputs)
-                inputAttachments.insert(resource.name);
+            for (const spirv_cross::Resource& resource : data->getResources().stage_outputs)
+                colorAttachments.insert(data->getName(resource.id, resource.name));
+            for (const spirv_cross::Resource& resource : data->getResources().subpass_inputs)
+                inputAttachments.insert(data->getName(resource.id, resource.name));
         }
 
         hasDepth |= subpassResource->hasDepthAttachment();
@@ -253,7 +261,7 @@ void ImGuiRenderPassWindow::processSubpassConnections(SubpassNode* subpass, gflo
 
     for (const std::string& attachment : oldColorAttachments)
         if (!colorAttachments.contains(attachment))
-            subpass->removeInputAttachmentPin(attachment);
+            subpass->removeColorAttachmentPin(attachment);
     for (const std::string& attachment : colorAttachments)
         if (!oldColorAttachments.contains(attachment))
             subpass->addColorAttachmentPin(attachment, true);
@@ -266,6 +274,32 @@ void ImGuiRenderPassWindow::processSubpassConnections(SubpassNode* subpass, gflo
             subpass->addInputAttachmentPin(attachment, true);
 
     subpass->setDepthAttachment(hasDepth, false);
+}
+
+void ImGuiRenderPassWindow::processPipelineConnections(SubpassPipelineNode* pipeline, PipelineNodeResource* pipelineResource) const
+{
+    const std::unordered_set<std::string> oldPushConstants = pipeline->getPushConstants();
+
+    std::unordered_set<std::string> pushConstants;
+    const VulkanShader::ReflectionManager* data = pipelineResource->getPipeline()->getShaderReflectionData(gflow::parser::Pipeline::VERTEX);
+    if (data->isValid())
+    {
+        for (const spirv_cross::Resource& resource : data->getResources().push_constant_buffers)
+            pushConstants.insert(data->getName(resource.id, resource.name));
+    }
+    data = pipelineResource->getPipeline()->getShaderReflectionData(gflow::parser::Pipeline::FRAGMENT);
+    if (data->isValid())
+    {
+        for (const spirv_cross::Resource& resource : data->getResources().push_constant_buffers)
+            pushConstants.insert(data->getName(resource.id, resource.name));
+    }
+
+    for (const std::string& pushConstant : oldPushConstants)
+        if (!pushConstants.contains(pushConstant))
+            pipeline->removePushConstantPin(pushConstant);
+    for (const std::string& pushConstant : pushConstants)
+        if (!oldPushConstants.contains(pushConstant))
+            pipeline->addPushConstantPin(pushConstant, true);
 }
 
 InitRenderpassNode* ImGuiRenderPassWindow::getInit()
