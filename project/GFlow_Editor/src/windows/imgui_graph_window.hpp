@@ -26,7 +26,7 @@ protected:
     ImFlow::ImNodeFlow m_grid{"Grid"};
 
     GFlowNode* m_sidePanelTarget = nullptr;
-    ImGuiResourceEditorWindow m_sidePanel{"Side Panel", false};
+    ImGuiResourceEditorWindow m_sidePanel;
     Signal<> m_refreshRequestedSignal;
 };
 

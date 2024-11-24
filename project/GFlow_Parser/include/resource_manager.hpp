@@ -86,7 +86,7 @@ namespace gflow::parser
         static Resource* createResource(const std::string& path, const Resource::ResourceFactory& factory, Resource::ExportData* data = nullptr);
 
         static bool deleteResource(const std::string& path);
-        static bool deleteResource(const Resource* resource);
+        static bool deleteResource(Resource* resource);
 
 
         static Project* loadProject(const std::string& path);

@@ -212,7 +212,7 @@ namespace gflow::parser
         [[nodiscard]] virtual std::string getType() const = 0;
 
         [[nodiscard]] std::string getPath() const { return m_path; }
-        [[nodiscard]] std::string getMetaPath() const { return gflow::string::getPathDirectory(m_path) + "/_" + gflow::string::getPathFilename(m_path) + ".meta"; }
+        [[nodiscard]] std::string getMetaPath() const;
         [[nodiscard]] uint32_t getID() const { return m_id; }
         [[nodiscard]] bool isSubresource() const { return m_path.empty(); }
 

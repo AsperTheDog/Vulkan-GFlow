@@ -10,6 +10,7 @@ public:
     explicit ImGuiEditorWindow(const std::string_view name, const bool defaultOpen) : open(defaultOpen), m_name(name) {}
 
     virtual void draw() = 0;
+    void setName(std::string name) { m_name = std::move(name); }
     [[nodiscard]] std::string getName() const { return m_name; }
 
     virtual void save() {}

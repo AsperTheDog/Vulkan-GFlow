@@ -39,8 +39,6 @@ namespace gflow::parser
         EXPORT_RESOURCE_LIST(StrPair, pushConstants);
         EXPORT_RESOURCE_LIST(StrPair, attachments);
 
-        void initContext(ExportData* metadata) override {}
-
     public:
         Pipeline* getPipeline() { return *pipeline; }
         void setPipeline(Pipeline* pipeline) { this->pipeline.setData(pipeline); }
@@ -82,7 +80,6 @@ namespace gflow::parser
         EXPORT(int, srcSubpass);
         EXPORT(int, destSubpass);
 
-        void initContext(ExportData* metadata) override {}
     public:
         DECLARE_PRIVATE_RESOURCE(RenderPassCustomDependency)
 
@@ -95,8 +92,6 @@ namespace gflow::parser
         EXPORT(std::string, name);
         EXPORT_ENUM(type, EnumContexts::PushConstantElement);
 
-        void initContext(ExportData* metadata) override {}
-
     public:
         DECLARE_PRIVATE_RESOURCE(PushConstantElement)
 
@@ -108,9 +103,12 @@ namespace gflow::parser
     {
         EXPORT(std::string, structureID);
         EXPORT_RESOURCE_LIST(PushConstantElement, elements);
+        EXPORT_GROUP(g_data, "Data");
+        EXPORT(bool, external);
+        EXPORT(FilePath, data);
 
-        void initContext(ExportData* metadata) override {}
 
+        DataUsage isUsed(const std::string& variable, const std::vector<Resource*>& parentPath) override;
     public:
         DECLARE_PRIVATE_RESOURCE(PushConstantStructure)
 
@@ -132,6 +130,9 @@ namespace gflow::parser
         void clearSubpasses() { (*subpasses).clear(); }
         RenderPassSubpass* addSubpass() { return *(*subpasses).emplace_back(); }
 
+        std::vector<std::string> getAttachmentIDs(bool includeInternal) const;
+        std::vector<std::string> getPushConstantIDs(bool includeInternal) const;
+
         DECLARE_PUBLIC_RESOURCE(RenderPass)
     };
 
@@ -146,10 +147,40 @@ namespace gflow::parser
         return false;
     }
 
+    inline DataUsage PushConstantStructure::isUsed(const std::string& variable,
+        const std::vector<Resource*>& parentPath)
+    {
+        if (variable == "data")
+        {
+            if (*external)
+                return NOT_USED;
+            return USED;
+        }
+        return USED;
+    }
+
     inline DataUsage RenderPass::isUsed(const std::string& variable, const std::vector<Resource*>& parentPath)
     {
         if (variable == "subpasses")
             return NOT_USED;
         return USED;
+    }
+
+    inline std::vector<std::string> RenderPass::getAttachmentIDs(const bool includeInternal) const
+    {
+        std::vector<std::string> ids;
+        for (Image* image : (*attachments).data())
+            if (includeInternal || image->getValue<bool>("external"))
+                ids.push_back(image->getValue<std::string>("imageID"));
+        return ids;
+    }
+
+    inline std::vector<std::string> RenderPass::getPushConstantIDs(const bool includeInternal) const
+    {
+        std::vector<std::string> ids;
+        for (PushConstantStructure* pushConstant : (*pushConstants).data())
+            if (includeInternal || pushConstant->getValue<bool>("external"))
+                ids.push_back(pushConstant->getValue<std::string>("structureID"));
+        return ids;
     }
 }

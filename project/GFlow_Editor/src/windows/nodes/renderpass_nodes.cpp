@@ -12,19 +12,14 @@ ImageNode::ImageNode(ImGuiGraphWindow* parent, NodeResource* resource)
     m_out->behaviour([this]() -> int { return 0; }); //Not used, but needed to prevent segfault
     m_out->setFilterID(IMAGE);
 
-    const std::string currentID = getLinkedResource()->get("imageID").first;
+    const std::string currentID = getLinkedResource()->getValue<std::string>("imageID");
     setTitle("Image" + (currentID.empty() ? "" : " (" + currentID + ")"));
-}
-
-NodeResource* ImageNode::getLinkedResource()
-{
-    return m_resource;
 }
 
 void ImageNode::onResourceUpdated(const gflow::parser::ResourceElemPath& element)
 {
     if (element.element != "imageID") return;
-    const std::string newID = getLinkedResource()->get("imageID").first;
+    const std::string newID = getLinkedResource()->getValue<std::string>("imageID");
     setTitle("Image" + (newID.empty() ? "" : " (" + newID + ")"));
 }
 
@@ -38,19 +33,14 @@ PushConstantNode::PushConstantNode(ImGuiGraphWindow* parent, NodeResource* resou
     m_out->behaviour([this]() -> int { return 0; }); //Not used, but needed to prevent segfault
     m_out->setFilterID(PUSH_CONSTANT);
 
-    const std::string currentID = getLinkedResource()->get("structID").first;
+    const std::string currentID = getLinkedResource()->getValue<std::string>("structID");
     setTitle("Push" + (currentID.empty() ? "" : " (" + currentID + ")"));
-}
-
-NodeResource* PushConstantNode::getLinkedResource()
-{
-    return m_resource;
 }
 
 void PushConstantNode::onResourceUpdated(const gflow::parser::ResourceElemPath& element)
 {
     if (element.element != "structID") return;
-    const std::string newID = getLinkedResource()->get("structID").first;
+    const std::string newID = getLinkedResource()->getValue<std::string>("structID");
     setTitle("Push" + (newID.empty() ? "" : " (" + newID + ")"));
 }
 
@@ -67,11 +57,6 @@ SubpassPipelineNode::SubpassPipelineNode(ImGuiGraphWindow* parent, NodeResource*
 
     for (const std::string& attachment : m_resource->getPushConstants())
         addPushConstantPin(attachment, false);
-}
-
-NodeResource* SubpassPipelineNode::getLinkedResource()
-{
-    return m_resource;
 }
 
 GFlowNode* SubpassPipelineNode::getNext() const
@@ -134,11 +119,6 @@ SubpassNode::SubpassNode(ImGuiGraphWindow* parent, NodeResource* resource)
 
     if (m_resource->hasDepthAttachment())
         setDepthAttachment(true, true);
-}
-
-NodeResource* SubpassNode::getLinkedResource()
-{
-    return m_resource;
 }
 
 GFlowNode* SubpassNode::getNext() const
@@ -234,11 +214,6 @@ InitRenderpassNode::InitRenderpassNode(ImGuiGraphWindow* parent, NodeResource* r
     m_out = addOUT<int>("-->", ImFlow::PinStyle::white());
     m_out->setFilterID(INIT);
     m_out->behaviour([this]() -> int { return 0; }); //Not used, but needed to prevent segfault
-}
-
-NodeResource* InitRenderpassNode::getLinkedResource()
-{
-    return m_resource;
 }
 
 GFlowNode* InitRenderpassNode::getNext() const

@@ -44,7 +44,8 @@ private:
     
 public: // Editor Management
     static void resourceSelected(const std::string& path);
-    [[nodiscard]] gflow::parser::Resource* getSelectedResource() const;
+    static gflow::parser::Resource* getSelectedResource();
+    static gflow::parser::Project* getCurrentProject();
 
     static void showCreateFolderModal(const std::string& path);
     static void showRenameFolderModal(const std::string& path);
@@ -53,8 +54,7 @@ public: // Editor Management
     static void showRenameResourceModal(const std::string& path);
     static void showDeleteResourceModal(const std::string& path);
 
-    static void showResourcePickerModal(ImGuiResourceEditorWindow* caller, gflow::parser::Resource* parent, const std::string& variable, const std::string&
-                                        filter);
+    static void showResourcePickerModal(ImGuiResourceEditorWindow* caller, gflow::parser::Resource* parent, const std::string& variable, const std::string& filter);
 
 private:
     static void createFolderModal();

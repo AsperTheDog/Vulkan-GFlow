@@ -34,6 +34,7 @@ namespace gflow::string
         std::vector<std::string> tokens;
         size_t pos;
         size_t prev = 0;
+        //FIXME: If the first element is the delimiter, it enters an infinite loop
         while ((pos = str.find(delimiter, prev)) != std::string::npos)
         {
             if (pos - prev != 0)

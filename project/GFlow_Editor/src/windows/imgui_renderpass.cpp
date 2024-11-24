@@ -159,21 +159,6 @@ void ImGuiRenderPassWindow::clearGrid()
     ImGuiGraphWindow::clearGrid();
 }
 
-void ImGuiRenderPassWindow::onNodeCreated(ImFlow::BaseNode* node)
-{
-    
-}
-
-void ImGuiRenderPassWindow::onNodeDeleted(ImFlow::BaseNode* node)
-{
-    
-}
-
-void ImGuiRenderPassWindow::onConnection(ImFlow::Pin* pin1, ImFlow::Pin* pin2)
-{
-    
-}
-
 void ImGuiRenderPassWindow::saveRenderPass()
 {
     if (m_selectedPass == nullptr) return;
@@ -306,8 +291,7 @@ InitRenderpassNode* ImGuiRenderPassWindow::getInit()
 {
     for (const std::shared_ptr<ImFlow::BaseNode>& val : m_grid.getNodes() | std::views::values)
     {
-        InitRenderpassNode* node = dynamic_cast<InitRenderpassNode*>(val.get());
-        if (node != nullptr)
+        if (InitRenderpassNode* node = dynamic_cast<InitRenderpassNode*>(val.get()))
             return node;
     }
     return nullptr;

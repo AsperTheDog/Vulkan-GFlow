@@ -345,6 +345,14 @@ namespace gflow::parser
         return exports;
     }
 
+    std::string Resource::getMetaPath() const
+    {
+        const std::string pathDir = gflow::string::getPathDirectory(m_path);
+        if (pathDir.empty())
+            return "_" + gflow::string::getPathFilename(m_path) + ".meta";
+        return pathDir + "/_" + gflow::string::getPathFilename(m_path) + ".meta";
+    }
+
     bool Resource::isNull(const std::string& variable)
     {
         for (const ExportData& exportData : getExports())

@@ -6,7 +6,6 @@ namespace gflow::parser
     class Image final : public Resource
     {
         EXPORT(std::string, imageID);
-        EXPORT(int, referenceCount);
         EXPORT_GROUP(g_properties, "Properties");
         EXPORT(bool, matchWindow);
         EXPORT(Vec2, size);
@@ -15,7 +14,6 @@ namespace gflow::parser
         EXPORT(bool, external);
         EXPORT(FilePath, data);
 
-        void initContext(ExportData* metadata) override {}
         DataUsage isUsed(const std::string& variable, const std::vector<Resource*>& parentPath) override;
     public:
         DECLARE_PUBLIC_RESOURCE(Image)
@@ -28,8 +26,7 @@ namespace gflow::parser
     {
         if (*matchWindow && variable == "size")
             return NOT_USED;
-        if (variable == "referenceCount")
-            return READ_ONLY;
+
         if (variable == "data")
         {
             if (*external)

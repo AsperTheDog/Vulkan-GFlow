@@ -47,7 +47,6 @@ namespace gflow::parser
         EXPORT_ENUM(alphaBlendOp, EnumContexts::blendOp);
         EXPORT_BITMASK(colorWriteMask, EnumContexts::colorWriteMaskBits);
 
-        void initContext(ExportData* metadata) override {}
         DataUsage isUsed(const std::string& variable, const std::vector<Resource*>& parentPath = {}) override;
         
     public:

@@ -358,29 +358,31 @@ namespace gflow::parser
 
     bool ResourceManager::deleteResource(const std::string& path)
     {
-        if (!hasResource(path))
-            return false;
-
-        const Resource* resource = m_resources[path];
-        m_resources.erase(path);
-        m_fileTree.deletePath(path, m_workingDir);
-        delete resource;
-        return true;
+        return deleteResource(getResource(path));
     }
 
-    bool ResourceManager::deleteResource(const Resource* resource)
+    bool ResourceManager::deleteResource(Resource* resource)
     {
         if (resource == nullptr)
             return false;
-        if (deleteResource(resource->getPath())) return true;
+
         for (auto it = m_embeddedResources.begin(); it != m_embeddedResources.end(); ++it)
         {
-            if (*it == resource)
+            if (*it != resource)
+                continue;
+            
+            m_embeddedResources.erase(it);
+            for (const Resource::ExportData& subresource : resource->getExports())
             {
-                m_embeddedResources.erase(it);
-                delete resource;
-                return true;
+                if (subresource.type != RESOURCE || subresource.data == nullptr) 
+                    continue;
+
+                Resource* sub = *static_cast<Resource**>(subresource.data);
+                if (sub != nullptr && sub->isSubresource())
+                    deleteResource(sub);
             }
+            delete resource;
+            return true;
         }
         return false;
     }

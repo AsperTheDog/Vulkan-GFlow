@@ -214,6 +214,11 @@ void Editor::createWindows()
         ImGuiRenderPassWindow* renderPassWindow = dynamic_cast<ImGuiRenderPassWindow*>(getWindow("RenderPass"));
         s_resourceSelectedSignal.connect(renderPassWindow, &ImGuiRenderPassWindow::resourceSelected);
     }
+    {
+        // Setup execution window
+        ImGuiExecutionWindow* executionWindow = dynamic_cast<ImGuiExecutionWindow*>(getWindow("Execution"));
+        s_projectLoadedSignal.connect(executionWindow, &ImGuiExecutionWindow::onProjectLoaded);
+    }
 }
 
 bool Editor::renderImgui()
@@ -360,9 +365,14 @@ void Editor::resourceSelected(const std::string& path)
     s_selectedResource = path;
 }
 
-gflow::parser::Resource* Editor::getSelectedResource() const
+gflow::parser::Resource* Editor::getSelectedResource()
 {
     return gflow::parser::ResourceManager::getResource(s_selectedResource);
+}
+
+gflow::parser::Project* Editor::getCurrentProject()
+{
+    return dynamic_cast<gflow::parser::Project*>(gflow::parser::ResourceManager::getProject());
 }
 
 void Editor::showCreateFolderModal(const std::string& path)

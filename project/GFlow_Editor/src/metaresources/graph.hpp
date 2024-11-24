@@ -2,6 +2,7 @@
 #include "resource.hpp"
 #include "resources/list.hpp"
 #include "resources/pair.hpp"
+#include "windows/nodes/base_node.hpp"
 
 class CustomPin final : public gflow::parser::Resource
 {
@@ -43,6 +44,13 @@ protected:
     NodeResource() = default;
 };
 
+class InitNodeResource final : public NodeResource
+{
+
+public:
+    DECLARE_PRIVATE_RESOURCE_ANCESTOR(InitNodeResource, NodeResource)
+};
+
 class Connection final : public gflow::parser::Resource
 {
 private:
@@ -80,6 +88,14 @@ public:
     gflow::parser::List<NodeResource*>& getNodes() { return *nodes; }
     gflow::parser::List<Connection*>& getConnections() { return *connections; }
 
+    template <typename U>
+    U* addNode(gflow::parser::Vec2 position = {});
+    void removeNode(GFlowNode* node);
+
+    void addConnection(size_t left_uid, size_t left_pin, size_t right_uid, size_t right_pin);
+    void clearConnections() { (*connections).clear(); }
+
+
     DECLARE_PRIVATE_RESOURCE(GraphResource)
 };
 
@@ -95,5 +111,42 @@ inline gflow::parser::DataUsage NodeResource::isUsed(const std::string& variable
 inline gflow::parser::DataUsage GraphResource::isUsed(const std::string& variable, const std::vector<Resource*>& parentPath)
 {
     return gflow::parser::NOT_USED;
+}
+
+template <typename U>
+U* GraphResource::addNode(const gflow::parser::Vec2 position)
+{
+    static_assert(std::is_base_of_v<NodeResource, U>, "T must be a subclass of NodeResource");
+
+    U* node = (*nodes).emplace_subclass_back<U>();
+    node->set("position", position.toString());
+    return node;
+}
+
+inline void GraphResource::removeNode(GFlowNode* node)
+{
+    (*nodes).erase(node->getLinkedResource());
+    for (int i = 0; i < (*connections).size(); i++)
+    {
+        if ((*connections)[i]->getLeftUID() == node->getUID() || (*connections)[i]->getRightUID() == node->getUID())
+        {
+            (*connections).remove(i);
+            i--;
+        }
+    }
+}
+
+inline void GraphResource::addConnection(const size_t left_uid, const size_t left_pin, const size_t right_uid, const size_t right_pin)
+{
+    for (int i = 0; i < (*connections).size(); i++)
+    {
+        if ((*connections)[i]->getLeftUID() == left_uid && (*connections)[i]->getLeftPin() == left_pin &&
+            (*connections)[i]->getRightUID() == right_uid && (*connections)[i]->getRightPin() == right_pin)
+        {
+            return;
+        }
+    }
+    Connection** connection = (*connections).emplace_back();
+    (*connection)->setValues(left_uid, left_pin, right_uid, right_pin);
 }
 

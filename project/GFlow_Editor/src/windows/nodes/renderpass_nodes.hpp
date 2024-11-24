@@ -4,21 +4,12 @@
 #include "metaresources/renderpass.hpp"
 #include "windows/nodes/base_node.hpp"
 
-enum RenderPassPinType : uint8_t
-{
-    INIT,
-    SUBPASS,
-    PIPELINE,
-    IMAGE,
-    PUSH_CONSTANT
-};
-
 class ImageNode final : public GFlowNode
 {
 public:
     ImageNode(ImGuiGraphWindow* parent, NodeResource* resource);
 
-    NodeResource* getLinkedResource() override;
+    NodeResource* getLinkedResource() override { return m_resource; }
     void onResourceUpdated(const gflow::parser::ResourceElemPath& element) override;
 
 private:
@@ -32,7 +23,7 @@ class PushConstantNode final : public GFlowNode
 public:
     PushConstantNode(ImGuiGraphWindow* parent, NodeResource* resource);
 
-    NodeResource* getLinkedResource() override;
+    NodeResource* getLinkedResource() override { return m_resource; }
     void onResourceUpdated(const gflow::parser::ResourceElemPath& element) override;
 
 private:
@@ -46,7 +37,7 @@ class SubpassPipelineNode final : public GFlowNode
 public:
     explicit SubpassPipelineNode(ImGuiGraphWindow* parent, NodeResource* resource);
 
-	NodeResource* getLinkedResource() override;
+    NodeResource* getLinkedResource() override { return m_resource; }
     [[nodiscard]] GFlowNode* getNext() const;
     
     void addPushConstantPin(const std::string& name, bool addToResource);
@@ -69,7 +60,7 @@ class SubpassNode final : public GFlowNode
 public:
     explicit SubpassNode(ImGuiGraphWindow* parent, NodeResource* resource);
 
-    NodeResource* getLinkedResource() override;
+    NodeResource* getLinkedResource() override { return m_resource; }
     [[nodiscard]] GFlowNode* getNext() const;
 
     void addColorAttachmentPin(const std::string& name, bool addToResource);
@@ -102,7 +93,7 @@ public:
 
     void destroy() override {}
 
-    NodeResource* getLinkedResource() override;
+    NodeResource* getLinkedResource() override { return m_resource; }
 
     [[nodiscard]] GFlowNode* getNext() const;
 
@@ -111,11 +102,3 @@ private:
 
     std::shared_ptr<ImFlow::OutPin<int>> m_out;
 };
-
-template <typename... Ints>
-std::function<bool(const ImFlow::Pin*, const ImFlow::Pin*)> getLambdaFilter(Ints... filterIDs) {
-    return [filterIDs...](const ImFlow::Pin* pin1, const ImFlow::Pin* pin2) -> bool { 
-        int id = pin1->getFilterID();
-        return ((id == filterIDs) || ...);  // Fold expression to match any filterID
-    };
-}

@@ -2,6 +2,21 @@
 
 #include "windows/nodes/base_node.hpp"
 
+gflow::parser::DataUsage ImageNodeResource::isUsed(const std::string& variable, const std::vector<Resource*>& parentPath)
+{
+    if (variable == "imageID" || variable == "usage")
+        return gflow::parser::USED;
+    return NodeResource::isUsed(variable, parentPath);
+}
+
+gflow::parser::DataUsage PushConstantNodeResource::isUsed(const std::string& variable,
+    const std::vector<Resource*>& parentPath)
+{
+    if (variable == "structID")
+        return gflow::parser::USED;
+    return NodeResource::isUsed(variable, parentPath);
+}
+
 void SubpassNodeResource::initContext(ExportData* metadata)
 {
     if (colorAttachments.isNull())
@@ -18,30 +33,21 @@ void SubpassNodeResource::clearAttachments()
     *depthAttachment = false;
 }
 
-void RenderpassResource::removeNode(GFlowNode* node)
+gflow::parser::DataUsage SubpassNodeResource::isUsed(const std::string& variable, const std::vector<Resource*>& parentPath)
 {
-    (*nodes).erase(node->getLinkedResource());
-    for (int i = 0; i < (*connections).size(); i++)
+    if (variable == "subpassID")
     {
-        if ((*connections)[i]->getLeftUID() == node->getUID() || (*connections)[i]->getRightUID() == node->getUID())
-        {
-            (*connections).remove(i);
-            i--;
-        }
+        return gflow::parser::USED;
     }
+    return NodeResource::isUsed(variable, parentPath);
 }
 
-void RenderpassResource::addConnection(const size_t left_uid, const size_t left_pin, const size_t right_uid, const size_t right_pin)
+gflow::parser::DataUsage PipelineNodeResource::isUsed(const std::string& variable, const std::vector<Resource*>& parentPath)
 {
-    for (int i = 0; i < (*connections).size(); i++)
+    if (variable == "pipeline")
     {
-        if ((*connections)[i]->getLeftUID() == left_uid && (*connections)[i]->getLeftPin() == left_pin &&
-            (*connections)[i]->getRightUID() == right_uid && (*connections)[i]->getRightPin() == right_pin)
-        {
-            return;
-        }
+        return gflow::parser::USED;
     }
-    Connection** connection = (*connections).emplace_back();
-    (*connection)->setValues(left_uid, left_pin, right_uid, right_pin);
+    return NodeResource::isUsed(variable, parentPath);
 }
 

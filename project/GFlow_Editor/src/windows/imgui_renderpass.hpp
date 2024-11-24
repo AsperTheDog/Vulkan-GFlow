@@ -31,10 +31,6 @@ private:
 
     void clearGrid() override;
 
-    void onNodeCreated(ImFlow::BaseNode* node) override;
-    void onNodeDeleted(ImFlow::BaseNode* node) override;
-    void onConnection(ImFlow::Pin* pin1, ImFlow::Pin* pin2) override;
-
     void saveRenderPass();
     void loadRenderPass(bool loadInit = true);
 
