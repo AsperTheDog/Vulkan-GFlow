@@ -347,7 +347,7 @@ void Editor::saveProject()
     gflow::parser::ResourceManager::saveAll();
 }
 
-ImGuiEditorWindow* Editor::getWindow(const std::string_view& name)
+ImGuiEditorWindow* Editor::getWindow(const std::string& name)
 {
     for (ImGuiEditorWindow* window : s_imguiWindows)
     {

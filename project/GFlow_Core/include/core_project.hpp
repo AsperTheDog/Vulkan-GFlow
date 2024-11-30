@@ -23,7 +23,7 @@ namespace gflow
 	private:
 		struct FileStructure;
 
-		Project(std::string_view path, uint32_t environment);
+		Project(const std::string& path, uint32_t environment);
 
 		[[nodiscard]] Requirements getRequirements() const;
 

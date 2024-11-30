@@ -242,8 +242,8 @@ namespace gflow::parser
     class Export<List<T>*, true, false>
     {
     public:
-        Export(std::string_view name, Resource* parent);
-        Export(std::string_view name, Resource* parent, EnumContext& enumContext);
+        Export(const std::string& name, Resource* parent);
+        Export(const std::string& name, Resource* parent, EnumContext& enumContext);
 
         void setData(Resource* value) { m_data = dynamic_cast<List<T>*>(value); }
 
@@ -262,7 +262,7 @@ namespace gflow::parser
     };
 
     template <typename T>
-    Export<List<T>*, true, false>::Export(std::string_view name, Resource* parent) : m_parent(parent)
+    Export<List<T>*, true, false>::Export(const std::string& name, Resource* parent) : m_parent(parent)
     {
         Resource::ExportData data;
         this->m_name = name;
@@ -278,7 +278,7 @@ namespace gflow::parser
     }
 
     template <typename T>
-    Export<List<T>*, true, false>::Export(std::string_view name, Resource* parent, EnumContext& enumContext) : m_parent(parent)
+    Export<List<T>*, true, false>::Export(const std::string& name, Resource* parent, EnumContext& enumContext) : m_parent(parent)
     {
         Resource::ExportData data;
         this->m_name = name;

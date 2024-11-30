@@ -9,8 +9,7 @@ gflow::parser::DataUsage ImageNodeResource::isUsed(const std::string& variable, 
     return NodeResource::isUsed(variable, parentPath);
 }
 
-gflow::parser::DataUsage PushConstantNodeResource::isUsed(const std::string& variable,
-    const std::vector<Resource*>& parentPath)
+gflow::parser::DataUsage PushConstantNodeResource::isUsed(const std::string& variable, const std::vector<Resource*>& parentPath)
 {
     if (variable == "structID")
         return gflow::parser::USED;

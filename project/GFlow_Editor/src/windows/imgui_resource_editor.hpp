@@ -8,7 +8,7 @@ namespace gflow::parser { class Resource; }
 class ImGuiResourceEditorWindow final : public ImGuiEditorWindow
 {
 public:
-    explicit ImGuiResourceEditorWindow(const std::string_view& name, bool defaultOpen = true);
+    explicit ImGuiResourceEditorWindow(const std::string& name, bool defaultOpen = true);
 
     void resourceSelected(const std::string& resource);
     void resourceSelected(gflow::parser::Resource* resource);

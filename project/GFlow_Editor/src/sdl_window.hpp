@@ -25,7 +25,7 @@ public:
 	};
 
 	SDLWindow() = default;
-	SDLWindow(std::string_view name, int width, int height, int top = SDL_WINDOWPOS_CENTERED, int left = SDL_WINDOWPOS_CENTERED, uint32_t flags = SDL_WINDOW_SHOWN | SDL_WINDOW_MAXIMIZED | SDL_WINDOW_RESIZABLE);
+	SDLWindow(const std::string& name, int width, int height, int top = SDL_WINDOWPOS_CENTERED, int left = SDL_WINDOWPOS_CENTERED, uint32_t flags = SDL_WINDOW_SHOWN | SDL_WINDOW_MAXIMIZED | SDL_WINDOW_RESIZABLE);
 
 	[[nodiscard]] bool shouldClose() const;
 	[[nodiscard]] std::vector<const char*> getRequiredVulkanExtensions() const;

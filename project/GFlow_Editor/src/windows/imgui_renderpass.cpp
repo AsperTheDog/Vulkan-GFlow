@@ -37,7 +37,7 @@ public:
     }
 };
 
-ImGuiRenderPassWindow::ImGuiRenderPassWindow(const std::string_view& name, const bool defaultOpen) : ImGuiGraphWindow(name, defaultOpen)
+ImGuiRenderPassWindow::ImGuiRenderPassWindow(const std::string& name, const bool defaultOpen) : ImGuiGraphWindow(name, defaultOpen)
 {
     m_refreshRequestedSignal.connect(this, &ImGuiRenderPassWindow::recreateParserData);
 }

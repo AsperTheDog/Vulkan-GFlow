@@ -8,7 +8,7 @@ class GFlowNode;
 class ImGuiGraphWindow : public ImGuiEditorWindow
 {
 public:
-    explicit ImGuiGraphWindow(const std::string_view& name, bool defaultOpen = true);
+    explicit ImGuiGraphWindow(const std::string& name, bool defaultOpen = true);
     void draw() override;
 
     [[nodiscard]] Signal<const gflow::parser::ResourceElemPath&>& getSidePanelUpdateSignal() { return m_sidePanel.getVariableChangedSignal(); }

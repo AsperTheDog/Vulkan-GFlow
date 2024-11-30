@@ -16,7 +16,7 @@ class GFlowNode;
 class ImGuiRenderPassWindow final : public ImGuiGraphWindow
 {
 public:
-    explicit ImGuiRenderPassWindow(const std::string_view& name, bool defaultOpen = true);
+    explicit ImGuiRenderPassWindow(const std::string& name, bool defaultOpen = true);
 
     void resourceSelected(const std::string& resource);
     void recreateParserData();

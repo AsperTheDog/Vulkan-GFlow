@@ -52,7 +52,7 @@ namespace gflow
 		destroyEnvironment(environment.getID());
 	}
 
-	Project& Context::loadProject(const std::string_view path, const uint32_t gpuOverride)
+	Project& Context::loadProject(const std::string& path, const uint32_t gpuOverride)
 	{
 		Environment& env = getEnvironment(createEnvironment());
 		const uint32_t proj = env.loadProject(path);

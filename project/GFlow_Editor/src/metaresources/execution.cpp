@@ -1,7 +1,6 @@
 ﻿#include "execution.hpp"
 
-gflow::parser::DataUsage BeginExecutionNodeResource::isUsed(const std::string& variable,
-    const std::vector<Resource*>& parentPath)
+gflow::parser::DataUsage BeginExecutionNodeResource::isUsed(const std::string& variable, const std::vector<Resource*>& parentPath)
 {
     if (variable == "renderpass")
         return gflow::parser::USED;

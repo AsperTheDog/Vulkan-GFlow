@@ -39,7 +39,7 @@ private:
 
     inline static std::vector<ImGuiEditorWindow*> s_imguiWindows{};
 
-    static ImGuiEditorWindow* getWindow(const std::string_view& name);
+    static ImGuiEditorWindow* getWindow(const std::string& name);
 
     
 public: // Editor Management

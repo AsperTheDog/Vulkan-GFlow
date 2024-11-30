@@ -23,7 +23,7 @@ SDLWindow::WindowSize::WindowSize(const Sint32 width, const Sint32 height)
 
 }
 
-SDLWindow::SDLWindow(const std::string_view name, const int width, const int height, const int top, const int left, const uint32_t flags)
+SDLWindow::SDLWindow(const std::string&name, const int width, const int height, const int top, const int left, const uint32_t flags)
 {
     SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS);
     m_SDLHandle = SDL_CreateWindow(name.data(), top, left, width, height, flags | SDL_WINDOW_VULKAN);

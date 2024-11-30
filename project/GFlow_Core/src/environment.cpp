@@ -9,7 +9,7 @@
 
 namespace gflow
 {
-	uint32_t Environment::loadProject(std::string_view path)
+	uint32_t Environment::loadProject(const std::string& path)
 	{
 		m_projects.push_back({ path, m_id });
 		return m_projects.back().getID();

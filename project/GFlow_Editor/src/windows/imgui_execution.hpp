@@ -10,7 +10,7 @@ class InitExecutionNode;
 class ImGuiExecutionWindow final : public ImGuiGraphWindow
 {
 public:
-    explicit ImGuiExecutionWindow(const std::string_view& name, bool defaultOpen = true);
+    explicit ImGuiExecutionWindow(const std::string& name, bool defaultOpen = true);
     void buildProject();
 
     void onProjectLoaded();

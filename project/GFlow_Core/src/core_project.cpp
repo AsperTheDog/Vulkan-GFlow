@@ -5,7 +5,7 @@
 
 namespace gflow
 {
-	Project::Project(const std::string_view path, const uint32_t environment)
+	Project::Project(const std::string& path, const uint32_t environment)
 			: m_path(path), m_environment(environment)
 	{
 		std::ifstream file(m_path.data(), std::ios::binary);

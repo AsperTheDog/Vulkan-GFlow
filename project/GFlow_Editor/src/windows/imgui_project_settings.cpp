@@ -2,7 +2,7 @@
 
 #include "imgui.h"
 
-ImGuiProjectSettingsWindow::ImGuiProjectSettingsWindow(const std::string_view& name, const bool defaultOpen) : ImGuiEditorWindow(name, defaultOpen)
+ImGuiProjectSettingsWindow::ImGuiProjectSettingsWindow(const std::string& name, const bool defaultOpen) : ImGuiEditorWindow(name, defaultOpen)
 {
 }
 

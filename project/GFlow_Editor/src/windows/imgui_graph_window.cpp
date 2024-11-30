@@ -5,10 +5,10 @@
 #include "nodes/base_node.hpp"
 #include "../metaresources/graph.hpp"
 
-ImGuiGraphWindow::ImGuiGraphWindow(const std::string_view& name, const bool defaultOpen)
+ImGuiGraphWindow::ImGuiGraphWindow(const std::string& name, const bool defaultOpen)
     : ImGuiEditorWindow(name, defaultOpen), m_sidePanel("Side Panel", false)
 {
-    m_sidePanel.setName("Side Panel##" + std::to_string(std::bit_cast<size_t>(this)));
+    m_sidePanel.setName("Side Panel##" + name);
     m_sidePanel.setInlinePadding(100.0f);
     clearGrid();
 }

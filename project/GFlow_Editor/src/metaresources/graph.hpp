@@ -89,7 +89,7 @@ public:
     gflow::parser::List<Connection*>& getConnections() { return *connections; }
 
     template <typename U>
-    U* addNode(gflow::parser::Vec2 position = {});
+    U* addNode(const gflow::parser::Vec2& position = {});
     void removeNode(GFlowNode* node);
 
     void addConnection(size_t left_uid, size_t left_pin, size_t right_uid, size_t right_pin);
@@ -114,7 +114,7 @@ inline gflow::parser::DataUsage GraphResource::isUsed(const std::string& variabl
 }
 
 template <typename U>
-U* GraphResource::addNode(const gflow::parser::Vec2 position)
+U* GraphResource::addNode(const gflow::parser::Vec2& position)
 {
     static_assert(std::is_base_of_v<NodeResource, U>, "T must be a subclass of NodeResource");
 

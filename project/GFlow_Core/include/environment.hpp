@@ -16,7 +16,7 @@ namespace gflow
     {
     public:
 
-        uint32_t loadProject(std::string_view path);
+        uint32_t loadProject(const std::string& path);
         void addSurface(VkSurfaceKHR surface);
 
         void build(uint32_t gpuOverride = UINT32_MAX);

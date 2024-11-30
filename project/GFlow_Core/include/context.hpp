@@ -16,7 +16,7 @@ namespace gflow
         static void destroyEnvironment(uint32_t id);
         static void destroyEnvironment(const Environment& environment);
 
-        static Project& loadProject(std::string_view path, uint32_t gpuOverride = UINT32_MAX);
+        static Project& loadProject(const std::string& path, uint32_t gpuOverride = UINT32_MAX);
 	    static VkInstance getVulkanInstance();
 
         static void destroy();

@@ -31,7 +31,7 @@ public:
     }
 };
 
-ImGuiExecutionWindow::ImGuiExecutionWindow(const std::string_view& name, const bool defaultOpen)
+ImGuiExecutionWindow::ImGuiExecutionWindow(const std::string& name, const bool defaultOpen)
 : ImGuiGraphWindow(name, defaultOpen)
 {
     m_refreshRequestedSignal.connect(this, &ImGuiExecutionWindow::buildProject);

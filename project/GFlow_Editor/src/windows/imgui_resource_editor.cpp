@@ -8,7 +8,7 @@
 #define LEFT_ALIGN_ITEM (-13.f)
 
 
-ImGuiResourceEditorWindow::ImGuiResourceEditorWindow(const std::string_view& name, const bool defaultOpen) : ImGuiEditorWindow(name, defaultOpen)
+ImGuiResourceEditorWindow::ImGuiResourceEditorWindow(const std::string& name, const bool defaultOpen) : ImGuiEditorWindow(name, defaultOpen)
 {
 }
 

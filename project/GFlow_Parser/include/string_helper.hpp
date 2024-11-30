@@ -120,7 +120,7 @@ namespace gflow::string
         return (dirPath.empty() ? "" : dirPath + "/") + filename + (path.back() == '/' ? "/" : "");
     }
 
-    inline bool contains(const std::string_view variable, const std::string_view str)
+    inline bool contains(const std::string&variable, const std::string&str)
     {
         return variable.find(str) != std::string::npos;
     }

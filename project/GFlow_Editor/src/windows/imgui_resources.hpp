@@ -13,7 +13,7 @@ namespace gflow::parser
 class ImGuiResourcesWindow final : public ImGuiEditorWindow
 {
 public:
-    explicit ImGuiResourcesWindow(const std::string_view& name, const bool defaultOpen = true);
+    explicit ImGuiResourcesWindow(const std::string& name, const bool defaultOpen = true);
 
     void setFilter(const std::string& filter) { m_typeFilter = filter; }
 

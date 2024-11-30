@@ -8,7 +8,7 @@
 
 
 
-ImGuiResourcesWindow::ImGuiResourcesWindow(const std::string_view& name, const bool defaultOpen) : ImGuiEditorWindow(name, defaultOpen)
+ImGuiResourcesWindow::ImGuiResourcesWindow(const std::string& name, const bool defaultOpen) : ImGuiEditorWindow(name, defaultOpen)
 {
 }
 
