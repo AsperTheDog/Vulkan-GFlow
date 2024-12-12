@@ -18,7 +18,8 @@ enum PinType : uint8_t
     PUSH_CONSTANT,
     BIND_PUSH_CONSTANT,
     DRAW_CALL,
-    IMAGE
+    IMAGE,
+    MODEL
 };
 
 class GFlowNode : public ImFlow::BaseNode

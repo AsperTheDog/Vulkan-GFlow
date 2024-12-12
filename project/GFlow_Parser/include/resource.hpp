@@ -243,7 +243,7 @@ namespace gflow::parser
         friend class Project;
     };
 
-    Resource* createResourceInManager(const Resource::ResourceFactory& factory);
+    Resource* createResourceInManager(const Resource::ResourceFactory& factory, Resource::ExportData* data = nullptr);
 
     //***************************************************************
     //*********************** Implementations ***********************

@@ -2,7 +2,7 @@
 
 #include "windows/nodes/base_node.hpp"
 
-gflow::parser::DataUsage ImageNodeResource::isUsed(const std::string& variable, const std::vector<Resource*>& parentPath)
+gflow::parser::DataUsage ImageAttachmentNodeResource::isUsed(const std::string& variable, const std::vector<Resource*>& parentPath)
 {
     if (variable == "imageID" || variable == "usage")
         return gflow::parser::USED;

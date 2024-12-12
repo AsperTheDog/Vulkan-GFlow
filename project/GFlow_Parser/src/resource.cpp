@@ -377,8 +377,8 @@ namespace gflow::parser
         s_ids.insert(m_id);
     }
 
-    Resource* createResourceInManager(const Resource::ResourceFactory& factory)
+    Resource* createResourceInManager(const Resource::ResourceFactory& factory, Resource::ExportData* data)
     {
-        return ResourceManager::createResource("", factory);
+        return ResourceManager::createResource("", factory, data);
     }
 }

@@ -2,8 +2,8 @@
 
 #include "metaresources/renderpass.hpp"
 
-ImageNode::ImageNode(ImGuiGraphWindow* parent, NodeResource* resource)
-    : GFlowNode("Image", parent), m_resource(dynamic_cast<ImageNodeResource*>(resource))
+ImageAttachmentNode::ImageAttachmentNode(ImGuiGraphWindow* parent, NodeResource* resource)
+    : GFlowNode("Image", parent), m_resource(dynamic_cast<ImageAttachmentNodeResource*>(resource))
 {
     m_resource->set("usage", "0");
     setStyle(std::make_shared<ImFlow::NodeStyle>(IM_COL32(99,156,0,255), ImColor(233,241,244,255), 3.5f));
@@ -16,7 +16,7 @@ ImageNode::ImageNode(ImGuiGraphWindow* parent, NodeResource* resource)
     setTitle("Image" + (currentID.empty() ? "" : " (" + currentID + ")"));
 }
 
-void ImageNode::onResourceUpdated(const gflow::parser::ResourceElemPath& element)
+void ImageAttachmentNode::onResourceUpdated(const gflow::parser::ResourceElemPath& element)
 {
     if (element.element != "imageID") return;
     const std::string newID = getLinkedResource()->getValue<std::string>("imageID");
@@ -209,7 +209,7 @@ void SubpassNode::setDepthAttachment(const bool enabled, const bool force)
 InitRenderpassNode::InitRenderpassNode(ImGuiGraphWindow* parent, NodeResource* resource)
     : GFlowNode("START", parent), m_resource(dynamic_cast<InitNodeResource*>(resource))
 {
-    setStyle(std::make_shared<ImFlow::NodeStyle>(IM_COL32(71,142,173,255), ImColor(233,241,244,255), 3.5f));
+    setStyle(std::make_shared<ImFlow::NodeStyle>(IM_COL32(106,174,204,255), ImColor(233,241,244,255), 3.5f));
 
     m_out = addOUT<int>("-->", ImFlow::PinStyle::white());
     m_out->setFilterID(INIT);

@@ -1,7 +1,6 @@
 #pragma once
 #include "../resource_manager.hpp"
 
-#include "image.hpp"
 #include "pair.hpp"
 #include "pipeline.hpp"
 
@@ -116,9 +115,21 @@ namespace gflow::parser
         friend class List;
     };
 
+    class ImageAttachment final : public Resource
+    {
+        EXPORT(std::string, imageID);
+        EXPORT(bool, clear);
+
+    public:
+        DECLARE_PUBLIC_RESOURCE(ImageAttachment)
+
+        template <typename T>
+        friend class List;
+    };
+
     class RenderPass final : public Resource
     {
-        EXPORT_RESOURCE_LIST(Image, attachments);
+        EXPORT_RESOURCE_LIST(ImageAttachment, attachments);
         EXPORT_RESOURCE_LIST(RenderPassCustomDependency, customDependencies);
         EXPORT_RESOURCE_LIST(PushConstantStructure, pushConstants);
 
@@ -130,7 +141,7 @@ namespace gflow::parser
         void clearSubpasses() { (*subpasses).clear(); }
         RenderPassSubpass* addSubpass() { return *(*subpasses).emplace_back(); }
 
-        std::vector<std::string> getAttachmentIDs(bool includeInternal) const;
+        std::vector<std::string> getAttachmentIDs() const;
         std::vector<std::string> getPushConstantIDs(bool includeInternal) const;
 
         DECLARE_PUBLIC_RESOURCE(RenderPass)
@@ -166,12 +177,11 @@ namespace gflow::parser
         return USED;
     }
 
-    inline std::vector<std::string> RenderPass::getAttachmentIDs(const bool includeInternal) const
+    inline std::vector<std::string> RenderPass::getAttachmentIDs() const
     {
         std::vector<std::string> ids;
-        for (Image* image : (*attachments).data())
-            if (includeInternal || image->getValue<bool>("external"))
-                ids.push_back(image->getValue<std::string>("imageID"));
+        for (ImageAttachment* image : (*attachments).data())
+            ids.push_back(image->getValue<std::string>("imageID"));
         return ids;
     }
 

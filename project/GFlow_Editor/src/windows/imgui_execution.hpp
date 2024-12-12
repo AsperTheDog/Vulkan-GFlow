@@ -25,6 +25,7 @@ private:
     void loadExecution(bool loadInit = true);
 
     void processRenderpassConnections(BeginExecutionNode* renderpassNode, gflow::parser::ProjectRenderpass* renderpassResource) const;
+    void processDrawCallConnections(DrawCallNode* drawNode, gflow::parser::ProjectRenderpassDrawCall* drawCallResource) const;
 
     InitExecutionNode* getInit();
 

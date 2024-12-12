@@ -938,4 +938,40 @@ namespace gflow::parser
             7
         }
     };
+
+    EnumContext EnumContexts::ImageSource = 
+    {
+        {
+            "Screen",
+            "Flat Color",
+            "File"
+        },
+        {
+            0,
+            1,
+            2
+        }
+    };
+
+    EnumContext EnumContexts::ModelFields = 
+    {
+        {
+            "Position",
+            "Normal",
+            "Texture Coords",
+            "Colors 1",
+            "Colors 2",
+            "Tangents",
+            "Bitangents"
+        },
+        {
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+        }
+    };
 }

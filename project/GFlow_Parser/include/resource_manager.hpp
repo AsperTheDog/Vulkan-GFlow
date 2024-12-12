@@ -119,6 +119,7 @@ namespace gflow::parser
 
         static bool injectResourceFactory(const std::string& type, const Resource::ResourceFactory& factory, bool isPrivate);
         [[nodiscard]] static bool hasResourceFactory(const std::string& type);
+        static bool isResourcePublic(const std::string& path);
 
     private:
         static void obtainResources(const std::string& current);

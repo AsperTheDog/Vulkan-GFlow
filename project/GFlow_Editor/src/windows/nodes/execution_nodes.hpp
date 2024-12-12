@@ -100,9 +100,34 @@ public:
     NodeResource* getLinkedResource() override { return m_resource; }
     [[nodiscard]] GFlowNode* getNext() const;
 
+    void setModelPin(bool enabled, bool force);
+
 private:
     DrawCallNodeResource* m_resource = nullptr;
 
     std::shared_ptr<ImFlow::InPin<int>> m_in;
+    std::shared_ptr<ImFlow::OutPin<int>> m_out;
+    std::shared_ptr<ImFlow::InPin<int>> m_modelPin;
+};
+
+class ImageNode final : public GFlowNode
+{
+public:
+    explicit ImageNode(ImGuiGraphWindow* parent, NodeResource* resource);
+    NodeResource* getLinkedResource() override { return m_resource; }
+
+private:
+    ImageNodeResource* m_resource = nullptr;
+    std::shared_ptr<ImFlow::OutPin<int>> m_out;
+};
+
+class ModelNode final : public GFlowNode
+{
+public:
+    explicit ModelNode(ImGuiGraphWindow* parent, NodeResource* resource);
+    NodeResource* getLinkedResource() override { return m_resource; }
+
+private:
+    ModelNodeResource* m_resource = nullptr;
     std::shared_ptr<ImFlow::OutPin<int>> m_out;
 };

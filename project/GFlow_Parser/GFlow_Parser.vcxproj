@@ -21,7 +21,6 @@
   <ItemGroup>
     <ClInclude Include="include\resource.hpp" />
     <ClInclude Include="include\enum_contexts.hpp" />
-    <ClInclude Include="include\resources\image.hpp" />
     <ClInclude Include="include\resources\project.hpp" />
     <ClInclude Include="include\resources\renderpass.hpp" />
     <ClInclude Include="include\string_helper.hpp" />

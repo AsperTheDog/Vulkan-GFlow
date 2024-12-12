@@ -251,6 +251,13 @@ namespace gflow::parser
         return s_resourceFactories.contains(type);
     }
 
+    bool ResourceManager::isResourcePublic(const std::string& path)
+    {
+        if (!hasResource(path))
+            return false;
+        return !s_resourceFactories[m_resources[path]->getType()].second;
+    }
+
     gflow::parser::Resource* ResourceManager::getSubresource(const std::string& path, const std::string& subpath)
     {
         if (!hasResource(path))

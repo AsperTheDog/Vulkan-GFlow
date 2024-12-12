@@ -134,7 +134,9 @@ void ImGuiResourcesWindow::drawContent()
             continue;
         }
 
-        if (gflow::parser::ResourceManager::hasResource(path) && (m_typeFilter.empty() || gflow::parser::ResourceManager::getResourceType(path) == m_typeFilter))
+        if (gflow::parser::ResourceManager::hasResource(path) 
+            && (m_typeFilter.empty() || gflow::parser::ResourceManager::getResourceType(path) == m_typeFilter)
+            && gflow::parser::ResourceManager::isResourcePublic(path))
         {
             if (addSelectable(name, path == m_selectedResource) && path != m_selectedResource)
             {

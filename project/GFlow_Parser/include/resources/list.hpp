@@ -225,10 +225,7 @@ namespace gflow::parser
         else if constexpr (std::is_same_v<T, size_t>) data.type = BIGINT;
         else if constexpr (std::is_same_v<T, float>) data.type = FLOAT;
         else if constexpr (std::is_same_v<T, bool>) data.type = BOOL;
-        else if constexpr (std::is_same_v<T, EnumExport>)
-        {
-            data.type = ENUM;
-        }
+        else if constexpr (std::is_same_v<T, EnumExport>) data.type = ENUM;
         else if constexpr (std::is_pointer_v<T> && std::is_base_of_v<Resource, std::remove_pointer_t<T>>)
         {
             data.type = RESOURCE;
@@ -289,7 +286,7 @@ namespace gflow::parser
         data.enumContext = &enumContext;
         data.data = &this->m_data;
         data.isRef = false;
-        *static_cast<Resource**>(data.data) = createResourceInManager(data.resourceFactory);
+        *static_cast<Resource**>(data.data) = createResourceInManager(data.resourceFactory, &data);
 
         parent->registerExport(data);
     }

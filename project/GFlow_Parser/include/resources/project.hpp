@@ -11,8 +11,12 @@ namespace gflow::parser
     class ProjectRenderpassDrawCall final : public Resource
     {
         EXPORT_RESOURCE(Pipeline, pipeline, false, true);
+        EXPORT(int, vertexCount);
 
     public:
+        Pipeline* getPipeline() { return *pipeline; }
+        void setPipeline(Pipeline* pipeline) { this->pipeline.setData(pipeline); }
+
         DECLARE_PRIVATE_RESOURCE(ProjectRenderpassDrawCall);
 
         template <typename T>
@@ -24,6 +28,8 @@ namespace gflow::parser
         EXPORT_RESOURCE_LIST(ProjectRenderpassDrawCall, drawcalls);
 
     public:
+        ProjectRenderpassDrawCall* addDrawCall() { return *(*drawcalls).emplace_back(); }
+
         DECLARE_PRIVATE_RESOURCE(ProjectRenderpassSubpass)
 
         template <typename T>
@@ -54,6 +60,7 @@ namespace gflow::parser
         EXPORT(std::string, name);
         EXPORT_RESOURCE_LIST(ProjectRenderpass, renderpasses);
 
+        DataUsage isUsed(const std::string& variable, const std::vector<Resource*>& parentPath) override;
     public:
         [[nodiscard]] std::string getName() const { return *name; }
 
@@ -63,6 +70,11 @@ namespace gflow::parser
 
         DECLARE_PRIVATE_RESOURCE(Project)
     };
+
+    inline DataUsage Project::isUsed(const std::string& variable, const std::vector<Resource*>& parentPath)
+    {
+        return NOT_USED;
+    }
 }
 
 

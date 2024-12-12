@@ -70,9 +70,12 @@ void ImGuiExecutionWindow::buildProject()
 
             next = bindNode->getNext();
         }
-        else if (const DrawCallNode* drawNode = dynamic_cast<DrawCallNode*>(next))
+        else if (DrawCallNode* drawNode = dynamic_cast<DrawCallNode*>(next))
         {
-
+            gflow::parser::ProjectRenderpassDrawCall* drawCallResource = subpassResource->addDrawCall();
+            DrawCallNodeResource* drawCallNodeResource = dynamic_cast<DrawCallNodeResource*>(drawNode->getLinkedResource());
+            drawCallResource->setPipeline(drawCallNodeResource->getPipeline());
+            processDrawCallConnections(drawNode, drawCallResource);
             next = drawNode->getNext();
         }
     }
@@ -143,10 +146,10 @@ void ImGuiExecutionWindow::rightClick(ImFlow::BaseNode* node)
             if (ImGui::BeginMenu("Resources"))
             {
                 if (ImGui::MenuItem("Image"))
-                {
-
-                }
+                    NodeCreateHelper::createNode<ImageNode, ImageNodeResource>(this);
                 if (ImGui::MenuItem("Model"))
+                    NodeCreateHelper::createNode<ModelNode, ModelNodeResource>(this);
+                if (ImGui::MenuItem("Data Decompose"))
                 {
 
                 }
@@ -163,6 +166,10 @@ void ImGuiExecutionWindow::rightClick(ImFlow::BaseNode* node)
                     ImGui::EndMenu();
                 }
                 ImGui::EndMenu();
+            }
+            if (ImGui::MenuItem("Watcher"))
+            {
+                
             }
             ImGui::EndMenu();
         }
@@ -212,6 +219,18 @@ void ImGuiExecutionWindow::loadExecution(const bool loadInit)
             newNode = m_grid.placeNode<BindPushConstantNode>(this, resource).get();
         else if (resource->getType() == "DrawCallNodeResource")
             newNode = m_grid.placeNode<DrawCallNode>(this, resource).get();
+        else if (resource->getType() == "ImageNodeResource")
+            newNode = m_grid.placeNode<ImageNode>(this, resource).get();
+        else if (resource->getType() == "ModelNodeResource")
+            newNode = m_grid.placeNode<ModelNode>(this, resource).get();
+        /*else if (resource->getType() == "DataDecomposeNodeResource")
+            newNode = m_grid.placeNode<DataDecomposeNode>(this, resource).get();
+        else if (resource->getType() == "CameraFlightNodeResource")
+            newNode = m_grid.placeNode<CameraFlightNode>(this, resource).get();
+        else if (resource->getType() == "CameraObjectNodeResource")
+            newNode = m_grid.placeNode<CameraObjectNode>(this, resource).get();
+        else if (resource->getType() == "WatcherNodeResource")
+            newNode = m_grid.placeNode<WatcherNode>(this, resource).get();*/
 
         if (!newNode) continue;
 
@@ -240,7 +259,7 @@ void ImGuiExecutionWindow::processRenderpassConnections(BeginExecutionNode* rend
     const std::unordered_set<std::string> oldAttachments = renderpassNode->getAttachments();
 
     std::unordered_set<std::string> newAttachments{};
-    for (const std::string& attachment : renderpassResource->getRenderpass()->getAttachmentIDs(false))
+    for (const std::string& attachment : renderpassResource->getRenderpass()->getAttachmentIDs())
         newAttachments.insert(attachment);
     
     for (const std::string& attachment : oldAttachments)
@@ -249,6 +268,26 @@ void ImGuiExecutionWindow::processRenderpassConnections(BeginExecutionNode* rend
     for (const std::string& attachment : newAttachments)
         if (!oldAttachments.contains(attachment))
             renderpassNode->addAttachmentPin(attachment, true);
+}
+
+void ImGuiExecutionWindow::processDrawCallConnections(DrawCallNode* drawNode, gflow::parser::ProjectRenderpassDrawCall* drawCallResource) const
+{
+    if (drawCallResource->getPipeline() == nullptr)
+    {
+        drawNode->setModelPin(false, false);
+        return;
+    }
+
+    gflow::parser::Pipeline* pipeline = drawCallResource->getPipeline();
+    const VulkanShader::ReflectionManager* reflectionData = pipeline->getShaderReflectionData(gflow::parser::Pipeline::VERTEX);
+    if (reflectionData == nullptr)
+    {
+        drawNode->setModelPin(false, false);
+        return;
+    }
+
+    // Check if the vertex shader has vertex inputs
+    drawNode->setModelPin(!reflectionData->getResources().stage_inputs.empty(), false);
 }
 
 InitExecutionNode* ImGuiExecutionWindow::getInit()

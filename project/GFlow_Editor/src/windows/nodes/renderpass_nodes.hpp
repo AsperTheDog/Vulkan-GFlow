@@ -4,16 +4,16 @@
 #include "metaresources/renderpass.hpp"
 #include "windows/nodes/base_node.hpp"
 
-class ImageNode final : public GFlowNode
+class ImageAttachmentNode final : public GFlowNode
 {
 public:
-    ImageNode(ImGuiGraphWindow* parent, NodeResource* resource);
+    ImageAttachmentNode(ImGuiGraphWindow* parent, NodeResource* resource);
 
     NodeResource* getLinkedResource() override { return m_resource; }
     void onResourceUpdated(const gflow::parser::ResourceElemPath& element) override;
 
 private:
-    ImageNodeResource* m_resource = nullptr;
+    ImageAttachmentNodeResource* m_resource = nullptr;
 
     std::shared_ptr<ImFlow::OutPin<int>> m_out;
 };

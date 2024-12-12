@@ -3,7 +3,7 @@
 InitExecutionNode::InitExecutionNode(ImGuiGraphWindow* parent, NodeResource* resource)
  : GFlowNode("Init", parent), m_resource(dynamic_cast<InitNodeResource*>(resource))
 {
-    setStyle(std::make_shared<ImFlow::NodeStyle>(IM_COL32(99,156,0,255), ImColor(233, 241, 244, 255), 3.5f));
+    setStyle(std::make_shared<ImFlow::NodeStyle>(IM_COL32(106,174,204,255), ImColor(233, 241, 244, 255), 3.5f));
     m_out = addOUT<int>("-->", ImFlow::PinStyle::white());
     m_out->behaviour([this]() -> int { return 0; }); //Not used, but needed to prevent segfault
     m_out->setFilterID(INIT);
@@ -149,6 +149,9 @@ DrawCallNode::DrawCallNode(ImGuiGraphWindow* parent, NodeResource* resource)
     m_out = addOUT<int>("-->", ImFlow::PinStyle::white());
     m_out->behaviour([this]() -> int { return 0; }); //Not used, but needed to prevent segfault
     m_out->setFilterID(DRAW_CALL);
+
+    if (m_resource->hasModelPin())
+        setModelPin(true, true);
 }
 
 GFlowNode* DrawCallNode::getNext() const
@@ -156,4 +159,44 @@ GFlowNode* DrawCallNode::getNext() const
     const std::weak_ptr<ImFlow::Link> link = m_out->getLink();
     if (link.expired()) return nullptr;
     return dynamic_cast<GFlowNode*>(link.lock()->right()->getParent());
+}
+
+void DrawCallNode::setModelPin(const bool enabled, const bool force)
+{
+    static std::shared_ptr<ImFlow::PinStyle> pinColor = std::make_shared<ImFlow::PinStyle>(ImFlow::PinStyle(IM_COL32(90,117,191,255), 4, 4.f, 4.67f, 4.2f, 1.3f));
+
+    if (m_resource->hasModelPin() == enabled && !force) return;
+
+    if (enabled)
+    {
+        m_modelPin = addIN("Input Buffer", 0, getLambdaFilter(MODEL), pinColor);
+        m_modelPin->setFilterID(MODEL);
+    }
+    else
+    {
+        dropIN("Input Buffer");
+    }
+    m_resource->setModelPin(enabled);
+}
+
+ImageNode::ImageNode(ImGuiGraphWindow* parent, NodeResource* resource) : GFlowNode("Image", parent)
+{
+    setStyle(std::make_shared<ImFlow::NodeStyle>(IM_COL32(99,156,0,255), ImColor(233,241,244,255), 3.5f));
+    m_resource = dynamic_cast<ImageNodeResource*>(resource);
+
+    static std::shared_ptr<ImFlow::PinStyle> pinColor = std::make_shared<ImFlow::PinStyle>(ImFlow::PinStyle(IM_COL32(145,255,150,255), 4, 4.f, 4.67f, 4.2f, 1.3f));
+    m_out = addOUT<int>("-->", pinColor);
+    m_out->behaviour([this]() -> int { return 0; }); //Not used, but needed to prevent segfault
+    m_out->setFilterID(IMAGE);
+}
+
+ModelNode::ModelNode(ImGuiGraphWindow* parent, NodeResource* resource) : GFlowNode("Model", parent)
+{
+    m_resource = dynamic_cast<ModelNodeResource*>(resource);
+    setStyle(std::make_shared<ImFlow::NodeStyle>(IM_COL32(90,117,191,255), ImColor(233,241,244,255), 3.5f));
+    
+    static std::shared_ptr<ImFlow::PinStyle> pinColor = std::make_shared<ImFlow::PinStyle>(ImFlow::PinStyle(IM_COL32(90,117,191,255), 4, 4.f, 4.67f, 4.2f, 1.3f));
+    m_out = addOUT<int>("-->", pinColor);
+    m_out->behaviour([this]() -> int { return 0; }); //Not used, but needed to prevent segfault
+    m_out->setFilterID(MODEL);
 }

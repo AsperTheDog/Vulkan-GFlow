@@ -3,7 +3,7 @@
 #include "resources/pipeline.hpp"
 #include "windows/nodes/base_node.hpp"
 
-class ImageNodeResource final : public NodeResource
+class ImageAttachmentNodeResource final : public NodeResource
 {
     EXPORT(std::string, imageID);
     EXPORT_ENUM(usage, gflow::parser::EnumContexts::ImageUsageContext);
@@ -11,7 +11,7 @@ class ImageNodeResource final : public NodeResource
     gflow::parser::DataUsage isUsed(const std::string& variable, const std::vector<Resource*>& parentPath) override;
 
 public:
-    DECLARE_PRIVATE_RESOURCE_ANCESTOR(ImageNodeResource, NodeResource)
+    DECLARE_PRIVATE_RESOURCE_ANCESTOR(ImageAttachmentNodeResource, NodeResource)
 };
 
 class PushConstantNodeResource final : public NodeResource

@@ -143,7 +143,7 @@ void ImGuiRenderPassWindow::rightClick(ImFlow::BaseNode* node)
             if (ImGui::BeginMenu("Resources"))
             {
                 if (ImGui::MenuItem("Attachment"))
-                    NodeCreateHelper::createNode<ImageNode, ImageNodeResource>(this);
+                    NodeCreateHelper::createNode<ImageAttachmentNode, ImageAttachmentNodeResource>(this);
                 if (ImGui::MenuItem("Push Constant"))
                     NodeCreateHelper::createNode<PushConstantNode, PushConstantNodeResource>(this);
                 ImGui::EndMenu();
@@ -195,8 +195,8 @@ void ImGuiRenderPassWindow::loadRenderPass(const bool loadInit)
             newNode = m_grid.placeNode<SubpassNode>(this, resource).get();
         else if (resource->getType() == "PipelineNodeResource")
             newNode = m_grid.placeNode<SubpassPipelineNode>(this, resource).get();
-        else if (resource->getType() == "ImageNodeResource")
-            newNode = m_grid.placeNode<ImageNode>(this, resource).get();
+        else if (resource->getType() == "ImageAttachmentNodeResource")
+            newNode = m_grid.placeNode<ImageAttachmentNode>(this, resource).get();
         else if (resource->getType() == "PushConstantNodeResource")
             newNode = m_grid.placeNode<PushConstantNode>(this, resource).get();
 
@@ -226,7 +226,7 @@ void ImGuiRenderPassWindow::processSubpassConnections(SubpassNode* subpass, gflo
     bool hasDepth = false;
     for (gflow::parser::RenderPassPipeline* pipelineResource : subpassResource->getPipelines())
     {
-        VulkanShader::ReflectionManager* data = pipelineResource->getPipeline()->getShaderReflectionData(gflow::parser::Pipeline::VERTEX);
+        const VulkanShader::ReflectionManager* data = pipelineResource->getPipeline()->getShaderReflectionData(gflow::parser::Pipeline::VERTEX);
         if (data->isValid())
         {
             for (const spirv_cross::Resource& resource : data->getResources().subpass_inputs)

@@ -25,5 +25,7 @@ namespace gflow::parser
         static EnumContext ImageUsageContext;
         static EnumContext attachmentType;
         static EnumContext PushConstantElement;
+        static EnumContext ImageSource;
+        static EnumContext ModelFields;
     };
 }
