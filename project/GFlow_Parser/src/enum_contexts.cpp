@@ -942,14 +942,12 @@ namespace gflow::parser
     EnumContext EnumContexts::ImageSource = 
     {
         {
-            "Screen",
             "Flat Color",
             "File"
         },
         {
             0,
-            1,
-            2
+            1
         }
     };
 
@@ -972,6 +970,18 @@ namespace gflow::parser
             4,
             5,
             6
+        }
+    };
+
+    EnumContext EnumContexts::ExecutionImageType = 
+    {
+        {
+            "Screen",
+            "Texture"
+        },
+        {
+            0,
+            1
         }
     };
 }

@@ -8,6 +8,23 @@
 
 namespace gflow::parser
 {
+    class ProjectImageSource final : public Resource
+    {
+        EXPORT(std::string, imageID);
+        EXPORT_ENUM(source, gflow::parser::EnumContexts::ImageSource);
+        EXPORT(gflow::parser::FilePath, path);
+        EXPORT(gflow::parser::Color, color);
+        EXPORT(bool, matchScreen);
+        EXPORT(gflow::parser::Vec2, size);
+        gflow::parser::DataUsage isUsed(const std::string& variable, const std::vector<Resource*>& parentPath) override;
+
+    public:
+        DECLARE_PRIVATE_RESOURCE(ProjectImageSource)
+
+        template <typename T>
+        friend class List;
+    };
+
     class ProjectRenderpassDrawCall final : public Resource
     {
         EXPORT_RESOURCE(Pipeline, pipeline, false, true);
@@ -58,6 +75,7 @@ namespace gflow::parser
     class Project final : public Resource
     {
         EXPORT(std::string, name);
+        EXPORT_RESOURCE_LIST(ProjectImageSource, images);
         EXPORT_RESOURCE_LIST(ProjectRenderpass, renderpasses);
 
         DataUsage isUsed(const std::string& variable, const std::vector<Resource*>& parentPath) override;
@@ -71,8 +89,35 @@ namespace gflow::parser
         DECLARE_PRIVATE_RESOURCE(Project)
     };
 
+    inline gflow::parser::DataUsage ProjectImageSource::isUsed(const std::string& variable, const std::vector<Resource*>& parentPath)
+    {
+        if (variable == "imageID" || variable == "source")
+            return gflow::parser::USED;
+
+        switch ((*source).id)
+        {
+        case 0: // ImageSource::File
+            if (variable == "color")
+                return gflow::parser::USED;
+            if (variable == "matchScreen")
+                return gflow::parser::USED;
+            if (variable == "size" && !*matchScreen)
+                return gflow::parser::USED;
+            break;
+        case 1: // ImageSource::Flat Color
+            if (variable == "path")
+                return gflow::parser::USED;
+            break;
+        }
+        return NOT_USED;
+    }
+
     inline DataUsage Project::isUsed(const std::string& variable, const std::vector<Resource*>& parentPath)
     {
+        if (variable == "name")
+            return READ_ONLY;
+        if (variable == "images")
+            return USED;
         return NOT_USED;
     }
 }

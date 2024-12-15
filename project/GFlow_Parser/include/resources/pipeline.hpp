@@ -154,6 +154,6 @@ namespace gflow::parser
         {
             Logger::print(e.what(), Logger::WARN);
         }
-        return {};
+        return nullptr;
     }
 }

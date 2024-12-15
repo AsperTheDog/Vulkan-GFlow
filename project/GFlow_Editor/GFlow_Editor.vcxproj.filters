@@ -10,7 +10,6 @@
     <ClCompile Include="src\windows\imgui_resource_editor.cpp" />
     <ClCompile Include="src\windows\imgui_execution.cpp" />
     <ClCompile Include="src\windows\imgui_renderpass.cpp" />
-    <ClCompile Include="src\windows\imgui_project_settings.cpp" />
     <ClCompile Include="src\windows\nodes\base_node.cpp" />
     <ClCompile Include="src\windows\imgui_graph_window.cpp" />
     <ClCompile Include="src\metaresources\renderpass.cpp" />
@@ -30,7 +29,6 @@
     <ClInclude Include="src\windows\imgui_resource_editor.hpp" />
     <ClInclude Include="src\windows\imgui_execution.hpp" />
     <ClInclude Include="src\windows\imgui_renderpass.hpp" />
-    <ClInclude Include="src\windows\imgui_project_settings.hpp" />
     <ClInclude Include="src\windows\nodes\base_node.hpp" />
     <ClInclude Include="src\windows\imgui_graph_window.hpp" />
     <ClInclude Include="src\metaresources\renderpass.hpp" />

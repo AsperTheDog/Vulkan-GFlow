@@ -4,7 +4,7 @@
 
 gflow::parser::DataUsage ImageAttachmentNodeResource::isUsed(const std::string& variable, const std::vector<Resource*>& parentPath)
 {
-    if (variable == "imageID" || variable == "usage")
+    if (variable == "attachmentID" || variable == "usage")
         return gflow::parser::USED;
     return NodeResource::isUsed(variable, parentPath);
 }

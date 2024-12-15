@@ -8,10 +8,10 @@
 #include "string_helper.hpp"
 #include "vulkan_context.hpp"
 #include "backends/imgui_impl_vulkan.h"
-#include "metaresources/renderpass.hpp"
+#include "metaresources/Renderpass.hpp"
+#include "metaresources/Renderpass.hpp"
 #include "utils/logger.hpp"
 #include "windows/imgui_execution.hpp"
-#include "windows/imgui_project_settings.hpp"
 #include "windows/imgui_renderpass.hpp"
 
 #include "windows/imgui_resources.hpp"
@@ -193,7 +193,7 @@ void Editor::createWindows()
     s_imguiWindows.push_back(new ImGuiResourceEditorWindow("Resource Editor"));
     s_imguiWindows.push_back(new ImGuiExecutionWindow("Execution"));
     s_imguiWindows.push_back(new ImGuiRenderPassWindow("RenderPass"));
-    s_imguiWindows.push_back(new ImGuiProjectSettingsWindow("Project Settings", false));
+    s_imguiWindows.push_back(new ImGuiResourceEditorWindow("Project Settings", false));
 #ifdef _DEBUG
     s_imguiWindows.push_back(new ImGuiTestWindow("Test", false));
 #endif
@@ -218,6 +218,11 @@ void Editor::createWindows()
         // Setup execution window
         ImGuiExecutionWindow* executionWindow = dynamic_cast<ImGuiExecutionWindow*>(getWindow("Execution"));
         s_projectLoadedSignal.connect(executionWindow, &ImGuiExecutionWindow::onProjectLoaded);
+    }
+    {
+        // Setup project settings window
+        ImGuiResourceEditorWindow* projectSettingsWindow = dynamic_cast<ImGuiResourceEditorWindow*>(getWindow("Project Settings"));
+        s_projectLoadedSignal.connect([projectSettingsWindow] { projectSettingsWindow->resourceSelected(gflow::parser::ResourceManager::getProject()); });
     }
 }
 

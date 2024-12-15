@@ -65,9 +65,9 @@ void ImGuiExecutionWindow::buildProject()
             renderpassResource = nullptr;
             next = endNode->getNext();
         }
-        else if (const BindPushConstantNode* bindNode = dynamic_cast<BindPushConstantNode*>(next))
+        else if (BindPushConstantNode* bindNode = dynamic_cast<BindPushConstantNode*>(next))
         {
-
+            processBindPushConstantConnections(bindNode, renderpassResource);
             next = bindNode->getNext();
         }
         else if (DrawCallNode* drawNode = dynamic_cast<DrawCallNode*>(next))
@@ -150,27 +150,45 @@ void ImGuiExecutionWindow::rightClick(ImFlow::BaseNode* node)
                 if (ImGui::MenuItem("Model"))
                     NodeCreateHelper::createNode<ModelNode, ModelNodeResource>(this);
                 if (ImGui::MenuItem("Data Decompose"))
-                {
-
-                }
+                    NodeCreateHelper::createNode<DataDecomposeNode, DataDecomposeNodeResource>(this);
+                if (ImGui::MenuItem("External Argument"))
+                    NodeCreateHelper::createNode<ExternalArgumentNode, ExternalArgumentNodeResource>(this);
                 if (ImGui::BeginMenu("Camera"))
                 {
                     if (ImGui::MenuItem("Flight"))
-                    {
-
-                    }
+                        NodeCreateHelper::createNode<CameraFlightNode, CameraNodeResource>(this);
                     if (ImGui::MenuItem("Object"))
+                        NodeCreateHelper::createNode<CameraObjectNode, ObjectCameraNodeResource>(this);
+                    ImGui::EndMenu();
+                }
+                if (ImGui::BeginMenu("Primitives"))
+                {
+                    if (ImGui::BeginMenu("Data Types"))
                     {
-
+                        if (ImGui::MenuItem("Float"))
+                            NodeCreateHelper::createNode<PrimitiveFloatNode, PrimitiveFloatNodeResource>(this);
+                        if (ImGui::MenuItem("Int"))
+                            NodeCreateHelper::createNode<PrimitiveIntNode, PrimitiveIntNodeResource>(this);
+                        if (ImGui::MenuItem("Color"))
+                            NodeCreateHelper::createNode<PrimitiveColorNode, PrimitiveColorNodeResource>(this);
+                        if (ImGui::MenuItem("Vec2"))
+                            NodeCreateHelper::createNode<PrimitiveVec2Node, PrimitiveVec2NodeResource>(this);
+                        if (ImGui::MenuItem("Vec3"))
+                            NodeCreateHelper::createNode<PrimitiveVec3Node, PrimitiveVec3NodeResource>(this);
+                        if (ImGui::MenuItem("Vec4"))
+                            NodeCreateHelper::createNode<PrimitiveVec4Node, PrimitiveVec4NodeResource>(this);
+                        if (ImGui::MenuItem("Mat3"))
+                            NodeCreateHelper::createNode<PrimitiveMat3Node, PrimitiveMat3NodeResource>(this);
+                        if (ImGui::MenuItem("Mat4"))
+                            NodeCreateHelper::createNode<PrimitiveMat4Node, PrimitiveMat4NodeResource>(this);
+                        ImGui::EndMenu();
                     }
                     ImGui::EndMenu();
                 }
                 ImGui::EndMenu();
             }
             if (ImGui::MenuItem("Watcher"))
-            {
-                
-            }
+                NodeCreateHelper::createNode<WatcherNode, WatcherNodeResource>(this);
             ImGui::EndMenu();
         }
     }
@@ -223,14 +241,32 @@ void ImGuiExecutionWindow::loadExecution(const bool loadInit)
             newNode = m_grid.placeNode<ImageNode>(this, resource).get();
         else if (resource->getType() == "ModelNodeResource")
             newNode = m_grid.placeNode<ModelNode>(this, resource).get();
-        /*else if (resource->getType() == "DataDecomposeNodeResource")
+        else if (resource->getType() == "DataDecomposeNodeResource")
             newNode = m_grid.placeNode<DataDecomposeNode>(this, resource).get();
+        else if (resource->getType() == "PrimitiveFloatNodeResource")
+            newNode = m_grid.placeNode<PrimitiveFloatNode>(this, resource).get();
+        else if (resource->getType() == "PrimitiveIntNodeResource")
+            newNode = m_grid.placeNode<PrimitiveIntNode>(this, resource).get();
+        else if (resource->getType() == "PrimitiveColorNodeResource")
+            newNode = m_grid.placeNode<PrimitiveColorNode>(this, resource).get();
+        else if (resource->getType() == "PrimitiveVec2NodeResource")
+            newNode = m_grid.placeNode<PrimitiveVec2Node>(this, resource).get();
+        else if (resource->getType() == "PrimitiveVec3NodeResource")
+            newNode = m_grid.placeNode<PrimitiveVec3Node>(this, resource).get();
+        else if (resource->getType() == "PrimitiveVec4NodeResource")
+            newNode = m_grid.placeNode<PrimitiveVec4Node>(this, resource).get();
+        else if (resource->getType() == "PrimitiveMat3NodeResource")
+            newNode = m_grid.placeNode<PrimitiveMat3Node>(this, resource).get();
+        else if (resource->getType() == "PrimitiveMat4NodeResource")
+            newNode = m_grid.placeNode<PrimitiveMat4Node>(this, resource).get();
+        else if (resource->getType() == "ExternalArgumentNodeResource")
+            newNode = m_grid.placeNode<ExternalArgumentNode>(this, resource).get();
+        else if (resource->getType() == "WatcherNodeResource")
+            newNode = m_grid.placeNode<WatcherNode>(this, resource).get();
+        else if (resource->getType() == "ObjectCameraNodeResource")
+            newNode = m_grid.placeNode<CameraObjectNode>(this, resource).get();
         else if (resource->getType() == "CameraFlightNodeResource")
             newNode = m_grid.placeNode<CameraFlightNode>(this, resource).get();
-        else if (resource->getType() == "CameraObjectNodeResource")
-            newNode = m_grid.placeNode<CameraObjectNode>(this, resource).get();
-        else if (resource->getType() == "WatcherNodeResource")
-            newNode = m_grid.placeNode<WatcherNode>(this, resource).get();*/
 
         if (!newNode) continue;
 
@@ -280,7 +316,7 @@ void ImGuiExecutionWindow::processDrawCallConnections(DrawCallNode* drawNode, gf
 
     gflow::parser::Pipeline* pipeline = drawCallResource->getPipeline();
     const VulkanShader::ReflectionManager* reflectionData = pipeline->getShaderReflectionData(gflow::parser::Pipeline::VERTEX);
-    if (reflectionData == nullptr)
+    if (reflectionData == nullptr || !reflectionData->isValid())
     {
         drawNode->setModelPin(false, false);
         return;
@@ -288,6 +324,37 @@ void ImGuiExecutionWindow::processDrawCallConnections(DrawCallNode* drawNode, gf
 
     // Check if the vertex shader has vertex inputs
     drawNode->setModelPin(!reflectionData->getResources().stage_inputs.empty(), false);
+}
+
+void ImGuiExecutionWindow::processBindPushConstantConnections(BindPushConstantNode* bindNode, gflow::parser::ProjectRenderpass* renderpassResource) const
+{
+    if (renderpassResource == nullptr || renderpassResource->getRenderpass() == nullptr)
+        return;
+
+    if (bindNode->getPushConstantDataPin()->getLink().expired() || bindNode->getPushConstantDataPin()->getLink().lock()->left()->getParent() == nullptr)
+        return;
+
+    gflow::parser::RenderPass* renderpass = renderpassResource->getRenderpass();
+    const std::string structID = bindNode->getLinkedResource()->getValue<std::string>("structID");
+    std::vector<std::string> pushConstants = renderpass->getPushConstantIDs(false);
+    DataDecomposeNode* pushConstantNode = dynamic_cast<DataDecomposeNode*>(bindNode->getPushConstantDataPin()->getLink().lock()->left()->getParent());
+
+    if (std::ranges::find(pushConstants, structID) == pushConstants.end())
+    {
+        pushConstantNode->removeAllReflectionPins();
+        return;
+    }
+
+    std::unordered_set<std::string> oldPins = pushConstantNode->getComponents();
+    std::vector<std::string> newPins = renderpass->getPushConstantStructure(structID)->getElementNames();
+
+    for (const std::string& pin : oldPins)
+        if (std::ranges::find(newPins, pin) == newPins.end())
+            pushConstantNode->removeComponentPin(pin);
+
+    for (const std::string& pin : newPins)
+        if (std::ranges::find(oldPins, pin) == oldPins.end())
+            pushConstantNode->addComponentPin(pin, true);
 }
 
 InitExecutionNode* ImGuiExecutionWindow::getInit()

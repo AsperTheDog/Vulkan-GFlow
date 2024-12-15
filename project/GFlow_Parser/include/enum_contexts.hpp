@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdint>
+#include <string>
 #include <vector>
 
 namespace gflow::parser
@@ -8,6 +9,16 @@ namespace gflow::parser
     {
         std::vector<const char*> names;
         std::vector<uint32_t> values;
+
+        uint32_t operator[](const std::string& name) const
+        {
+            for (uint32_t i = 0; i < names.size(); i++)
+            {
+                if (names[i] == name)
+                    return values[i];
+            }
+            return 0;
+        }
     };
 
     struct EnumContexts
@@ -27,5 +38,6 @@ namespace gflow::parser
         static EnumContext PushConstantElement;
         static EnumContext ImageSource;
         static EnumContext ModelFields;
+        static EnumContext ExecutionImageType;
     };
 }

@@ -183,6 +183,39 @@ bool ImGuiResourceEditorWindow::drawVec4(const std::string& name, void* data) co
     return changed;
 }
 
+bool ImGuiResourceEditorWindow::drawMat3(const std::string& name, void* data) const
+{
+    gflow::parser::Mat3* value = static_cast<gflow::parser::Mat3*>(data);
+    gflow::parser::Mat3 tmp = *value;
+    ImGui::Text(name.c_str());
+    ImGui::PushItemWidth(LEFT_ALIGN_ITEM);
+    ImGui::InputFloat3(("##1_" + name).c_str(), &tmp.data[0]);
+    ImGui::InputFloat3(("##2_" + name).c_str(), &tmp.data[3]);
+    ImGui::InputFloat3(("##3_" + name).c_str(), &tmp.data[6]);
+    ImGui::PopItemWidth();
+    ImGui::Spacing();
+    const bool changed = tmp != *value;
+    *value = tmp;
+    return changed;
+}
+
+bool ImGuiResourceEditorWindow::drawMat4(const std::string& name, void* data) const
+{
+    gflow::parser::Mat4* value = static_cast<gflow::parser::Mat4*>(data);
+    gflow::parser::Mat4 tmp = *value;
+    ImGui::Text(name.c_str());
+    ImGui::PushItemWidth(LEFT_ALIGN_ITEM);
+    ImGui::InputFloat4(("##1_" + name).c_str(), &tmp.data[0]);
+    ImGui::InputFloat4(("##2_" + name).c_str(), &tmp.data[4]);
+    ImGui::InputFloat4(("##3_" + name).c_str(), &tmp.data[8]);
+    ImGui::InputFloat4(("##4_" + name).c_str(), &tmp.data[12]);
+    ImGui::PopItemWidth();
+    ImGui::Spacing();
+    const bool changed = tmp != *value;
+    *value = tmp;
+    return changed;
+}
+
 bool ImGuiResourceEditorWindow::drawColor(const std::string& name, void* data) const
 {
     gflow::parser::Color* value = static_cast<gflow::parser::Color*>(data);
@@ -220,7 +253,8 @@ bool ImGuiResourceEditorWindow::drawFile(const std::string& name, void* data) co
     gflow::parser::FilePath* str = static_cast<gflow::parser::FilePath*>(data);
     drawString(name, &str->path, true);
     ImGui::SameLine(0, 10);
-    return ImGui::Button("refresh");
+    const bool aa = ImGui::Button(("refresh##" + std::string(name)).c_str());
+    return aa;
 }
 
 void ImGuiResourceEditorWindow::drawResource(const std::string& stackedName, void* data, const std::vector<gflow::parser::Resource*>& parentPath)
@@ -269,6 +303,12 @@ void ImGuiResourceEditorWindow::drawResource(const std::string& stackedName, voi
             break;
         case gflow::parser::DataType::VEC4:
             changed = drawVec4(exportElem.name, exportElem.data);
+            break;
+        case gflow::parser::DataType::MAT3:
+            changed = drawMat3(exportElem.name, exportElem.data);
+            break;
+        case gflow::parser::DataType::MAT4:
+            changed = drawMat4(exportElem.name, exportElem.data);
             break;
         case gflow::parser::DataType::COLOR:
             changed = drawColor(exportElem.name, exportElem.data);

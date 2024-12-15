@@ -31,6 +31,8 @@ private:
     bool drawVec2(const std::string& name, void* data) const;
     bool drawVec3(const std::string& name, void* data) const;
     bool drawVec4(const std::string& name, void* data) const;
+    bool drawMat3(const std::string& name, void* data) const;
+    bool drawMat4(const std::string& name, void* data) const;
     bool drawColor(const std::string& name, void* data) const;
     bool drawUColor(const std::string& name, void* data) const;
     void drawResource(const std::string& stackedName, void* data, const std::vector<gflow::parser::Resource*>& parentPath);

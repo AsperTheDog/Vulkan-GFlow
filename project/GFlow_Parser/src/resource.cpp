@@ -138,6 +138,10 @@ namespace gflow::parser
                 return { static_cast<Vec3*>(exportData.data)->toString(), "" };
             case VEC4:
                 return { static_cast<Vec4*>(exportData.data)->toString(), "" };
+            case MAT3:
+                return { static_cast<Mat3*>(exportData.data)->toString(), "" };
+            case MAT4:
+                return { static_cast<Mat4*>(exportData.data)->toString(), "" };
             case COLOR:
                 return { static_cast<Color*>(exportData.data)->toString(), "" };
             case UCOLOR:
@@ -227,6 +231,32 @@ namespace gflow::parser
                 vec->y = std::stof(values[1]);
                 vec->z = std::stof(values[2]);
                 vec->w = std::stof(values[3]);
+                break;
+            }
+            case MAT3:
+            {
+                Mat3* mat = static_cast<Mat3*>(exportData.data);
+                const std::vector<std::string> values = string::split(value, ", ");
+                if (values.size() != 9)
+                {
+                    Logger::print("Invalid value for Mat3: " + value, Logger::ERR);
+                    return false;
+                }
+                for (int i = 0; i < 9; i++)
+                    mat->data[i] = std::stof(values[i]);
+                break;
+            }
+            case MAT4:
+            {
+                Mat4* mat = static_cast<Mat4*>(exportData.data);
+                const std::vector<std::string> values = string::split(value, ", ");
+                if (values.size() != 16)
+                {
+                    Logger::print("Invalid value for Mat4: " + value, Logger::ERR);
+                    return false;
+                }
+                for (int i = 0; i < 16; i++)
+                    mat->data[i] = std::stof(values[i]);
                 break;
             }
             case COLOR:

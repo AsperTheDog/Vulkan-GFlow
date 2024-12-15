@@ -3,7 +3,7 @@
 #include "metaresources/renderpass.hpp"
 
 ImageAttachmentNode::ImageAttachmentNode(ImGuiGraphWindow* parent, NodeResource* resource)
-    : GFlowNode("Image", parent), m_resource(dynamic_cast<ImageAttachmentNodeResource*>(resource))
+    : GFlowNode("Attachment", parent), m_resource(dynamic_cast<ImageAttachmentNodeResource*>(resource))
 {
     m_resource->set("usage", "0");
     setStyle(std::make_shared<ImFlow::NodeStyle>(IM_COL32(99,156,0,255), ImColor(233,241,244,255), 3.5f));
@@ -12,15 +12,15 @@ ImageAttachmentNode::ImageAttachmentNode(ImGuiGraphWindow* parent, NodeResource*
     m_out->behaviour([this]() -> int { return 0; }); //Not used, but needed to prevent segfault
     m_out->setFilterID(IMAGE);
 
-    const std::string currentID = getLinkedResource()->getValue<std::string>("imageID");
-    setTitle("Image" + (currentID.empty() ? "" : " (" + currentID + ")"));
+    const std::string currentID = getLinkedResource()->getValue<std::string>("attachmentID");
+    setTitle("Attachment" + (currentID.empty() ? "" : " (" + currentID + ")"));
 }
 
 void ImageAttachmentNode::onResourceUpdated(const gflow::parser::ResourceElemPath& element)
 {
-    if (element.element != "imageID") return;
-    const std::string newID = getLinkedResource()->getValue<std::string>("imageID");
-    setTitle("Image" + (newID.empty() ? "" : " (" + newID + ")"));
+    if (element.element != "attachmentID") return;
+    const std::string newID = getLinkedResource()->getValue<std::string>("attachmentID");
+    setTitle("Attachment" + (newID.empty() ? "" : " (" + newID + ")"));
 }
 
 PushConstantNode::PushConstantNode(ImGuiGraphWindow* parent, NodeResource* resource)

@@ -3,7 +3,6 @@
 #include "ImNodeFlow.h"
 #include "resources/project.hpp"
 #include "sdl_window.hpp"
-#include "vulkan_shader.hpp"
 #include "windows/imgui_resources.hpp"
 
 class ImGuiResourceEditorWindow;

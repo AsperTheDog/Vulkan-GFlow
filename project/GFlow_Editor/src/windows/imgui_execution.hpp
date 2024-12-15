@@ -26,6 +26,7 @@ private:
 
     void processRenderpassConnections(BeginExecutionNode* renderpassNode, gflow::parser::ProjectRenderpass* renderpassResource) const;
     void processDrawCallConnections(DrawCallNode* drawNode, gflow::parser::ProjectRenderpassDrawCall* drawCallResource) const;
+    void processBindPushConstantConnections(BindPushConstantNode* bindNode, gflow::parser::ProjectRenderpass* renderpassResource) const;
 
     InitExecutionNode* getInit();
 

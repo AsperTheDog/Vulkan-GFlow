@@ -5,7 +5,7 @@
 
 class ImageAttachmentNodeResource final : public NodeResource
 {
-    EXPORT(std::string, imageID);
+    EXPORT(std::string, attachmentID);
     EXPORT_ENUM(usage, gflow::parser::EnumContexts::ImageUsageContext);
 
     gflow::parser::DataUsage isUsed(const std::string& variable, const std::vector<Resource*>& parentPath) override;

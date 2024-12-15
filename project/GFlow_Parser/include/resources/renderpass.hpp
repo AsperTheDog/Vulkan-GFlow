@@ -109,6 +109,8 @@ namespace gflow::parser
 
         DataUsage isUsed(const std::string& variable, const std::vector<Resource*>& parentPath) override;
     public:
+        std::vector<std::string> getElementNames() const;
+
         DECLARE_PRIVATE_RESOURCE(PushConstantStructure)
 
         template <typename T>
@@ -144,6 +146,8 @@ namespace gflow::parser
         std::vector<std::string> getAttachmentIDs() const;
         std::vector<std::string> getPushConstantIDs(bool includeInternal) const;
 
+        PushConstantStructure* getPushConstantStructure(const std::string& structureID);
+
         DECLARE_PUBLIC_RESOURCE(RenderPass)
     };
 
@@ -170,6 +174,14 @@ namespace gflow::parser
         return USED;
     }
 
+    inline std::vector<std::string> PushConstantStructure::getElementNames() const
+    {
+        std::vector<std::string> names;
+        for (PushConstantElement* element : (*elements).data())
+            names.push_back(element->getValue<std::string>("name"));
+        return names;
+    }
+
     inline DataUsage RenderPass::isUsed(const std::string& variable, const std::vector<Resource*>& parentPath)
     {
         if (variable == "subpasses")
@@ -192,5 +204,13 @@ namespace gflow::parser
             if (includeInternal || pushConstant->getValue<bool>("external"))
                 ids.push_back(pushConstant->getValue<std::string>("structureID"));
         return ids;
+    }
+
+    inline PushConstantStructure* RenderPass::getPushConstantStructure(const std::string& structureID)
+    {
+        for (PushConstantStructure* pushConstant : (*pushConstants).data())
+            if (pushConstant->getValue<std::string>("structureID") == structureID)
+                return pushConstant;
+        return nullptr;
     }
 }

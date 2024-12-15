@@ -53,6 +53,8 @@ namespace gflow::parser
         VEC2,
         VEC3,
         VEC4,
+        MAT3,
+        MAT4,
         COLOR,
         UCOLOR,
         FILE,
@@ -111,6 +113,42 @@ namespace gflow::parser
             g = static_cast<uint8_t>(ftmp.g * 255);
             b = static_cast<uint8_t>(ftmp.b * 255);
             a = static_cast<uint8_t>(ftmp.a * 255);
+        }
+    };
+    struct Mat3
+    {
+        float data[9];
+        bool operator==(const Mat3& other) const
+        {
+            for (int i = 0; i < 9; i++)
+                if (data[i] != other.data[i]) return false;
+            return true;
+        }
+
+        [[nodiscard]] std::string toString() const
+        {
+            std::string str;
+            for (int i = 0; i < 9; i++)
+                str += std::to_string(data[i]) + ", ";
+            return str;
+        }
+    };
+    struct Mat4
+    {
+        float data[16];
+        bool operator==(const Mat4& other) const
+        {
+            for (int i = 0; i < 16; i++)
+                if (data[i] != other.data[i]) return false;
+            return true;
+        }
+
+        [[nodiscard]] std::string toString() const
+        {
+            std::string str;
+            for (int i = 0; i < 16; i++)
+                str += std::to_string(data[i]) + ", ";
+            return str;
         }
     };
 
@@ -277,6 +315,8 @@ namespace gflow::parser
         else if constexpr (std::is_same_v<T, Vec2>) exportData.type = VEC2;
         else if constexpr (std::is_same_v<T, Vec3>) exportData.type = VEC3;
         else if constexpr (std::is_same_v<T, Vec4>) exportData.type = VEC4;
+        else if constexpr (std::is_same_v<T, Mat3>) exportData.type = MAT3;
+        else if constexpr (std::is_same_v<T, Mat4>) exportData.type = MAT4;
         else if constexpr (std::is_same_v<T, Color>) exportData.type = COLOR;
         else if constexpr (std::is_same_v<T, UColor>) exportData.type = UCOLOR;
         else if constexpr (std::is_pointer_v<T> && std::is_base_of_v<Resource, std::remove_pointer_t<T>>)
