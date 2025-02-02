@@ -11,7 +11,7 @@ namespace gflow
 		std::ifstream file(m_path.data(), std::ios::binary);
 		if (!file.is_open())
 		{
-			throw std::runtime_error(std::string("Failed to open project file: ") + path.data());
+			throw std::runtime_error(std::string("Failed to open project file: ") + path);
 		}
 		file.read(reinterpret_cast<char*>(&m_fileStructure.requirementsPos), sizeof(size_t));
 		file.read(reinterpret_cast<char*>(&m_fileStructure.renderPassPos), sizeof(size_t));

@@ -152,7 +152,7 @@ namespace gflow::parser
         }
         catch (const std::runtime_error& e)
         {
-            Logger::print(e.what(), Logger::WARN);
+            Logger::print(Logger::WARN, e.what());
         }
         return nullptr;
     }

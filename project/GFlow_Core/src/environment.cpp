@@ -5,13 +5,14 @@
 #include <thread>
 
 #include "vulkan_context.hpp"
+#include "ext/vulkan_swapchain.hpp"
 #include "utils/logger.hpp"
 
 namespace gflow
 {
 	uint32_t Environment::loadProject(const std::string& path)
 	{
-		m_projects.push_back({ path, m_id });
+		m_projects.push_back({ path, getID() });
 		return m_projects.back().getID();
 	}
 
@@ -26,18 +27,18 @@ namespace gflow
 		VulkanGPU selectedGPU;
 		if (gpuOverride < VulkanContext::getGPUCount())
 		{
-			Logger::print("Manually selected GPU with id " + std::to_string(gpuOverride), Logger::INFO);
+			Logger::print(Logger::INFO, "Manually selected GPU with id ", gpuOverride);
 			const std::vector<VulkanGPU> gpus = VulkanContext::getGPUs();
 			selectedGPU = gpus[gpuOverride];
 			if (!isGPUSuitable(selectedGPU, requirements))
 			{
-				Logger::print("Invalid GPU: manually selected GPU is not suitable, searching alternative...", Logger::WARN);
+				Logger::print(Logger::WARN, "Invalid GPU: manually selected GPU is not suitable, searching alternative...");
 				selectedGPU = selectGPU(requirements);
 			}
 		}
 		else
 		{
-			Logger::print("Automatically selecting GPU", Logger::INFO);
+			Logger::print(Logger::INFO, "Automatically selecting GPU");
 			selectedGPU = selectGPU(requirements);
 		}
 
@@ -70,21 +71,22 @@ namespace gflow
 			}
 		}
 
-		std::vector<const char*> extensions{};
-		extensions.reserve(requirements.extensions.size());
-		for (const std::string& extension : requirements.extensions) extensions.push_back(extension.c_str());
+        VulkanDeviceExtensionManager extensions{};
+        extensions.addExtension(VK_KHR_SWAPCHAIN_EXTENSION_NAME, new VulkanSwapchainExtension(m_device));
 
-		m_device = VulkanContext::createDevice(selectedGPU, selector, extensions, requirements.features);
+		m_device = VulkanContext::createDevice(selectedGPU, selector, &extensions, requirements.features);
+        VulkanDevice& device = VulkanContext::getDevice(m_device);
 
 		QueueFamily queueFamily = queueStructure.getQueueFamily(m_mainQueue.familyIndex);
-		m_commandBuffer = VulkanContext::getDevice(m_device).createCommandBuffer(queueFamily, 0, false);
+        device.initializeCommandPool(queueFamily, 0, true);
+		m_commandBuffer = device.createCommandBuffer(queueFamily, 0, false);
 
 		QueueFamily transferFamily = queueStructure.getQueueFamily(m_transferQueue.familyIndex);
-		m_transferBuffer = VulkanContext::getDevice(m_device).createCommandBuffer(transferFamily, 0, false);
+		m_transferBuffer = device.createCommandBuffer(transferFamily, 0, false);
 
-		m_inFlightFence = VulkanContext::getDevice(m_device).createFence(VK_FENCE_CREATE_SIGNALED_BIT);
-		m_renderFinishedSemaphoreID = VulkanContext::getDevice(m_device).createSemaphore();
-		m_readyToPresentSemaphoerID = VulkanContext::getDevice(m_device).createSemaphore();
+		m_inFlightFence = device.createFence(VK_FENCE_CREATE_SIGNALED_BIT);
+		m_renderFinishedSemaphoreID = device.createSemaphore();
+		m_readyToPresentSemaphoerID = device.createSemaphore();
 
 		Logger::popContext();
 	}
@@ -92,9 +94,10 @@ namespace gflow
 	uint32_t Environment::man_acquireSwapchainImage(const VkSurfaceKHR surface)
 	{
 		if (!m_swapchains.contains(surface))
-			throw std::runtime_error("Surface not found in environment (ID: " + std::to_string(m_id));
+			throw std::runtime_error("Surface not found in environment (ID: " + std::to_string(getID()));
 
-		VulkanSwapchain& swapchain = VulkanContext::getDevice(m_device).getSwapchain(m_swapchains[surface].id);
+        VulkanSwapchainExtension* swapchainExtension = VulkanSwapchainExtension::get(VulkanContext::getDevice(m_device));
+		VulkanSwapchain& swapchain = swapchainExtension->getSwapchain(m_swapchains[surface].id);
 		return swapchain.acquireNextImage();
 	}
 
@@ -110,7 +113,7 @@ namespace gflow
         }
         catch (const std::runtime_error& e)
         {
-            Logger::print("Failed to get reflection data for shader " + shaderPath + ": " + e.what(), Logger::ERR);
+            Logger::print(Logger::ERR, "Failed to get reflection data for shader ", shaderPath, ": ", e.what());
             return {};
         }
         
@@ -119,9 +122,10 @@ namespace gflow
     uint32_t Environment::man_getSwapchainImage(const VkSurfaceKHR surface)
 	{
 		if (!m_swapchains.contains(surface))
-			throw std::runtime_error("Surface not found in environment (ID: " + std::to_string(m_id));
+			throw std::runtime_error("Surface not found in environment (ID: " + std::to_string(getID()));
 
-		return VulkanContext::getDevice(m_device).getSwapchain(m_swapchains[surface].id).getNextImage();
+        VulkanSwapchainExtension* swapchainExtension = VulkanSwapchainExtension::get(VulkanContext::getDevice(m_device));
+		return swapchainExtension->getSwapchain(m_swapchains[surface].id).getNextImage();
 	}
 
 	void Environment::build(const uint32_t gpuOverride)
@@ -140,7 +144,7 @@ namespace gflow
 			}
 		}
 
-		Logger::print("Project search failed out of " + std::to_string(m_projects.size()) + " projects", Logger::LevelBits::DEBUG);
+		Logger::print(Logger::DEBUG, "Project search failed out of ", m_projects.size(), " projects");
 		throw std::runtime_error("Project (ID: " + std::to_string(id) + ") not found");
 	}
 
@@ -201,7 +205,8 @@ namespace gflow
 		{
 			if (swapchain.mustBeAwaited)
 			{
-				VulkanSwapchain& swapchainObj = device.getSwapchain(swapchain.id);
+                VulkanSwapchainExtension* swapchainExtension = VulkanSwapchainExtension::get(device);
+				VulkanSwapchain& swapchainObj = swapchainExtension->getSwapchain(swapchain.id);
 				semaphores.emplace_back(swapchainObj.getImgSemaphore(), VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT);
 			}
 		}
@@ -219,7 +224,7 @@ namespace gflow
 	{
 		if (!m_swapchains.contains(surface))
 		{
-			throw std::runtime_error("Surface not found in environment (ID: " + std::to_string(m_id));
+			throw std::runtime_error("Surface not found in environment (ID: " + std::to_string(getID()));
 		}
 
 		const VkSurfaceCapabilitiesKHR capabilities = VulkanContext::getDevice(m_device).getGPU().getCapabilities(surface);
@@ -234,8 +239,9 @@ namespace gflow
 			extent.height = std::max(std::min(windowSize.height, capabilities.minImageExtent.height), capabilities.maxImageExtent.height);
 		}
 
-		VulkanDevice& device = VulkanContext::getDevice(m_device);
-		m_swapchains[surface].id = device.createSwapchain(surface, extent, format);
+        const VulkanDevice& device = VulkanContext::getDevice(m_device);
+	    VulkanSwapchainExtension* swapchainExtension = VulkanSwapchainExtension::get(device);
+		m_swapchains[surface].id = swapchainExtension->createSwapchain(surface, extent, format);
 	}
 
 	bool Environment::present(VkSurfaceKHR surface)
@@ -246,11 +252,12 @@ namespace gflow
 			
 			if (swapchain.mustBeAwaited)
 			{
-				VulkanSwapchain& swapchainObj = VulkanContext::getDevice(m_device).getSwapchain(swapchain.id);
+                VulkanSwapchainExtension* swapchainExtension = VulkanSwapchainExtension::get(VulkanContext::getDevice(m_device));
+				VulkanSwapchain& swapchainObj = swapchainExtension->getSwapchain(swapchain.id);
 				if (!swapchainObj.present(swapchain.presentQueue, { m_renderFinishedSemaphoreID }))
 				{
 					finishedCorrectly = false;
-					Logger::print("Swapchain (ID: " + std::to_string(swapchain.id) + ") out of date", Logger::WARN);
+					Logger::print(Logger::WARN, "Swapchain (ID: ", swapchain.id, ") out of date");
 				}
 				swapchain.mustBeAwaited = false;
 			}
@@ -282,19 +289,16 @@ namespace gflow
 	{
 		if (m_device == UINT32_MAX) return;
 
-		for (const Swapchain& swapchain : m_swapchains | std::views::values)
-			VulkanContext::getDevice(m_device).freeSwapchain(swapchain.id);
-		m_swapchains.clear();
-
 		VulkanContext::freeDevice(m_device);
 		m_device = UINT32_MAX;
 	}
 
 	void Environment::reconfigurePresentTarget(const VkSurfaceKHR surface, const VkExtent2D windowSize)
 	{
-		VulkanDevice& device = VulkanContext::getDevice(m_device);
-		const VulkanSwapchain& swapchain = device.getSwapchain(m_swapchains[surface].id);
-		m_swapchains[surface].id = device.createSwapchain(surface, windowSize, swapchain.getFormat(), m_swapchains[surface].id);
+        const VulkanDevice& device = VulkanContext::getDevice(m_device);
+        VulkanSwapchainExtension* swapchainExtension = VulkanSwapchainExtension::get(device);
+		const VulkanSwapchain& swapchain = swapchainExtension->getSwapchain(m_swapchains[surface].id);
+		m_swapchains[surface].id = swapchainExtension->createSwapchain(surface, windowSize, swapchain.getFormat(), m_swapchains[surface].id);
 	}
 
     Project::Requirements Environment::getRequirements() const
@@ -311,7 +315,7 @@ namespace gflow
 
 	bool Environment::isGPUSuitable(const VulkanGPU gpu, const Project::Requirements& requirements)
 	{
-		Logger::print(std::string("Checking GPU: ") + gpu.getProperties().deviceName, Logger::DEBUG);
+		Logger::print(Logger::DEBUG, "Checking GPU: ", gpu.getProperties().deviceName);
 
 		bool invalid = false;
 		const GPUQueueStructure queueStructure = gpu.getQueueFamilies();
@@ -333,7 +337,7 @@ namespace gflow
 			}
 			if (invalid)
 			{
-				Logger::print("Invalid GPU: unsupported requested features", Logger::INFO);
+				Logger::print(Logger::INFO, "Invalid GPU: unsupported requested features");
 				return false;
 			}
 		}
@@ -342,7 +346,7 @@ namespace gflow
 		const VkQueueFlags queueFlags = requirements.queueFlags & (VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT);
 		if (!queueStructure.areQueueFlagsSupported(queueFlags, true) || !queueStructure.areQueueFlagsSupported(requirements.queueFlags))
 		{
-			Logger::print("Invalid GPU: unsupported requested queue flags", Logger::INFO);
+			Logger::print(Logger::INFO, "Invalid GPU: unsupported requested queue flags");
 			return false;
 		}
 
@@ -360,7 +364,7 @@ namespace gflow
 			}
 			if (invalid)
 			{
-				Logger::print("Invalid GPU: unsupported present queue", Logger::INFO);
+				Logger::print(Logger::INFO, "Invalid GPU: unsupported present queue");
 				return false;
 			}
 		}
@@ -390,7 +394,7 @@ namespace gflow
 			}
 			if (invalid)
 			{
-				Logger::print("Invalid GPU: unsupported requested extensions", Logger::INFO);
+				Logger::print(Logger::INFO, "Invalid GPU: unsupported requested extensions");
 				return false;
 			}
 		}
@@ -438,7 +442,7 @@ namespace gflow
 				}
 			}
 
-			Logger::print(std::string("GPU ") + +gpu.getProperties().deviceName + " score: " + std::to_string(scores[i]), Logger::DEBUG);
+			Logger::print(Logger::DEBUG, "GPU ", gpu.getProperties().deviceName, " score: ", scores[i]);
 		}
 
 		uint32_t bestGPU = 0;
@@ -450,7 +454,7 @@ namespace gflow
 			}
 		}
 
-		Logger::print(std::string("Selected GPU: ") + suitableGPUs[bestGPU].getProperties().deviceName, Logger::INFO);
+		Logger::print(Logger::INFO, "Selected GPU: ", suitableGPUs[bestGPU].getProperties().deviceName);
 		Logger::popContext();
 		return suitableGPUs[bestGPU];
 	}

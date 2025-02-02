@@ -474,7 +474,7 @@ namespace gflow::parser
                 }
                 catch (const std::exception& e)
                 {
-                    Logger::print(e.what(), Logger::LevelBits::ERR);
+                    Logger::print(Logger::ERR, e.what());
                 }
 
             }

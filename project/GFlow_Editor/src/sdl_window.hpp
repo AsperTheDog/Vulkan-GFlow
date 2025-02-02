@@ -2,7 +2,7 @@
 #include <string_view>
 #include <vector>
 #include <SDL2/SDL_vulkan.h>
-#include <vulkan/vulkan.h>
+#include <Volk/volk.h>
 
 #include "utils/signal.hpp"
 
@@ -41,7 +41,8 @@ public:
 	SDL_Window* operator*() const;
 	[[nodiscard]] VkSurfaceKHR getSurface() const;
 
-	void free();
+    void freeSurface();
+    void free();
 	void shutdownImgui() const;
 
 	[[nodiscard]] Signal<uint32_t, uint32_t>& getResizeSignal();
@@ -50,8 +51,8 @@ public:
 private:
 	SDL_Window* m_SDLHandle = nullptr;
 
-	VkInstance m_instance = nullptr;
-	VkSurfaceKHR m_surface = nullptr;
+	VkInstance m_instance = VK_NULL_HANDLE;
+	VkSurfaceKHR m_surface = VK_NULL_HANDLE;
 
 	Signal<uint32_t, uint32_t> m_resizeSignal;
     Signal<> m_saveInput;

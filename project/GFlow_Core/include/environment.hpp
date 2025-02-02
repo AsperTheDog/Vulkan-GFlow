@@ -2,8 +2,6 @@
 #include <unordered_map>
 #include <vector>
 
-#include <vulkan/vulkan.h>
-
 #include "utils/identifiable.hpp"
 #include "core_project.hpp"
 #include "vulkan_gpu.hpp"

@@ -2,14 +2,14 @@
 
 #include <filesystem>
 
+#include "backends/imgui_impl_vulkan.h"
+
 #include "context.hpp"
 #include "imgui.h"
 #include "resource_manager.hpp"
 #include "string_helper.hpp"
 #include "vulkan_context.hpp"
-#include "backends/imgui_impl_vulkan.h"
-#include "metaresources/Renderpass.hpp"
-#include "metaresources/Renderpass.hpp"
+#include "ext/vulkan_swapchain.hpp"
 #include "utils/logger.hpp"
 #include "windows/imgui_execution.hpp"
 #include "windows/imgui_renderpass.hpp"
@@ -135,7 +135,8 @@ void Editor::initImgui()
     };
 
     const uint32_t imguiPoolID = device.createDescriptorPool(pool_sizes, 1000 * static_cast<uint32_t>(pool_sizes.size()), VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT);
-    const VulkanSwapchain& swapchain = device.getSwapchain(env.man_getSwapchain(s_window.getSurface()));
+    VulkanSwapchainExtension* swapchainExtension = VulkanSwapchainExtension::get(device);
+    const VulkanSwapchain& swapchain = swapchainExtension->getSwapchain(env.man_getSwapchain(s_window.getSurface()));
 
     {
         Logger::pushContext("Create Imgui Renderpass");
@@ -295,7 +296,7 @@ void Editor::drawImgui()
     ImGui::EndMainMenuBar();
 
     // General window execution
-    ImGui::DockSpaceOverViewport(ImGui::GetMainViewport());
+    ImGui::DockSpaceOverViewport();
 
     for (ImGuiEditorWindow* window : s_imguiWindows)
     {
@@ -333,7 +334,8 @@ void Editor::recreateSwapchain(const uint32_t width, const uint32_t height)
     env.reconfigurePresentTarget(s_window.getSurface(), { width, height });
 
     const VulkanRenderPass& renderPass = device.getRenderPass(s_imguiRenderPass);
-    const VulkanSwapchain& swapchain = device.getSwapchain(env.man_getSwapchain(s_window.getSurface()));
+    VulkanSwapchainExtension* swapchainExtension = VulkanSwapchainExtension::get(device);
+    const VulkanSwapchain& swapchain = swapchainExtension->getSwapchain(env.man_getSwapchain(s_window.getSurface()));
 
     const VkExtent3D extent = { width, height, 1 };
     for (uint32_t i = 0; i < swapchain.getImageCount(); ++i)
@@ -475,12 +477,12 @@ void Editor::createFolderModal()
             const std::string folderPath = gflow::parser::ResourceManager::makePathAbsolute(folderName);
             if (std::filesystem::create_directory(folderPath))
             {
-                Logger::print("Folder created at: " + folderPath, Logger::INFO);
+                Logger::print(Logger::INFO, "Folder created at: ", folderPath);
                 gflow::parser::ResourceManager::getTree().addPath(s_modalBasePath + folderName + "/");
             }
             else
             {
-                Logger::print("Failed to create folder at: " + folderPath, Logger::ERR);
+                Logger::print(Logger::ERR, "Failed to create folder at: ", folderPath);
             }
             ImGui::CloseCurrentPopup();
         }
@@ -509,7 +511,7 @@ void Editor::deleteFolderModal()
         if (ImGui::Button("Confirm"))
         {
             const std::string baseDir = gflow::parser::ResourceManager::makePathAbsolute(s_modalBasePath);
-            Logger::print("Folder deleted at: " + baseDir, Logger::INFO);
+            Logger::print(Logger::INFO, "Folder deleted at: ", baseDir);
             gflow::parser::ResourceManager::deleteDirectory(s_modalBasePath);
             ImGui::CloseCurrentPopup();
         }
@@ -545,7 +547,7 @@ void Editor::renameFolderModal()
             const std::string baseDir = gflow::parser::ResourceManager::makePathAbsolute(s_modalBasePath);
             const std::string folderPath = gflow::string::replacePathFilename(baseDir, folderName);
             std::filesystem::rename(baseDir, folderPath);
-            Logger::print("Folder renamed from: " + baseDir + " to: " + folderPath, Logger::INFO);
+            Logger::print(Logger::INFO, "Folder renamed from: ", baseDir, " to: ", folderPath);
             gflow::parser::ResourceManager::getTree().renamePath(gflow::string::replacePathFilename(s_modalBasePath, renameFolderName), folderName);
             ImGui::CloseCurrentPopup();
         }
@@ -620,7 +622,7 @@ void Editor::deleteResourceModal()
         {
             const std::string absPath = gflow::parser::ResourceManager::makePathAbsolute(s_modalBasePath);
             std::filesystem::remove_all(absPath);
-            Logger::print("Resource deleted at: " + absPath, Logger::INFO);
+            Logger::print(Logger::INFO, "Resource deleted at: ", absPath);
             gflow::parser::ResourceManager::deleteResource(s_modalBasePath);
             ImGui::CloseCurrentPopup();
         }

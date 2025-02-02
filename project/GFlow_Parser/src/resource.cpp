@@ -34,7 +34,7 @@ namespace gflow::parser
             // Key-value pair
             const auto [key, value] = string::tokenize(line, "=");
             if (data.data.contains(key))
-                Logger::print("Duplicate key " + key + " in " + data.type + " " + std::to_string(data.key) + " of type " + data.type, Logger::WARN);
+                Logger::print(Logger::WARN, "Duplicate key ", key, " in ", data.type, " ", data.key, " of type ", data.type);
             data.data[key] = value;
         }
         return data;
@@ -48,7 +48,7 @@ namespace gflow::parser
             file.open(ResourceManager::getWorkingDir() + m_path);
             if (!file.is_open())
             {
-                Logger::print("Failed to open file " + ResourceManager::getWorkingDir() + m_path, Logger::ERR);
+                Logger::print(Logger::ERR, "Failed to open file ", ResourceManager::getWorkingDir(), m_path);
                 return "";
             }
         }
@@ -159,7 +159,7 @@ namespace gflow::parser
                 return { std::to_string((*resource)->getID()),(*resource)->serialize() };
             }
             case NONE:
-                Logger::print("Export type not supported", Logger::ERR);
+                Logger::print(Logger::ERR, "Export type not supported");
             }
         }
         return { "", "" };
@@ -197,7 +197,7 @@ namespace gflow::parser
                 const std::vector<std::string> values = string::split(value, ", ");
                 if (values.size() != 2)
                 {
-                    Logger::print("Invalid value for Vec2: " + value, Logger::ERR);
+                    Logger::print(Logger::ERR, "Invalid value for Vec2: ", value);
                     return false;
                 }
                 vec->x = std::stof(values[0]);
@@ -210,7 +210,7 @@ namespace gflow::parser
                 const std::vector<std::string> values = string::split(value, ", ");
                 if (values.size() != 3)
                 {
-                    Logger::print("Invalid value for Vec3: " + value, Logger::ERR);
+                    Logger::print(Logger::ERR, "Invalid value for Vec3: ", value);
                     return false;
                 }
                 vec->x = std::stof(values[0]);
@@ -224,7 +224,7 @@ namespace gflow::parser
                 const std::vector<std::string> values = string::split(value, ", ");
                 if (values.size() != 4)
                 {
-                    Logger::print("Invalid value for Vec3: " + value, Logger::ERR);
+                    Logger::print(Logger::ERR, "Invalid value for Vec3: ", value);
                     return false;
                 }
                 vec->x = std::stof(values[0]);
@@ -239,7 +239,7 @@ namespace gflow::parser
                 const std::vector<std::string> values = string::split(value, ", ");
                 if (values.size() != 9)
                 {
-                    Logger::print("Invalid value for Mat3: " + value, Logger::ERR);
+                    Logger::print(Logger::ERR, "Invalid value for Mat3: ", value);
                     return false;
                 }
                 for (int i = 0; i < 9; i++)
@@ -252,7 +252,7 @@ namespace gflow::parser
                 const std::vector<std::string> values = string::split(value, ", ");
                 if (values.size() != 16)
                 {
-                    Logger::print("Invalid value for Mat4: " + value, Logger::ERR);
+                    Logger::print(Logger::ERR, "Invalid value for Mat4: ", value);
                     return false;
                 }
                 for (int i = 0; i < 16; i++)
@@ -265,7 +265,7 @@ namespace gflow::parser
                 const std::vector<std::string> values = string::split(value, ", ");
                 if (values.size() != 4)
                 {
-                    Logger::print("Invalid value for Color: " + value, Logger::ERR);
+                    Logger::print(Logger::ERR, "Invalid value for Color: ", value);
                     return false;
                 }
                 color->r = std::stof(values[0]);
@@ -280,7 +280,7 @@ namespace gflow::parser
                 const std::vector<std::string> values = string::split(value, ", ");
                 if (values.size() != 4)
                 {
-                    Logger::print("Invalid value for UColor: " + value, Logger::ERR);
+                    Logger::print(Logger::ERR, "Invalid value for UColor: ", value);
                     return false;
                 }
                 color->r = std::stoi(values[0]);
@@ -325,7 +325,7 @@ namespace gflow::parser
                         exportData.isRef = false;
                         break;
                     }
-                    Logger::print("Resource with id " + std::to_string(id) + " not found in dependencies", Logger::ERR);
+                    Logger::print(Logger::ERR, "Resource with id ", id, " not found in dependencies");
                 }
                 catch (const std::invalid_argument&)
                 {
@@ -337,7 +337,7 @@ namespace gflow::parser
                 }
             }
             default:
-                Logger::print("Export type not supported for export " + variable, Logger::ERR);
+                Logger::print(Logger::ERR, "Export type not supported for export ", variable);
                 return false;
             }
             exportChanged(variable);

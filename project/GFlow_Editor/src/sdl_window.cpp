@@ -97,15 +97,22 @@ VkSurfaceKHR SDLWindow::getSurface() const
     return m_surface;
 }
 
-void SDLWindow::free()
+void SDLWindow::freeSurface()
 {
-    if (m_surface != nullptr)
+    if (m_surface != VK_NULL_HANDLE)
     {
         vkDestroySurfaceKHR(m_instance, m_surface, nullptr);
-        m_surface = nullptr;
+        Logger::print(Logger::DEBUG, "Freed surface (ID: ", m_surface, ")");
+        m_surface = VK_NULL_HANDLE;
     }
+}
+
+void SDLWindow::free()
+{
+    freeSurface();
 
     SDL_DestroyWindow(m_SDLHandle);
+    Logger::print(Logger::DEBUG, "Freed SDLHandle window (ID: ", m_SDLHandle, ")");
     SDL_Quit();
     m_SDLHandle = nullptr;
 }
