@@ -45,6 +45,7 @@ void Editor::run()
     while (!s_window.shouldClose())
     {
         s_window.pollEvents();
+        if (s_window.isMinimized()) continue;
         renderFrame();
         updateImguiWindows();
     }
@@ -330,6 +331,7 @@ void Editor::recreateSwapchain(const uint32_t width, const uint32_t height)
     Logger::pushContext("Recreate Swapchain");
     gflow::Environment& env = gflow::Context::getEnvironment(s_environment);
     VulkanDevice& device = VulkanContext::getDevice(env.man_getDevice());
+    device.waitIdle();
 
     env.reconfigurePresentTarget(s_window.getSurface(), { width, height });
 

@@ -30,6 +30,7 @@ public:
 	[[nodiscard]] bool shouldClose() const;
 	[[nodiscard]] std::vector<const char*> getRequiredVulkanExtensions() const;
 	[[nodiscard]] WindowSize getSize() const;
+    [[nodiscard]] bool isMinimized() const;
 
 	void pollEvents();
 
@@ -56,6 +57,8 @@ private:
 
 	Signal<uint32_t, uint32_t> m_resizeSignal;
     Signal<> m_saveInput;
+
+    bool m_minimized = false;
 
 	friend class Surface;
 	friend class VulkanGPU;

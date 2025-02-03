@@ -52,6 +52,11 @@ SDLWindow::WindowSize SDLWindow::getSize() const
     return { width, height };
 }
 
+bool SDLWindow::isMinimized() const
+{
+    return m_minimized;
+}
+
 void SDLWindow::pollEvents()
 {
     SDL_Event event;
@@ -64,6 +69,11 @@ void SDLWindow::pollEvents()
             if (event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED && event.window.data1 > 0 && event.window.data2 > 0)
             {
                 m_resizeSignal.emit(event.window.data1, event.window.data2);
+                m_minimized = false;
+            }
+            else if (event.window.event == SDL_WINDOWEVENT_MINIMIZED)
+            {
+                m_minimized = true;
             }
             break;
         case SDL_KEYDOWN:
