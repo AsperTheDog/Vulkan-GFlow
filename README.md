@@ -4,3 +4,5 @@ The users will be able to preview the results of their rendering configuration a
 Additionally, the application is designed to have each layer of abstraction as independent as possible, enabling the use of each one independently from each other. This means that:
 - When you just want to execute an exported project you can simply use the core library
 - When you want to create a project and export it through an API (i.e. an automated system or a homebrew editor) you can simply use the parser library
+
+![image](https://github.com/user-attachments/assets/38e47182-f10f-45c7-a0d1-4fcd3c3014f8)
