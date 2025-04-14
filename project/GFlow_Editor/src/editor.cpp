@@ -9,6 +9,8 @@
 #include "resource_manager.hpp"
 #include "string_helper.hpp"
 #include "vulkan_context.hpp"
+#include "vulkan_device.hpp"
+#include "vulkan_render_pass.hpp"
 #include "ext/vulkan_swapchain.hpp"
 #include "utils/logger.hpp"
 #include "windows/imgui_execution.hpp"
@@ -24,9 +26,12 @@ void Editor::init(const std::string& projectPath)
 
     s_window = SDLWindow{ "GFlow", 1280, 720 };
 
-    Logger::setRootContext("Vulkan init");
-    gflow::Context::initVulkan(s_window.getRequiredVulkanExtensions());
-    s_window.createSurface(gflow::Context::getVulkanInstance());
+    {
+        Logger::setRootContext("Vulkan init");
+        std::vector<const char*> requiredExts = s_window.getRequiredVulkanExtensions();
+        gflow::Context::initVulkan(requiredExts);
+        s_window.createSurface(gflow::Context::getVulkanInstance());
+    }
 
     createEnv();
     initImgui();
@@ -120,24 +125,24 @@ void Editor::initImgui()
     gflow::Environment& env = gflow::Context::getEnvironment(s_environment);
     VulkanDevice& device = VulkanContext::getDevice(env.man_getDevice());
 
-    const std::vector<VkDescriptorPoolSize> pool_sizes =
+    constexpr std::array<VkDescriptorPoolSize, 11> pool_sizes
     {
-        { VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
-        { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
-        { VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000 },
-        { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000 },
-        { VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000 },
-        { VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000 },
-        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000 },
-        { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000 },
-        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000 },
-        { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000 },
-        { VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000 }
+        VkDescriptorPoolSize{ VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
+        VkDescriptorPoolSize{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
+        VkDescriptorPoolSize{ VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000 },
+        VkDescriptorPoolSize{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000 },
+        VkDescriptorPoolSize{ VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000 },
+        VkDescriptorPoolSize{ VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000 },
+        VkDescriptorPoolSize{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000 },
+        VkDescriptorPoolSize{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000 },
+        VkDescriptorPoolSize{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000 },
+        VkDescriptorPoolSize{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000 },
+        VkDescriptorPoolSize{ VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000 }
     };
 
     const uint32_t imguiPoolID = device.createDescriptorPool(pool_sizes, 1000 * static_cast<uint32_t>(pool_sizes.size()), VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT);
     VulkanSwapchainExtension* swapchainExtension = VulkanSwapchainExtension::get(device);
-    const VulkanSwapchain& swapchain = swapchainExtension->getSwapchain(env.man_getSwapchain(s_window.getSurface()));
+    VulkanSwapchain& swapchain = swapchainExtension->getSwapchain(env.man_getSwapchain(s_window.getSurface()));
 
     {
         Logger::pushContext("Create Imgui Renderpass");
@@ -146,7 +151,11 @@ void Editor::initImgui()
             VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE,
             VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
         builder.addAttachment(colorAttachment);
-        builder.addSubpass(VK_PIPELINE_BIND_POINT_GRAPHICS, { {COLOR, 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL} }, 0);
+
+        std::array<VulkanRenderPassBuilder::AttachmentReference, 1> colorAttachmentRef = {
+            VulkanRenderPassBuilder::AttachmentReference{COLOR, 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL}
+        };
+        builder.addSubpass(colorAttachmentRef, 0);
         VkSubpassDependency dependency{};
         dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
         dependency.dstSubpass = 0;
@@ -180,7 +189,10 @@ void Editor::initImgui()
 
     const VkExtent3D extent = { swapchain.getExtent().width, swapchain.getExtent().height, 1 };
     for (uint32_t i = 0; i < swapchain.getImageCount(); ++i)
-        s_imguiFrameBuffers.push_back(device.createFramebuffer(extent, renderPass, { swapchain.getImageView(i) }));
+    {
+        VulkanImageView& imageView = swapchain.getImage(i).getImageView(swapchain.getImageView(i));
+        s_imguiFrameBuffers.push_back(device.createFramebuffer(extent, s_imguiRenderPass, {{*imageView}}));
+    }
 }
 
 void Editor::connectSignals()
@@ -253,7 +265,7 @@ void Editor::submitImgui()
 
     const VulkanCommandBuffer& commandBuffer = VulkanContext::getDevice(env.man_getDevice()).getCommandBuffer(env.man_getCommandBuffer(), 0);
 
-    const std::vector<VkClearValue> clearValues{ {0.0f, 0.0f, 0.0f, 1.0f} };
+    std::array<VkClearValue, 1> clearValues{ {0.0f, 0.0f, 0.0f, 1.0f} };
 
     const uint32_t frameBuffer = s_imguiFrameBuffers[env.man_getSwapchainImage(s_window.getSurface())];
 
@@ -335,15 +347,15 @@ void Editor::recreateSwapchain(const uint32_t width, const uint32_t height)
 
     env.reconfigurePresentTarget(s_window.getSurface(), { width, height });
 
-    const VulkanRenderPass& renderPass = device.getRenderPass(s_imguiRenderPass);
     VulkanSwapchainExtension* swapchainExtension = VulkanSwapchainExtension::get(device);
-    const VulkanSwapchain& swapchain = swapchainExtension->getSwapchain(env.man_getSwapchain(s_window.getSurface()));
+    VulkanSwapchain& swapchain = swapchainExtension->getSwapchain(env.man_getSwapchain(s_window.getSurface()));
 
     const VkExtent3D extent = { width, height, 1 };
     for (uint32_t i = 0; i < swapchain.getImageCount(); ++i)
     {
         device.freeFramebuffer(s_imguiFrameBuffers[i]);
-        s_imguiFrameBuffers[i] = device.createFramebuffer(extent, renderPass, { swapchain.getImageView(i) });
+        VulkanImageView& imageView = swapchain.getImage(i).getImageView(swapchain.getImageView(i));
+        s_imguiFrameBuffers[i] = device.createFramebuffer(extent, s_imguiRenderPass, {{ *imageView }});
     }
     Logger::popContext();
 }

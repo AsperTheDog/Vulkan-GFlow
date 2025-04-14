@@ -330,7 +330,7 @@ namespace gflow::parser
         else
         {
             exportData.type = NONE;
-            Logger::print("Export type not supported", Logger::ERR);
+            LOG_ERR("Export type not supported");
             return;
         }
         parent->registerExport(exportData);
@@ -350,7 +350,7 @@ namespace gflow::parser
         else
         {
             data.type = NONE;
-            Logger::print("Export type not supported for enum export", Logger::ERR);
+            LOG_ERR("Export type not supported for enum export");
             return;
         }
         parent->registerExport(data);

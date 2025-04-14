@@ -87,6 +87,12 @@
     <ClInclude Include="repo\include\ext\vulkan_shader_clock.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="repo\include\utils\allocators.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="repo\include\utils\string_utils.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="repo\src\vulkan_binding.cpp">
@@ -153,6 +159,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="repo\src\ext\vulkan_swapchain.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="repo\src\allocators.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="repo\src\volk_loader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

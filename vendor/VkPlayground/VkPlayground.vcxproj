@@ -147,9 +147,11 @@
     <ClInclude Include="repo\include\ext\vulkan_raytracing.hpp" />
     <ClInclude Include="repo\include\ext\vulkan_shader_clock.hpp" />
     <ClInclude Include="repo\include\ext\vulkan_swapchain.hpp" />
+    <ClInclude Include="repo\include\utils\allocators.hpp" />
     <ClInclude Include="repo\include\utils\identifiable.hpp" />
     <ClInclude Include="repo\include\utils\logger.hpp" />
     <ClInclude Include="repo\include\utils\signal.hpp" />
+    <ClInclude Include="repo\include\utils\string_utils.hpp" />
     <ClInclude Include="repo\include\vulkan_binding.hpp" />
     <ClInclude Include="repo\include\vulkan_buffer.hpp" />
     <ClInclude Include="repo\include\vulkan_command_buffer.hpp" />
@@ -167,6 +169,7 @@
     <ClInclude Include="repo\include\vulkan_sync.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="repo\src\allocators.cpp" />
     <ClCompile Include="repo\src\ext\vulkan_acceleration_structure.cpp" />
     <ClCompile Include="repo\src\ext\vulkan_deffered_host_operation.cpp" />
     <ClCompile Include="repo\src\ext\vulkan_extension_management.cpp" />
@@ -174,6 +177,7 @@
     <ClCompile Include="repo\src\ext\vulkan_shader_clock.cpp" />
     <ClCompile Include="repo\src\ext\vulkan_swapchain.cpp" />
     <ClCompile Include="repo\src\logger.cpp" />
+    <ClCompile Include="repo\src\volk_loader.cpp" />
     <ClCompile Include="repo\src\vulkan_binding.cpp" />
     <ClCompile Include="repo\src\vulkan_buffer.cpp" />
     <ClCompile Include="repo\src\vulkan_command_buffer.cpp" />

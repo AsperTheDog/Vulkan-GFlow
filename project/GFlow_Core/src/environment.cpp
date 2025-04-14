@@ -5,6 +5,7 @@
 #include <thread>
 
 #include "vulkan_context.hpp"
+#include "vulkan_device.hpp"
 #include "ext/vulkan_swapchain.hpp"
 #include "utils/logger.hpp"
 
@@ -28,7 +29,8 @@ namespace gflow
 		if (gpuOverride < VulkanContext::getGPUCount())
 		{
 			Logger::print(Logger::INFO, "Manually selected GPU with id ", gpuOverride);
-			const std::vector<VulkanGPU> gpus = VulkanContext::getGPUs();
+			std::array<VulkanGPU, 10> gpus;
+		    VulkanContext::getGPUs(gpus.data());
 			selectedGPU = gpus[gpuOverride];
 			if (!isGPUSuitable(selectedGPU, requirements))
 			{
@@ -182,14 +184,17 @@ namespace gflow
 		commandBuffer.beginRecording();
 	}
 
-	void Environment::recordProject(uint32_t project)
-	{
+	void Environment::recordProject(uint32_t project) const
+    {
 		throw std::runtime_error("Not implemented");
 	}
 
 	void Environment::setRecordingBarrier() const
 	{
-		VulkanContext::getDevice(m_device).getCommandBuffer(m_commandBuffer, 0).cmdSimpleAbsoluteBarrier();
+        VulkanMemoryBarrierBuilder barrierBuilder{m_device, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, 0};
+        barrierBuilder.addAbsoluteMemoryBarrier();
+
+		VulkanContext::getDevice(m_device).getCommandBuffer(m_commandBuffer, 0).cmdPipelineBarrier(barrierBuilder);
 	}
 
 	void Environment::endRecording()
@@ -200,7 +205,7 @@ namespace gflow
 		commandBuffer.endRecording();
 		const VulkanQueue graphicsQueue = device.getQueue(m_mainQueue);
 
-		std::vector<std::pair<uint32_t, VkSemaphoreWaitFlags>> semaphores{};
+		std::vector<VulkanCommandBuffer::WaitSemaphoreData> semaphores{};
 		for (const Swapchain& swapchain : m_swapchains | std::views::values)
 		{
 			if (swapchain.mustBeAwaited)
@@ -212,7 +217,7 @@ namespace gflow
 		}
 
 		const uint32_t fence = !semaphores.empty() ? m_inFlightFence : UINT32_MAX;
-		commandBuffer.submit(graphicsQueue, semaphores, { m_renderFinishedSemaphoreID }, fence);
+		commandBuffer.submit(graphicsQueue, semaphores, {{ m_renderFinishedSemaphoreID }}, fence);
 	}
 
 	void Environment::configurePresentTarget(const VkSurfaceKHR surface, const VkExtent2D windowSize)
@@ -241,7 +246,7 @@ namespace gflow
 
         const VulkanDevice& device = VulkanContext::getDevice(m_device);
 	    VulkanSwapchainExtension* swapchainExtension = VulkanSwapchainExtension::get(device);
-		m_swapchains[surface].id = swapchainExtension->createSwapchain(surface, extent, format);
+		m_swapchains[surface].id = swapchainExtension->createSwapchain(surface, extent, format, VK_PRESENT_MODE_FIFO_KHR);
 	}
 
 	bool Environment::present(VkSurfaceKHR surface)
@@ -254,7 +259,7 @@ namespace gflow
 			{
                 VulkanSwapchainExtension* swapchainExtension = VulkanSwapchainExtension::get(VulkanContext::getDevice(m_device));
 				VulkanSwapchain& swapchainObj = swapchainExtension->getSwapchain(swapchain.id);
-				if (!swapchainObj.present(swapchain.presentQueue, { m_renderFinishedSemaphoreID }))
+				if (!swapchainObj.present(swapchain.presentQueue, {{ m_renderFinishedSemaphoreID }}))
 				{
 					finishedCorrectly = false;
 					Logger::print(Logger::WARN, "Swapchain (ID: ", swapchain.id, ") out of date");
@@ -298,7 +303,7 @@ namespace gflow
         const VulkanDevice& device = VulkanContext::getDevice(m_device);
         VulkanSwapchainExtension* swapchainExtension = VulkanSwapchainExtension::get(device);
 		const VulkanSwapchain& swapchain = swapchainExtension->getSwapchain(m_swapchains[surface].id);
-		m_swapchains[surface].id = swapchainExtension->createSwapchain(surface, windowSize, swapchain.getFormat(), m_swapchains[surface].id);
+		m_swapchains[surface].id = swapchainExtension->createSwapchain(surface, windowSize, swapchain.getFormat(), VK_PRESENT_MODE_FIFO_KHR, m_swapchains[surface].id);
 	}
 
     Project::Requirements Environment::getRequirements() const
@@ -373,7 +378,9 @@ namespace gflow
 		// Check extensions
 		if (!requirements.extensions.empty())
 		{
-			const std::vector<VkExtensionProperties> extensions = gpu.getSupportedExtensions();
+			std::vector<VkExtensionProperties> extensions;
+            extensions.resize(gpu.getSupportedExtensionCount());
+		    gpu.getSupportedExtensions(extensions.data());
 			for (const std::string& extension : requirements.extensions)
 			{
 				bool found = false;
@@ -406,7 +413,9 @@ namespace gflow
 	{
 		Logger::pushContext("GPU Selection");
 		std::vector<VulkanGPU> suitableGPUs{};
-		for (VulkanGPU& gpu : VulkanContext::getGPUs())
+        std::vector<VulkanGPU> gpus{ VulkanContext::getGPUCount() };
+        VulkanContext::getGPUs(gpus.data());
+		for (VulkanGPU& gpu : gpus)
 		{
 			if (isGPUSuitable(gpu, requirements))
 				suitableGPUs.push_back(gpu);

@@ -23,7 +23,7 @@ namespace gflow
         [[nodiscard]] const Project& getProject(uint32_t id) const;
 
         void beginRecording(const std::vector<VkSurfaceKHR>& surfacesToPrepare = {});
-        void recordProject(uint32_t project);
+        void recordProject(uint32_t project) const;
         void setRecordingBarrier() const;
         void endRecording();
 

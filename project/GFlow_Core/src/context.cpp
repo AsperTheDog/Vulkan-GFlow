@@ -6,7 +6,7 @@
 
 namespace gflow
 {
-	void Context::initVulkan(const std::vector<const char*>& vulkanInstanceExtensions)
+	void Context::initVulkan(std::span<const char*> vulkanInstanceExtensions)
 	{
 #ifndef _DEBUG
 		VulkanContext::init(VK_API_VERSION_1_0, false, false, vulkanInstanceExtensions);

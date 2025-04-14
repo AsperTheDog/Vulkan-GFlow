@@ -93,6 +93,25 @@ namespace gflow::parser
         DECLARE_PUBLIC_RESOURCE(Pipeline)
     };
 
+    class CouncilMember final : public gflow::parser::Resource
+    {
+        EXPORT(std::string, name);
+        EXPORT(gflow::parser::Color, color);
+
+    public:
+        DECLARE_PUBLIC_RESOURCE(CouncilMember);
+    };
+
+    class MinionCouncil final : public gflow::parser::Resource
+    {
+    public:
+        EXPORT(std::string, name);
+        EXPORT_LIST(std::string, artifacts);
+        EXPORT_RESOURCE_LIST(CouncilMember, members);
+
+        DECLARE_PUBLIC_RESOURCE(MinionCouncil);
+    };
+
     // ********************
     // Function definitions
     // ********************

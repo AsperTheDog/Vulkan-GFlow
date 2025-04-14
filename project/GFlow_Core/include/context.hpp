@@ -8,7 +8,7 @@ namespace gflow
     class Context
     {
     public:
-    	static void initVulkan(const std::vector<const char*>& vulkanInstanceExtensions);
+    	static void initVulkan(std::span<const char*> vulkanInstanceExtensions);
 
         static uint32_t createEnvironment();
         static Environment& getEnvironment(uint32_t id);
