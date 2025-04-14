@@ -152,6 +152,7 @@ namespace gflow::parser
         }
     };
 
+    // Utility class with full context of a Resource, used by GFlow when reacting to specific events
     struct ResourceElemPath
     {
         std::string path;
@@ -170,6 +171,8 @@ namespace gflow::parser
         }
     };
 
+    // Main class that represents a variable that can be serialized. Must be used to hold data inside a Resource. 
+    // It is recommended to use the utility EXPORT macros defined at the top of this file
     template <typename T, bool CreateOnInit, bool IsRef>
     class Export
     {
@@ -191,12 +194,15 @@ namespace gflow::parser
         Resource* m_parent;
     };
 
+    // Main class of the system. Any created Resource must inherit this class to get serialization and reflection capabilities.
     class Resource
     {
     public:
         struct ExportData;
         using ResourceFactory = std::function<Resource* (const std::string&, Resource::ExportData*)>;
 
+        // Struct containing all the runtime data in an exported variable. A lot of extra data has been added to
+        // allow for extra functionality needed by GFlow
         struct ExportData
         {
             DataType type = NONE;
@@ -209,6 +215,7 @@ namespace gflow::parser
             bool isRef = false;
         };
 
+        // Utility struct used in serialization process
         struct SerializedResourceEntry
         {
             uint32_t key;
@@ -225,13 +232,17 @@ namespace gflow::parser
 
         struct Ref { std::string path; };
 
+        // This function can be overridden to provide custom functionality when loaded
         virtual void initContext(ExportData* metadata) {}
-
+        
+        // Serialization functions. While default behavior is normally enough for most Resources, they can be overridden to provide 
+        // custom behavior (see GFlow_Parser/include/resource/list.hpp)
         virtual std::string serialize();
         virtual void deserialize(const SerializedResourceEntry& data, const SerializedResourceEntries& dependencies);
 
         bool deserialize(std::string filename = "");
 
+        // These getters and setters can provide runtime retrieval of exported parameters in a resource dynamically
         virtual std::pair<std::string, std::string> get(const std::string& variable);
         virtual bool set(const std::string& variable, const std::string& value, const SerializedResourceEntries& dependencies = {});
         virtual DataUsage isUsed(const std::string& variable, const std::vector<Resource*>& parentPath = {}) { return USED; }
@@ -241,12 +252,18 @@ namespace gflow::parser
 
         void initializeExport(const std::string& name);
 
+        // These functions can be overridden to provide custom behavior when these events happen
         virtual void exportsChanged() {}
         virtual void exportChanged(const std::string& variable) { exportsChanged(); }
+
+        // This function can be overridden to support dynamic export parameters. This is used for example by the list resource to dynamically 
+        // serialize all elements in its internal array (see GFlow_Parser/include/resource/list.hpp)
         [[nodiscard]] virtual std::vector<ExportData> getCustomExports() { return {}; }
 
         [[nodiscard]] std::vector<ExportData> getExports();
 
+        // Only function required to be overridden, Needed for the serialization system to properly identify subresource types. 
+        // Implemented automatically by the DECLARE macros
         [[nodiscard]] virtual std::string getType() const = 0;
 
         [[nodiscard]] std::string getPath() const { return m_path; }
@@ -281,6 +298,7 @@ namespace gflow::parser
         friend class Project;
     };
 
+    // In GFlow, Resources are managed by a manager class. Implementing this function here avoids some annoying circular dependencies
     Resource* createResourceInManager(const Resource::ResourceFactory& factory, Resource::ExportData* data = nullptr);
 
     //***************************************************************
