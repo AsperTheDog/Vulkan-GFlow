@@ -93,6 +93,12 @@
     <ClInclude Include="repo\include\utils\string_utils.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="repo\include\utils\call_on_destroy.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="repo\include\utils\shader_reflection.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="repo\src\vulkan_binding.cpp">

@@ -103,24 +103,6 @@ namespace gflow
 		return swapchain.acquireNextImage();
 	}
 
-    VulkanShader::ReflectionManager Environment::man_getReflectionData(const std::string& shaderPath, const VkShaderStageFlagBits stage) const
-    {
-        try
-        {
-            const uint32_t shaderID = VulkanContext::getDevice(m_device).createShader(shaderPath, stage, true, {});
-            const VulkanShader& shader = VulkanContext::getDevice(m_device).getShader(shaderID);
-            VulkanShader::ReflectionManager reflectionData = shader.getReflectionData();
-            VulkanContext::getDevice(m_device).freeShader(shaderID);
-            return reflectionData;
-        }
-        catch (const std::runtime_error& e)
-        {
-            Logger::print(Logger::ERR, "Failed to get reflection data for shader ", shaderPath, ": ", e.what());
-            return {};
-        }
-        
-    }
-
     uint32_t Environment::man_getSwapchainImage(const VkSurfaceKHR surface)
 	{
 		if (!m_swapchains.contains(surface))

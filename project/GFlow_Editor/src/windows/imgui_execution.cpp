@@ -315,15 +315,14 @@ void ImGuiExecutionWindow::processDrawCallConnections(DrawCallNode* drawNode, gf
     }
 
     gflow::parser::Pipeline* pipeline = drawCallResource->getPipeline();
-    const VulkanShader::ReflectionManager* reflectionData = pipeline->getShaderReflectionData(gflow::parser::Pipeline::VERTEX);
-    if (reflectionData == nullptr || !reflectionData->isValid())
+    pipeline->getShaderReflectionData(gflow::parser::Pipeline::VERTEX);
+    /*if (reflectionData == nullptr)
     {
         drawNode->setModelPin(false, false);
         return;
-    }
+    }*/
 
     // Check if the vertex shader has vertex inputs
-    drawNode->setModelPin(!reflectionData->getResources().stage_inputs.empty(), false);
 }
 
 void ImGuiExecutionWindow::processBindPushConstantConnections(BindPushConstantNode* bindNode, gflow::parser::ProjectRenderpass* renderpassResource) const

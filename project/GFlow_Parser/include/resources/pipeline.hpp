@@ -3,6 +3,7 @@
 
 #include "list.hpp"
 #include "vulkan_shader.hpp"
+#include "utils/shader_reflection.hpp"
 
 
 namespace gflow::parser
@@ -83,33 +84,34 @@ namespace gflow::parser
     public:
         enum ShaderStage : uint8_t { VERTEX, FRAGMENT };
 
-        VulkanShader::ReflectionManager* getShaderReflectionData(ShaderStage type, bool forceRecalculation = false);
+        void updateShaderReflectionData(ShaderStage p_Type, bool p_ForceRecalculation = false);
+        ShaderReflectionData getShaderReflectionData(ShaderStage p_Type);
         void exportChanged(const std::string& variable) override;
         DataUsage isUsed(const std::string& variable, const std::vector<Resource*>& parentPath = {}) override;
 
-        VulkanShader::ReflectionManager m_vertexReflection;
-        VulkanShader::ReflectionManager m_fragmentReflection;
+        struct ShaderStructure
+        {
+            enum class PrimitiveType
+            {
+                INT, UINT, FLOAT, BOOL,
+                VEC2, VEC3, VEC4,
+                MAT2, MAT3, MAT4,
+                BUFFER, IMAGE,
+            };
+
+            struct Member
+            {
+                std::string name;
+                PrimitiveType type;
+            };
+
+            std::vector<Member> members;
+        };
+
+        VulkanShader m_VertexShader{};
+        VulkanShader m_FragmentShader{};
 
         DECLARE_PUBLIC_RESOURCE(Pipeline)
-    };
-
-    class CouncilMember final : public gflow::parser::Resource
-    {
-        EXPORT(std::string, name);
-        EXPORT(gflow::parser::Color, color);
-
-    public:
-        DECLARE_PUBLIC_RESOURCE(CouncilMember);
-    };
-
-    class MinionCouncil final : public gflow::parser::Resource
-    {
-    public:
-        EXPORT(std::string, name);
-        EXPORT_LIST(std::string, artifacts);
-        EXPORT_RESOURCE_LIST(CouncilMember, members);
-
-        DECLARE_PUBLIC_RESOURCE(MinionCouncil);
     };
 
     // ********************
@@ -132,12 +134,82 @@ namespace gflow::parser
         return *logicOpEnable ? USED : NOT_USED;
     }
 
+    inline void Pipeline::updateShaderReflectionData(const ShaderStage p_Type, const bool p_ForceRecalculation)
+    {
+        try
+        {
+            switch (p_Type)
+            {
+            case VERTEX:
+                if ((*vertex).path.empty())
+                {
+                    VulkanShader::reset(m_VertexShader);
+                    return;
+                }
+                if (m_VertexShader.getStatus().status != VulkanShader::Result::COMPILED || p_ForceRecalculation)
+                {
+                    VulkanShader::reinit(m_VertexShader, 0, false);
+                    m_VertexShader.loadModule(ResourceManager::makePathAbsolute((*vertex).path), "main");
+                    m_VertexShader.linkAndFinalize();
+                    if (m_VertexShader.getStatus().status == VulkanShader::Result::COMPILED)
+                        LOG_INFO("Vertex shader for ", (*vertex).path, " compiled successfully");
+                    else 
+                        throw std::runtime_error("Vertex shader compilation failed for " + (*vertex).path);
+                }
+                break;
+            case FRAGMENT:
+                if ((*fragment).path.empty())
+                {
+                    VulkanShader::reset(m_FragmentShader);
+                    return;
+                }
+                if (m_FragmentShader.getStatus().status != VulkanShader::Result::COMPILED || p_ForceRecalculation)
+                {
+                    VulkanShader::reinit(m_FragmentShader, 0, false);
+                    m_FragmentShader.loadModule(ResourceManager::makePathAbsolute((*fragment).path), "main");
+                    m_FragmentShader.linkAndFinalize();
+                    if (m_FragmentShader.getStatus().status == VulkanShader::Result::COMPILED)
+                        LOG_INFO("Fragment shader for ", (*fragment).path, " compiled successfully");
+                    else 
+                        throw std::runtime_error("Fragment shader compilation failed for " + (*fragment).path);
+                }
+                break;
+            }
+        }
+        catch (const std::runtime_error& e)
+        {
+            Logger::print(Logger::WARN, e.what());
+        }
+    }
+
+    inline ShaderReflectionData Pipeline::getShaderReflectionData(const ShaderStage p_Type)
+    {
+        updateShaderReflectionData(p_Type);
+        switch (p_Type)
+        {
+        case VERTEX:
+            if (m_VertexShader.getStatus().status == VulkanShader::Result::COMPILED)
+            {
+                return { m_VertexShader.getLayout(), VK_SHADER_STAGE_VERTEX_BIT };
+            }
+            break;
+        case FRAGMENT:
+            if (m_FragmentShader.getStatus().status == VulkanShader::Result::COMPILED)
+            {
+                return { m_FragmentShader.getLayout(), VK_SHADER_STAGE_FRAGMENT_BIT };
+            }
+            break;
+        }
+
+        return {};
+    }
+
     inline void Pipeline::exportChanged(const std::string& variable)
     {
         if (variable == "vertex")
-            getShaderReflectionData(VERTEX, true);
+            updateShaderReflectionData(VERTEX, true);
         else if (variable == "fragment")
-            getShaderReflectionData(FRAGMENT, true);
+            updateShaderReflectionData(FRAGMENT, true);
         Resource::exportChanged(variable);
     }
 
@@ -146,33 +218,5 @@ namespace gflow::parser
         if (variable == "attachments")
             return NOT_USED;
         return Resource::isUsed(variable, parentPath);
-    }
-
-    inline VulkanShader::ReflectionManager* Pipeline::getShaderReflectionData(
-        const ShaderStage type, const bool forceRecalculation)
-    {
-        try
-        {
-            switch (type)
-            {
-            case VERTEX:
-                if ((*vertex).path.empty())
-                    m_vertexReflection = {};
-                else if (!m_vertexReflection.isValid() || forceRecalculation)
-                    m_vertexReflection = VulkanShader::getReflectionDataFromFile(ResourceManager::makePathAbsolute((*vertex).path), VK_SHADER_STAGE_VERTEX_BIT);
-                return &m_vertexReflection;
-            case FRAGMENT:
-                if ((*fragment).path.empty())
-                    m_fragmentReflection = {};
-                else if (!m_fragmentReflection.isValid() || forceRecalculation)
-                    m_fragmentReflection = VulkanShader::getReflectionDataFromFile(ResourceManager::makePathAbsolute((*fragment).path), VK_SHADER_STAGE_FRAGMENT_BIT);
-                return &m_fragmentReflection;
-            }
-        }
-        catch (const std::runtime_error& e)
-        {
-            Logger::print(Logger::WARN, e.what());
-        }
-        return nullptr;
     }
 }

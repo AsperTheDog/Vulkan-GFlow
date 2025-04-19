@@ -9,11 +9,8 @@
     </ClCompile>
     <ClCompile Include="src\windows\imgui_resource_editor.cpp" />
     <ClCompile Include="src\windows\imgui_execution.cpp" />
-    <ClCompile Include="src\windows\imgui_renderpass.cpp" />
     <ClCompile Include="src\windows\nodes\base_node.cpp" />
     <ClCompile Include="src\windows\imgui_graph_window.cpp" />
-    <ClCompile Include="src\metaresources\renderpass.cpp" />
-    <ClCompile Include="src\windows\nodes\renderpass_nodes.cpp" />
     <ClCompile Include="src\windows\nodes\execution_nodes.cpp" />
     <ClCompile Include="src\metaresources\execution.cpp" />
   </ItemGroup>
@@ -28,12 +25,9 @@
     </ClInclude>
     <ClInclude Include="src\windows\imgui_resource_editor.hpp" />
     <ClInclude Include="src\windows\imgui_execution.hpp" />
-    <ClInclude Include="src\windows\imgui_renderpass.hpp" />
     <ClInclude Include="src\windows\nodes\base_node.hpp" />
     <ClInclude Include="src\windows\imgui_graph_window.hpp" />
-    <ClInclude Include="src\metaresources\renderpass.hpp" />
     <ClInclude Include="src\metaresources\graph.hpp" />
-    <ClInclude Include="src\windows\nodes\renderpass_nodes.hpp" />
     <ClInclude Include="src\windows\nodes\execution_nodes.hpp" />
     <ClInclude Include="src\metaresources\execution.hpp" />
   </ItemGroup>
@@ -46,8 +40,8 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <None Include="assets\_shaders\depth.vert" />
-    <None Include="assets\_shaders\color.frag" />
-    <None Include="assets\_shaders\color.vert" />
+    <None Include="assets\_shaders\depth.slang" />
+    <None Include="assets\_shaders\color.slang" />
+    <None Include="assets\_shaders\common.slang" />
   </ItemGroup>
 </Project>

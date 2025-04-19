@@ -142,10 +142,8 @@
   <ItemGroup>
     <ClInclude Include="src\metaresources\execution.hpp" />
     <ClInclude Include="src\metaresources\graph.hpp" />
-    <ClInclude Include="src\metaresources\renderpass.hpp" />
     <ClInclude Include="src\windows\imgui_graph_window.hpp" />
     <ClInclude Include="src\windows\nodes\base_node.hpp" />
-    <ClInclude Include="src\windows\imgui_renderpass.hpp" />
     <ClInclude Include="src\windows\imgui_execution.hpp" />
     <ClInclude Include="src\windows\imgui_resource_editor.hpp" />
     <ClInclude Include="src\windows\imgui_editor_window.hpp" />
@@ -153,14 +151,11 @@
     <ClInclude Include="src\editor.hpp" />
     <ClInclude Include="src\sdl_window.hpp" />
     <ClInclude Include="src\windows\nodes\execution_nodes.hpp" />
-    <ClInclude Include="src\windows\nodes\renderpass_nodes.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\metaresources\execution.cpp" />
-    <ClCompile Include="src\metaresources\renderpass.cpp" />
     <ClCompile Include="src\windows\imgui_graph_window.cpp" />
     <ClCompile Include="src\windows\nodes\base_node.cpp" />
-    <ClCompile Include="src\windows\imgui_renderpass.cpp" />
     <ClCompile Include="src\windows\imgui_execution.cpp" />
     <ClCompile Include="src\windows\imgui_resource_editor.cpp" />
     <ClCompile Include="src\windows\imgui_resources.cpp" />
@@ -168,12 +163,11 @@
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\sdl_window.cpp" />
     <ClCompile Include="src\windows\nodes\execution_nodes.cpp" />
-    <ClCompile Include="src\windows\nodes\renderpass_nodes.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="assets\_shaders\color.frag" />
-    <None Include="assets\_shaders\color.vert" />
-    <None Include="assets\_shaders\depth.vert" />
+    <None Include="assets\_shaders\color.slang" />
+    <None Include="assets\_shaders\common.slang" />
+    <None Include="assets\_shaders\depth.slang" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

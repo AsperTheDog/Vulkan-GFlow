@@ -113,7 +113,7 @@
     </Link>
     <Lib>
       <AdditionalLibraryDirectories>$(VULKAN_SDK)\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>spirv-cross-cored.lib;spirv-cross-glsld.lib;volkd.lib;shaderc_combinedd.lib;</AdditionalDependencies>
+      <AdditionalDependencies>volkd.lib;slangd.lib;</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -134,7 +134,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <Lib>
-      <AdditionalDependencies>spirv-cross-core.lib;spirv-cross-glsl.lib;volk.lib;shaderc_combined.lib;</AdditionalDependencies>
+      <AdditionalDependencies>volk.lib;slang.lib;</AdditionalDependencies>
     </Lib>
     <Lib>
       <AdditionalLibraryDirectories>$(VULKAN_SDK)\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -148,8 +148,10 @@
     <ClInclude Include="repo\include\ext\vulkan_shader_clock.hpp" />
     <ClInclude Include="repo\include\ext\vulkan_swapchain.hpp" />
     <ClInclude Include="repo\include\utils\allocators.hpp" />
+    <ClInclude Include="repo\include\utils\call_on_destroy.hpp" />
     <ClInclude Include="repo\include\utils\identifiable.hpp" />
     <ClInclude Include="repo\include\utils\logger.hpp" />
+    <ClInclude Include="repo\include\utils\shader_reflection.hpp" />
     <ClInclude Include="repo\include\utils\signal.hpp" />
     <ClInclude Include="repo\include\utils\string_utils.hpp" />
     <ClInclude Include="repo\include\vulkan_binding.hpp" />

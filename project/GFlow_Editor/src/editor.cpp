@@ -14,7 +14,6 @@
 #include "ext/vulkan_swapchain.hpp"
 #include "utils/logger.hpp"
 #include "windows/imgui_execution.hpp"
-#include "windows/imgui_renderpass.hpp"
 
 #include "windows/imgui_resources.hpp"
 #include "windows/imgui_resource_editor.hpp"
@@ -206,7 +205,6 @@ void Editor::createWindows()
     s_imguiWindows.push_back(new ImGuiResourcesWindow("Resources"));
     s_imguiWindows.push_back(new ImGuiResourceEditorWindow("Resource Editor"));
     s_imguiWindows.push_back(new ImGuiExecutionWindow("Execution"));
-    s_imguiWindows.push_back(new ImGuiRenderPassWindow("RenderPass"));
     s_imguiWindows.push_back(new ImGuiResourceEditorWindow("Project Settings", false));
 #ifdef _DEBUG
     s_imguiWindows.push_back(new ImGuiTestWindow("Test", false));
@@ -222,11 +220,6 @@ void Editor::createWindows()
         // Setup resource editor window
         ImGuiResourceEditorWindow* resourceEditorWindow = dynamic_cast<ImGuiResourceEditorWindow*>(getWindow("Resource Editor"));
         s_resourceSelectedSignal.connect(resourceEditorWindow, &ImGuiResourceEditorWindow::resourceSelected);
-    }
-    {
-        // Setup renderpass window
-        ImGuiRenderPassWindow* renderPassWindow = dynamic_cast<ImGuiRenderPassWindow*>(getWindow("RenderPass"));
-        s_resourceSelectedSignal.connect(renderPassWindow, &ImGuiRenderPassWindow::resourceSelected);
     }
     {
         // Setup execution window
